@@ -1,4 +1,4 @@
-from controllers.controller_manager import ControllerManager
+from engine.controllers.controller_manager import ControllerManager
 
 manager = ControllerManager()
 
