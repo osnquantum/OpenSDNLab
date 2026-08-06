@@ -1,5 +1,5 @@
 {
-    "experiment_name": "Complete Experiment",
+    "experiment_name": "Configuration Experiment",
     "experiment_id": "EXP-0001",
     "topology": "unknown",
     "hosts": 2,
@@ -10,13 +10,13 @@
     "bandwidth": 100,
     "delay": "1ms",
     "loss": 0.0,
-    "minimum_rtt": 5.376,
-    "average_rtt": 28.379,
-    "maximum_rtt": 95.95,
-    "jitter": 39.014,
+    "minimum_rtt": 6.949,
+    "average_rtt": 13.042,
+    "maximum_rtt": 30.802,
+    "jitter": 10.254,
     "packet_loss": 0.0,
-    "throughput": 87.0,
-    "created_at": "2026-08-06 11:43:08.119960",
+    "throughput": 82.8,
+    "created_at": "2026-08-06 11:49:29.352092",
     "status": "SUCCESS",
     "notes": ""
 }

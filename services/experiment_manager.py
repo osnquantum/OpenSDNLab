@@ -15,6 +15,7 @@ from deployment.deployment_manager import DeploymentManager
 from monitoring.monitoring_manager import MonitoringManager
 
 from repository.experiment_repository import ExperimentRepository
+from repository.sqlite.sqlite_repository import SQLiteRepository
 
 
 class ExperimentManager:
@@ -32,6 +33,8 @@ class ExperimentManager:
         self.monitoring_manager = MonitoringManager()
 
         self.repository = ExperimentRepository()
+
+        self.sqlite_repository = SQLiteRepository()
 
     ############################################################
 
@@ -172,33 +175,44 @@ class ExperimentManager:
 
         )
 
-        return self.repository.save(result)
+        json_file = self.repository.save(result)
 
+        self.sqlite_repository.save(result)
+
+        return json_file
+
+
+    ############################################################
 
     ############################################################
 
     def run(
         self,
-        name,
-        topology,
-        hosts,
-        switches,
-        protocol,
-        controller_config
+        config
     ):
 
         inventory = self.build_experiment(
-            name=name,
-            topology=topology,
-            hosts=hosts,
-            switches=switches,
-            protocol=protocol,
-            controller="osken"
+
+            name=config.name,
+
+            topology=config.topology["type"],
+
+            hosts=config.topology["hosts"],
+
+            switches=config.topology["switches"],
+
+            protocol=config.network["protocol"],
+
+            controller=config.controller["name"]
+
         )
 
         net = self.deploy_experiment(
+
             inventory,
-            controller_config
+
+            config.controller
+
         )
 
         metrics = self.monitor_experiment(
@@ -206,7 +220,7 @@ class ExperimentManager:
         )
 
         filename = self.save_result(
-            name,
+            config.name,
             inventory,
             metrics
         )
@@ -214,7 +228,10 @@ class ExperimentManager:
         self.deployment_manager.backend.stop()
 
         return {
+
             "metrics": metrics,
+
             "result_file": str(filename)
+
         }
 

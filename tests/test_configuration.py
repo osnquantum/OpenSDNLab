@@ -1,19 +1,19 @@
-from core.configuration import config
+from models.experiment_configuration import ExperimentConfiguration
+
+config = ExperimentConfiguration(
+    name="Configuration Demo"
+)
 
 print()
 
-print("Application Name : ", config.get("application.name"))
-
-print("Version          : ", config.get("application.version"))
-
-print("Protocol         : ", config.get("network.protocol"))
-
-print("Database         : ", config.get("database.path"))
+print(config)
 
 print()
 
-config.set("network.protocol", "dual")
+print(config.topology)
 
-config.save()
+print(config.network)
 
-print("Updated protocol:", config.get("network.protocol"))
+print(config.controller)
+
+print(config.deployment)

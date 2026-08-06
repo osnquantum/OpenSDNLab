@@ -261,3 +261,39 @@
 2026-08-06 11:39:38,237 | INFO     | Pinging h2 from h1
 2026-08-06 11:39:41,290 | INFO     | Measuring throughput from h1 to h2
 2026-08-06 11:39:47,973 | INFO     | Stopping network
+2026-08-06 11:43:08,122 | INFO     | Creating experiment: Complete Experiment
+2026-08-06 11:43:08,126 | INFO     | Creating topology: linear
+2026-08-06 11:43:08,128 | INFO     | Topology created successfully.
+2026-08-06 11:43:08,130 | INFO     | Experiment created successfully.
+2026-08-06 11:43:08,143 | INFO     | Assigning addresses
+2026-08-06 11:43:08,151 | INFO     | Address assignment complete
+2026-08-06 11:43:08,159 | INFO     | Building inventory
+2026-08-06 11:43:08,160 | INFO     | Inventory complete
+2026-08-06 11:43:08,162 | INFO     | Initializing Mininet
+2026-08-06 11:43:08,194 | INFO     | Creating controller
+2026-08-06 11:43:08,264 | INFO     | Creating hosts
+2026-08-06 11:43:08,336 | INFO     | Creating switches
+2026-08-06 11:43:08,367 | INFO     | Creating links
+2026-08-06 11:43:09,294 | INFO     | Starting network
+2026-08-06 11:43:10,374 | INFO     | Network started
+2026-08-06 11:43:10,375 | INFO     | Pinging h2 from h1
+2026-08-06 11:43:13,473 | INFO     | Measuring throughput from h1 to h2
+2026-08-06 11:43:20,123 | INFO     | Stopping network
+2026-08-06 11:49:29,354 | INFO     | Creating experiment: Configuration Experiment
+2026-08-06 11:49:29,358 | INFO     | Creating topology: linear
+2026-08-06 11:49:29,360 | INFO     | Topology created successfully.
+2026-08-06 11:49:29,365 | INFO     | Experiment created successfully.
+2026-08-06 11:49:29,378 | INFO     | Assigning addresses
+2026-08-06 11:49:29,383 | INFO     | Address assignment complete
+2026-08-06 11:49:29,386 | INFO     | Building inventory
+2026-08-06 11:49:29,392 | INFO     | Inventory complete
+2026-08-06 11:49:29,398 | INFO     | Initializing Mininet
+2026-08-06 11:49:29,415 | INFO     | Creating controller
+2026-08-06 11:49:29,466 | INFO     | Creating hosts
+2026-08-06 11:49:29,506 | INFO     | Creating switches
+2026-08-06 11:49:29,592 | INFO     | Creating links
+2026-08-06 11:49:30,376 | INFO     | Starting network
+2026-08-06 11:49:31,432 | INFO     | Network started
+2026-08-06 11:49:31,434 | INFO     | Pinging h2 from h1
+2026-08-06 11:49:34,474 | INFO     | Measuring throughput from h1 to h2
+2026-08-06 11:49:40,869 | INFO     | Stopping network
