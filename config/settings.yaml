@@ -1,0 +1,36 @@
+application:
+  name: OpenSDNLab
+  version: 1.0.0
+  author: osnquantum
+system:
+  timezone: Asia/Kathmandu
+  debug: true
+database:
+  engine: sqlite
+  path: database/opensdnlab.db
+logging:
+  level: INFO
+  file: logs/application/app.log
+  console: true
+experiment:
+  workspace: experiments/
+  auto_save: true
+  duration: 300
+dashboard:
+  enabled: true
+  refresh_rate: 1
+  theme: dark
+metrics:
+  delay: true
+  jitter: true
+  throughput: true
+  bandwidth: true
+  packet_loss: true
+  packet_delivery_ratio: true
+  cpu_usage: true
+  memory_usage: true
+  routing_overhead: true
+network:
+  protocol: dual
+  addressing: automatic
+  topology: custom

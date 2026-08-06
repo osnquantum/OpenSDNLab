@@ -1,0 +1,79 @@
+{
+    "name": "IPv6 Lab",
+    "protocol": "ipv6",
+    "controller": "ryu",
+    "hosts": [
+        {
+            "name": "h1",
+            "ipv4": "",
+            "ipv6": "",
+            "mac": ""
+        },
+        {
+            "name": "h2",
+            "ipv4": "",
+            "ipv6": "",
+            "mac": ""
+        },
+        {
+            "name": "h3",
+            "ipv4": "",
+            "ipv6": "",
+            "mac": ""
+        },
+        {
+            "name": "h4",
+            "ipv4": "",
+            "ipv6": "",
+            "mac": ""
+        }
+    ],
+    "switches": [
+        {
+            "name": "s1",
+            "dpid": ""
+        },
+        {
+            "name": "s2",
+            "dpid": ""
+        }
+    ],
+    "links": [
+        {
+            "source": "h1",
+            "destination": "s1",
+            "bandwidth": 100,
+            "delay": "1ms",
+            "loss": 0.0
+        },
+        {
+            "source": "h2",
+            "destination": "s2",
+            "bandwidth": 100,
+            "delay": "1ms",
+            "loss": 0.0
+        },
+        {
+            "source": "h3",
+            "destination": "s2",
+            "bandwidth": 100,
+            "delay": "1ms",
+            "loss": 0.0
+        },
+        {
+            "source": "h4",
+            "destination": "s2",
+            "bandwidth": 100,
+            "delay": "1ms",
+            "loss": 0.0
+        },
+        {
+            "source": "s1",
+            "destination": "s2",
+            "bandwidth": 100,
+            "delay": "1ms",
+            "loss": 0.0
+        }
+    ],
+    "metadata": {}
+}

@@ -1,0 +1,35 @@
+controllers:
+
+  local:
+
+    enabled: true
+
+  remote:
+
+    default: ryu
+
+    available:
+
+      ryu:
+
+        ip: 127.0.0.1
+
+        port: 6653
+
+      onos:
+
+        ip: 127.0.0.1
+
+        port: 6653
+
+      floodlight:
+
+        ip: 127.0.0.1
+
+        port: 6653
+
+      opendaylight:
+
+        ip: 127.0.0.1
+
+        port: 6653

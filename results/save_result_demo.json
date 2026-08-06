@@ -1,0 +1,22 @@
+{
+    "experiment_name": "Save Result Demo",
+    "experiment_id": "EXP-0001",
+    "topology": "unknown",
+    "hosts": 2,
+    "switches": 1,
+    "links": 2,
+    "protocol": "ipv4",
+    "controller": "osken",
+    "bandwidth": 100,
+    "delay": "1ms",
+    "loss": 0.0,
+    "minimum_rtt": 5.622,
+    "average_rtt": 41.661,
+    "maximum_rtt": 148.199,
+    "jitter": 61.51,
+    "packet_loss": 0.0,
+    "throughput": 91.2,
+    "created_at": "2026-08-06 11:38:20.459240",
+    "status": "SUCCESS",
+    "notes": ""
+}

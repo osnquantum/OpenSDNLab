@@ -1,0 +1,18 @@
+topology:
+  type: linear
+
+controller:
+  enabled: true
+
+network:
+  protocol: ipv6
+
+hosts:
+  count: 2
+
+switches:
+  count: 3
+
+links:
+  bandwidth: 100
+  delay: 1ms
