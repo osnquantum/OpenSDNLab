@@ -1,0 +1,10 @@
+{
+    "experiment_name": "Repository Demo",
+    "topology": "linear",
+    "controller": "osken",
+    "protocol": "ipv4",
+    "average_rtt": 8.28,
+    "packet_loss": 0.0,
+    "throughput": 86.9,
+    "created_at": "2026-08-06 10:52:38.695517"
+}
