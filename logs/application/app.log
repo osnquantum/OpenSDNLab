@@ -13,3 +13,101 @@
 2026-08-06 08:29:21,094 | INFO     | Database connected: database/opensdnlab.db
 2026-08-06 08:58:09,222 | INFO     | Configuration loaded.
 2026-08-06 08:58:09,235 | INFO     | Database connected: database/opensdnlab.db
+2026-08-06 09:06:13,384 | INFO     | Creating linear topology
+2026-08-06 09:06:13,387 | INFO     | Topology created successfully
+2026-08-06 09:09:10,649 | INFO     | Creating topology: linear
+2026-08-06 09:09:10,652 | INFO     | Topology created successfully.
+2026-08-06 09:14:09,471 | INFO     | Creating experiment: IPv6 Lab
+2026-08-06 09:14:09,475 | INFO     | Creating topology: linear
+2026-08-06 09:14:09,477 | INFO     | Topology created successfully.
+2026-08-06 09:14:09,478 | INFO     | Experiment created successfully.
+2026-08-06 09:17:14,791 | INFO     | Creating experiment: IPv6 Lab
+2026-08-06 09:17:14,794 | INFO     | Creating topology: linear
+2026-08-06 09:17:14,795 | INFO     | Topology created successfully.
+2026-08-06 09:17:14,797 | INFO     | Experiment created successfully.
+2026-08-06 09:18:28,657 | INFO     | Creating experiment: IPv6 SDN Experiment
+2026-08-06 09:18:28,660 | INFO     | Creating topology: linear
+2026-08-06 09:18:28,662 | INFO     | Topology created successfully.
+2026-08-06 09:18:28,663 | INFO     | Experiment created successfully.
+2026-08-06 09:19:55,781 | INFO     | Creating experiment: IPv6 Lab
+2026-08-06 09:19:55,784 | INFO     | Creating topology: linear
+2026-08-06 09:19:55,785 | INFO     | Topology created successfully.
+2026-08-06 09:19:55,787 | INFO     | Experiment created successfully.
+2026-08-06 09:19:55,797 | INFO     | Assigning addresses
+2026-08-06 09:19:55,799 | INFO     | Address assignment complete
+2026-08-06 09:21:31,932 | INFO     | Creating experiment: Validation Demo
+2026-08-06 09:21:31,935 | INFO     | Creating topology: linear
+2026-08-06 09:21:31,936 | INFO     | Topology created successfully.
+2026-08-06 09:21:31,938 | INFO     | Experiment created successfully.
+2026-08-06 09:21:31,940 | INFO     | Assigning addresses
+2026-08-06 09:21:31,941 | INFO     | Address assignment complete
+2026-08-06 09:21:31,942 | INFO     | Validating network blueprint
+2026-08-06 09:21:31,944 | INFO     | Blueprint validation successful
+2026-08-06 09:23:08,979 | INFO     | Creating experiment: Deployment Demo
+2026-08-06 09:23:08,982 | INFO     | Creating topology: linear
+2026-08-06 09:23:08,983 | INFO     | Topology created successfully.
+2026-08-06 09:23:08,985 | INFO     | Experiment created successfully.
+2026-08-06 09:23:08,986 | INFO     | Assigning addresses
+2026-08-06 09:23:08,987 | INFO     | Address assignment complete
+2026-08-06 09:23:08,989 | INFO     | Preparing Mininet deployment
+2026-08-06 09:27:08,258 | INFO     | Creating experiment: Blueprint Adapter Demo
+2026-08-06 09:27:08,261 | INFO     | Creating topology: linear
+2026-08-06 09:27:08,270 | INFO     | Topology created successfully.
+2026-08-06 09:27:08,277 | INFO     | Experiment created successfully.
+2026-08-06 09:27:08,279 | INFO     | Assigning addresses
+2026-08-06 09:27:08,281 | INFO     | Address assignment complete
+2026-08-06 09:27:08,283 | INFO     | Converting blueprint to deployment plan
+2026-08-06 09:27:08,284 | INFO     | Deployment plan ready
+2026-08-06 09:30:19,108 | INFO     | Creating experiment: Inventory Demo
+2026-08-06 09:30:19,111 | INFO     | Creating topology: linear
+2026-08-06 09:30:19,113 | INFO     | Topology created successfully.
+2026-08-06 09:30:19,114 | INFO     | Experiment created successfully.
+2026-08-06 09:30:19,115 | INFO     | Assigning addresses
+2026-08-06 09:30:19,116 | INFO     | Address assignment complete
+2026-08-06 09:30:19,117 | INFO     | Building inventory
+2026-08-06 09:30:19,119 | INFO     | Inventory complete
+2026-08-06 09:37:35,873 | INFO     | Creating experiment: Real Deployment
+2026-08-06 09:37:35,876 | INFO     | Creating topology: linear
+2026-08-06 09:37:35,877 | INFO     | Topology created successfully.
+2026-08-06 09:37:35,882 | INFO     | Experiment created successfully.
+2026-08-06 09:37:35,883 | INFO     | Assigning addresses
+2026-08-06 09:37:35,884 | INFO     | Address assignment complete
+2026-08-06 09:37:35,885 | INFO     | Building inventory
+2026-08-06 09:37:35,887 | INFO     | Inventory complete
+2026-08-06 09:37:35,888 | INFO     | Initializing Mininet
+2026-08-06 09:37:35,894 | INFO     | Creating hosts
+2026-08-06 09:37:35,964 | INFO     | Creating switches
+2026-08-06 09:37:36,059 | INFO     | Creating links
+2026-08-06 09:37:36,804 | INFO     | Starting network
+2026-08-06 09:37:37,925 | INFO     | Network started
+2026-08-06 09:37:44,175 | INFO     | Stopping network
+2026-08-06 10:07:45,307 | INFO     | Creating experiment: Real Deployment
+2026-08-06 10:07:45,310 | INFO     | Creating topology: linear
+2026-08-06 10:07:45,312 | INFO     | Topology created successfully.
+2026-08-06 10:07:45,313 | INFO     | Experiment created successfully.
+2026-08-06 10:07:45,315 | INFO     | Assigning addresses
+2026-08-06 10:07:45,323 | INFO     | Address assignment complete
+2026-08-06 10:07:45,324 | INFO     | Building inventory
+2026-08-06 10:07:45,325 | INFO     | Inventory complete
+2026-08-06 10:07:45,326 | INFO     | Initializing Mininet
+2026-08-06 10:07:45,338 | INFO     | Creating controller
+2026-08-06 10:07:45,595 | INFO     | Creating hosts
+2026-08-06 10:07:45,648 | INFO     | Creating switches
+2026-08-06 10:07:45,719 | INFO     | Creating links
+2026-08-06 10:07:46,509 | INFO     | Starting network
+2026-08-06 10:29:34,884 | INFO     | Creating experiment: Real Deployment
+2026-08-06 10:29:34,890 | INFO     | Creating topology: linear
+2026-08-06 10:29:34,891 | INFO     | Topology created successfully.
+2026-08-06 10:29:34,892 | INFO     | Experiment created successfully.
+2026-08-06 10:29:34,893 | INFO     | Assigning addresses
+2026-08-06 10:29:34,894 | INFO     | Address assignment complete
+2026-08-06 10:29:34,895 | INFO     | Building inventory
+2026-08-06 10:29:34,896 | INFO     | Inventory complete
+2026-08-06 10:29:34,897 | INFO     | Initializing Mininet
+2026-08-06 10:29:34,901 | INFO     | Creating controller
+2026-08-06 10:29:34,930 | INFO     | Creating hosts
+2026-08-06 10:29:35,019 | INFO     | Creating switches
+2026-08-06 10:29:35,064 | INFO     | Creating links
+2026-08-06 10:29:35,978 | INFO     | Starting network
+2026-08-06 10:29:37,146 | INFO     | Network started
+2026-08-06 10:29:37,275 | INFO     | Stopping network
