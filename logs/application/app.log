@@ -1,0 +1,15 @@
+2026-08-06 07:57:34,495 | INFO     | OpenSDNLab has started.
+2026-08-06 07:57:34,497 | WARNING  | Warning message
+2026-08-06 07:57:34,498 | ERROR    | Error message
+2026-08-06 07:57:34,499 | CRITICAL | Critical message
+2026-08-06 08:01:03,182 | INFO     | Configuration loaded.
+2026-08-06 08:01:03,185 | INFO     | Configuration updated: network.protocol = dual
+2026-08-06 08:01:03,190 | INFO     | Configuration saved.
+2026-08-06 08:02:43,174 | INFO     | Configuration loaded.
+2026-08-06 08:02:43,190 | INFO     | Database connected: database/opensdnlab.db
+2026-08-06 08:09:12,427 | INFO     | Configuration loaded.
+2026-08-06 08:09:12,439 | INFO     | Database connected: database/opensdnlab.db
+2026-08-06 08:29:21,081 | INFO     | Configuration loaded.
+2026-08-06 08:29:21,094 | INFO     | Database connected: database/opensdnlab.db
+2026-08-06 08:58:09,222 | INFO     | Configuration loaded.
+2026-08-06 08:58:09,235 | INFO     | Database connected: database/opensdnlab.db

@@ -1,0 +1,16 @@
+default: ryu
+
+controllers:
+
+  ryu:
+    ip: 127.0.0.1
+    port: 6653
+    protocol: OpenFlow13
+
+  onos:
+    ip: 127.0.0.1
+    port: 6653
+
+  floodlight:
+    ip: 127.0.0.1
+    port: 6653
