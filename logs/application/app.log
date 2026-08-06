@@ -173,3 +173,91 @@
 2026-08-06 11:24:00,455 | INFO     | Pinging h2 from h1
 2026-08-06 11:24:03,491 | INFO     | Measuring throughput from h1 to h2
 2026-08-06 11:24:09,793 | INFO     | Stopping network
+2026-08-06 11:33:40,514 | INFO     | Creating experiment: Deployment Demo
+2026-08-06 11:33:40,518 | INFO     | Creating topology: linear
+2026-08-06 11:33:40,519 | INFO     | Topology created successfully.
+2026-08-06 11:33:40,530 | INFO     | Experiment created successfully.
+2026-08-06 11:33:40,543 | INFO     | Assigning addresses
+2026-08-06 11:33:40,548 | INFO     | Address assignment complete
+2026-08-06 11:33:40,552 | INFO     | Building inventory
+2026-08-06 11:33:40,553 | INFO     | Inventory complete
+2026-08-06 11:33:40,555 | INFO     | Initializing Mininet
+2026-08-06 11:33:40,586 | INFO     | Creating controller
+2026-08-06 11:33:40,655 | INFO     | Creating hosts
+2026-08-06 11:33:40,731 | INFO     | Creating switches
+2026-08-06 11:33:40,775 | INFO     | Creating links
+2026-08-06 11:33:41,742 | INFO     | Starting network
+2026-08-06 11:33:42,518 | INFO     | Network started
+2026-08-06 11:33:42,524 | INFO     | Stopping network
+2026-08-06 11:34:50,641 | INFO     | Creating experiment: Monitoring Demo
+2026-08-06 11:34:50,645 | INFO     | Creating topology: linear
+2026-08-06 11:34:50,651 | INFO     | Topology created successfully.
+2026-08-06 11:34:50,653 | INFO     | Experiment created successfully.
+2026-08-06 11:34:50,654 | INFO     | Assigning addresses
+2026-08-06 11:34:50,655 | INFO     | Address assignment complete
+2026-08-06 11:34:50,657 | INFO     | Building inventory
+2026-08-06 11:34:50,658 | INFO     | Inventory complete
+2026-08-06 11:34:50,661 | INFO     | Initializing Mininet
+2026-08-06 11:34:50,668 | INFO     | Creating controller
+2026-08-06 11:34:50,693 | INFO     | Creating hosts
+2026-08-06 11:34:50,759 | INFO     | Creating switches
+2026-08-06 11:34:50,982 | INFO     | Creating links
+2026-08-06 11:34:51,637 | INFO     | Starting network
+2026-08-06 11:34:52,463 | INFO     | Network started
+2026-08-06 11:34:52,465 | INFO     | Pinging h2 from h1
+2026-08-06 11:34:55,497 | INFO     | Measuring throughput from h1 to h2
+2026-08-06 11:35:02,382 | INFO     | Stopping network
+2026-08-06 11:36:50,851 | INFO     | Creating experiment: Monitoring Demo
+2026-08-06 11:36:50,854 | INFO     | Creating topology: linear
+2026-08-06 11:36:50,860 | INFO     | Topology created successfully.
+2026-08-06 11:36:50,861 | INFO     | Experiment created successfully.
+2026-08-06 11:36:50,863 | INFO     | Assigning addresses
+2026-08-06 11:36:50,865 | INFO     | Address assignment complete
+2026-08-06 11:36:50,867 | INFO     | Building inventory
+2026-08-06 11:36:50,867 | INFO     | Inventory complete
+2026-08-06 11:36:50,873 | INFO     | Initializing Mininet
+2026-08-06 11:36:50,884 | INFO     | Creating controller
+2026-08-06 11:36:50,915 | INFO     | Creating hosts
+2026-08-06 11:36:50,970 | INFO     | Creating switches
+2026-08-06 11:36:50,999 | INFO     | Creating links
+2026-08-06 11:36:51,767 | INFO     | Starting network
+2026-08-06 11:36:53,025 | INFO     | Network started
+2026-08-06 11:36:53,027 | INFO     | Pinging h2 from h1
+2026-08-06 11:36:56,068 | INFO     | Measuring throughput from h1 to h2
+2026-08-06 11:37:02,822 | INFO     | Stopping network
+2026-08-06 11:38:20,460 | INFO     | Creating experiment: Save Result Demo
+2026-08-06 11:38:20,464 | INFO     | Creating topology: linear
+2026-08-06 11:38:20,465 | INFO     | Topology created successfully.
+2026-08-06 11:38:20,467 | INFO     | Experiment created successfully.
+2026-08-06 11:38:20,469 | INFO     | Assigning addresses
+2026-08-06 11:38:20,471 | INFO     | Address assignment complete
+2026-08-06 11:38:20,474 | INFO     | Building inventory
+2026-08-06 11:38:20,475 | INFO     | Inventory complete
+2026-08-06 11:38:20,479 | INFO     | Initializing Mininet
+2026-08-06 11:38:20,483 | INFO     | Creating controller
+2026-08-06 11:38:20,521 | INFO     | Creating hosts
+2026-08-06 11:38:20,587 | INFO     | Creating switches
+2026-08-06 11:38:20,627 | INFO     | Creating links
+2026-08-06 11:38:21,415 | INFO     | Starting network
+2026-08-06 11:38:22,245 | INFO     | Network started
+2026-08-06 11:38:22,248 | INFO     | Pinging h2 from h1
+2026-08-06 11:38:25,295 | INFO     | Measuring throughput from h1 to h2
+2026-08-06 11:38:31,943 | INFO     | Stopping network
+2026-08-06 11:39:35,904 | INFO     | Creating experiment: Complete Experiment
+2026-08-06 11:39:35,910 | INFO     | Creating topology: linear
+2026-08-06 11:39:35,913 | INFO     | Topology created successfully.
+2026-08-06 11:39:35,914 | INFO     | Experiment created successfully.
+2026-08-06 11:39:35,919 | INFO     | Assigning addresses
+2026-08-06 11:39:35,921 | INFO     | Address assignment complete
+2026-08-06 11:39:35,922 | INFO     | Building inventory
+2026-08-06 11:39:35,927 | INFO     | Inventory complete
+2026-08-06 11:39:35,935 | INFO     | Initializing Mininet
+2026-08-06 11:39:35,994 | INFO     | Creating controller
+2026-08-06 11:39:36,022 | INFO     | Creating hosts
+2026-08-06 11:39:36,133 | INFO     | Creating switches
+2026-08-06 11:39:36,201 | INFO     | Creating links
+2026-08-06 11:39:37,173 | INFO     | Starting network
+2026-08-06 11:39:38,230 | INFO     | Network started
+2026-08-06 11:39:38,237 | INFO     | Pinging h2 from h1
+2026-08-06 11:39:41,290 | INFO     | Measuring throughput from h1 to h2
+2026-08-06 11:39:47,973 | INFO     | Stopping network

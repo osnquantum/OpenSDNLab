@@ -15,7 +15,7 @@ from deployment.deployment_manager import DeploymentManager
 from monitoring.monitoring_manager import MonitoringManager
 
 from repository.experiment_repository import ExperimentRepository
-from repository.models import ExperimentResult
+
 
 class ExperimentManager:
 
@@ -68,3 +68,153 @@ class ExperimentManager:
         )
 
         return inventory
+
+    ############################################################
+
+    def deploy_experiment(
+        self,
+        inventory,
+        controller_config
+    ):
+
+        net = self.deployment_manager.deploy(
+            inventory,
+            controller_config
+        )
+
+        return net
+
+
+    ############################################################
+
+    ############################################################
+
+    def monitor_experiment(
+        self,
+        net
+    ):
+
+        report = self.monitoring_manager.collect_all(
+
+            net["h1"],
+
+            net["h2"]
+
+        )
+
+        ping = report["ping"]
+
+        throughput = report["throughput"]
+
+        return {
+
+            "minimum_rtt": ping.minimum_rtt,
+
+            "average_rtt": ping.average_rtt,
+
+            "maximum_rtt": ping.maximum_rtt,
+
+            "jitter": ping.jitter,
+
+            "packet_loss": ping.packet_loss,
+
+            "throughput": throughput.throughput
+
+        }
+
+
+    ############################################################
+
+    def save_result(
+        self,
+        experiment_name,
+        inventory,
+        metrics
+    ):
+
+        from repository.models import ExperimentResult
+
+        result = ExperimentResult(
+
+            experiment_name=experiment_name,
+
+            experiment_id="EXP-0001",
+
+            topology=inventory.metadata.get("topology", "unknown"),
+
+            hosts=len([d for d in inventory.devices if d.device_type == "host"]),
+
+            switches=len([d for d in inventory.devices if d.device_type == "switch"]),
+
+            links=len(inventory.links),
+
+            protocol="ipv4",
+
+            controller="osken",
+
+            bandwidth=inventory.links[0].bandwidth,
+
+            delay=inventory.links[0].delay,
+
+            loss=inventory.links[0].loss,
+
+            minimum_rtt=metrics["minimum_rtt"],
+
+            average_rtt=metrics["average_rtt"],
+
+            maximum_rtt=metrics["maximum_rtt"],
+
+            jitter=metrics["jitter"],
+
+            packet_loss=metrics["packet_loss"],
+
+            throughput=metrics["throughput"]
+
+        )
+
+        return self.repository.save(result)
+
+
+    ############################################################
+
+    def run(
+        self,
+        name,
+        topology,
+        hosts,
+        switches,
+        protocol,
+        controller_config
+    ):
+
+        inventory = self.build_experiment(
+            name=name,
+            topology=topology,
+            hosts=hosts,
+            switches=switches,
+            protocol=protocol,
+            controller="osken"
+        )
+
+        net = self.deploy_experiment(
+            inventory,
+            controller_config
+        )
+
+        metrics = self.monitor_experiment(
+            net
+        )
+
+        filename = self.save_result(
+            name,
+            inventory,
+            metrics
+        )
+
+        self.deployment_manager.backend.stop()
+
+        return {
+            "metrics": metrics,
+            "result_file": str(filename)
+        }
+
