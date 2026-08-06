@@ -20,3 +20,44 @@ Thumbs.db
 
 # Logs
 *.log
+
+# ==========================
+# OpenSDNLab Ignore Rules
+# ==========================
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual Environments
+venv/
+.env
+.venv/
+
+# Editor Files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite3
+
+# Experiment Results (optional)
+# Uncomment if you don't want to track generated results
+# results/*.csv
+# results/*.json
+# results/*.png
+# results/*.pdf
+
