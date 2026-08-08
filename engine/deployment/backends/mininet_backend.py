@@ -5,6 +5,7 @@ OpenSDNLab Mininet Backend
 from mininet.net import Mininet
 from mininet.node import OVSSwitch
 from mininet.link import TCLink
+from mininet.clean import cleanup
 
 from engine.core.logger import logger
 
@@ -24,14 +25,13 @@ class MininetBackend:
         self.net = Mininet(
             switch=OVSSwitch,
             link=TCLink,
-            autoSetMacs=True
+            autoSetMacs=True,
+            autoStaticArp=True
         )
 
         ########################################################
 
-        logger.info("Creating controller")
-
-        controller.create(self.net)
+        logger.info("Controller managed externally")
 
         ########################################################
 
@@ -93,7 +93,8 @@ class MininetBackend:
                 dst,
                 bw=link.bandwidth,
                 delay=link.delay,
-                loss=link.loss
+                loss=link.loss,
+                max_queue_size=1000
             )
 
         ########################################################
@@ -103,6 +104,32 @@ class MininetBackend:
         self.net.start()
 
         logger.info("Network started")
+
+
+        ########################################################
+        # Connect switches to SDN Controller
+        ########################################################
+
+        if controller:
+
+            logger.info(
+                f"Connecting switches to controller {controller}"
+            )
+
+            for sw in switches.values():
+
+                logger.info(
+                    f"Setting controller for {sw.name}"
+                )
+
+                sw.cmd(
+                    f"ovs-vsctl set-controller {sw.name} tcp:127.0.0.1:{controller.port}"
+                )
+
+                sw.cmd(
+                    f"ovs-vsctl set-fail-mode {sw.name} secure"
+                )
+
 
         return self.net
 

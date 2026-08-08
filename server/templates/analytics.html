@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>
+OpenSDN Analytics
+</title>
+
+
+<style>
+
+body{
+
+background:#111827;
+color:white;
+font-family:Arial;
+
+}
+
+
+.card{
+
+background:#1f2937;
+padding:20px;
+margin:20px;
+border-radius:10px;
+
+}
+
+
+.grid{
+
+display:grid;
+grid-template-columns:repeat(3,1fr);
+
+}
+
+
+.value{
+
+font-size:28px;
+font-weight:bold;
+
+}
+
+
+</style>
+
+
+</head>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+<h2>
+Correlation Heatmap
+</h2>
+
+
+<div id="correlationHeatmap"></div>
+
+
+<script src="/static/js/heatmap.js"></script>
+
+
+<script>
+
+loadHeatmap(
+"{{experiment_name}}"
+);
+
+</script>
+<body>
+
+
+<h1>
+OpenSDN Research Analytics
+</h1>
+
+
+<div class="card">
+
+<h2>
+Experiment
+</h2>
+
+<p>
+{{experiment_name}}
+</p>
+
+<p>
+Samples:
+{{data.samples}}
+</p>
+
+</div>
+
+
+
+<div class="grid">
+
+
+<div class="card">
+
+<h3>
+Mean RTT
+</h3>
+
+<div class="value">
+
+{{data.rtt.mean}} ms
+
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+Median RTT
+</h3>
+
+<div class="value">
+
+{{data.rtt.median}} ms
+
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+RTT STD
+</h3>
+
+<div class="value">
+
+{{data.rtt.std}}
+
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+Throughput
+
+</h3>
+
+<div class="value">
+
+{{data.throughput.mean}} Mbps
+
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+Jitter
+
+</h3>
+
+<div class="value">
+
+{{data.jitter.mean}} ms
+
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+Packet Loss
+
+</h3>
+
+<div class="value">
+
+{{data.packet_loss.mean}} %
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+<div class="card">
+
+
+<h2>
+Research Interpretation
+</h2>
+
+
+<ul>
+
+<li>
+Latency variability:
+{{data.rtt.std}} ms
+</li>
+
+
+<li>
+Average throughput:
+{{data.throughput.mean}} Mbps
+</li>
+
+
+<li>
+Average one-way delay:
+{{data.one_way_delay.mean}} ms
+</li>
+
+
+</ul>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script src="/static/js/analytics.js"></script>
+
+
+<div class="card">
+
+<h2>
+Interactive Research Graph
+</h2>
+
+
+<select id="metric"
+onchange="createChart()">
+
+
+<option value="rtt">
+RTT
+</option>
+
+
+<option value="throughput">
+Throughput
+</option>
+
+
+<option value="jitter">
+Jitter
+</option>
+
+
+<option value="one_way_delay">
+One Way Delay
+</option>
+
+
+<option value="packet_loss">
+Packet Loss
+</option>
+
+
+</select>
+
+
+
+<select id="chartType"
+onchange="createChart()">
+
+
+<option value="line">
+Line Chart
+</option>
+
+
+<option value="bar">
+Bar Chart
+</option>
+
+
+<option value="scatter">
+Scatter Plot
+</option>
+
+
+</select>
+
+
+
+
+
+<div class="card">
+
+<h3>
+Select Parameters
+</h3>
+
+
+<label>
+<input class="metricBox"
+type="checkbox"
+value="rtt"
+checked
+onchange="createChart()">
+
+RTT
+</label>
+
+
+<br>
+
+
+<label>
+<input class="metricBox"
+type="checkbox"
+value="throughput"
+onchange="createChart()">
+
+Throughput
+</label>
+
+
+<br>
+
+
+<label>
+<input class="metricBox"
+type="checkbox"
+value="jitter"
+onchange="createChart()">
+
+Jitter
+</label>
+
+
+<br>
+
+
+<label>
+<input class="metricBox"
+type="checkbox"
+value="one_way_delay"
+onchange="createChart()">
+
+One Way Delay
+</label>
+
+
+<br>
+
+
+<label>
+<input class="metricBox"
+type="checkbox"
+value="packet_loss"
+onchange="createChart()">
+
+Packet Loss
+</label>
+
+
+</div>
+
+<canvas id="researchChart"></canvas>
+
+
+</div>
+
+
+
+<script>
+
+loadAnalytics(
+"{{experiment_name}}"
+);
+
+</script>
+</div>
+
+
+
+
+
+<h2>
+RTT vs Throughput Scatter Analysis
+</h2>
+
+
+<canvas id="scatterChart"></canvas>
+
+
+<script src="/static/js/scatter.js"></script>
+
+
+<script>
+
+loadScatter(
+"{{experiment_name}}"
+);
+
+</script>
+
+
+
+
+<h2>
+RTT CDF Analysis
+</h2>
+
+
+<canvas id="cdfChart"></canvas>
+
+
+<script src="/static/js/cdf.js"></script>
+
+
+<script>
+
+loadCDF(
+"{{experiment_name}}"
+);
+
+</script>
+
+
+
+
+<h2>
+Latency Intelligence
+</h2>
+
+
+<canvas id="latencyChart"></canvas>
+
+
+<div class="metrics">
+
+
+<h3>
+Percentiles
+</h3>
+
+
+<p>
+P50:
+<span id="p50"></span>
+</p>
+
+
+<p>
+P90:
+<span id="p90"></span>
+</p>
+
+
+<p>
+P95:
+<span id="p95"></span>
+</p>
+
+
+<p>
+P99:
+<span id="p99"></span>
+</p>
+
+
+<h3>
+Statistics
+</h3>
+
+
+<p>
+Mean RTT:
+<span id="meanRTT"></span>
+</p>
+
+
+<p>
+Median RTT:
+<span id="medianRTT"></span>
+</p>
+
+
+</div>
+
+
+
+<script src="/static/js/latency.js"></script>
+
+
+<script>
+
+loadLatency(
+"{{experiment_name}}"
+);
+
+</script>
+
+
+</body>
+
+</html>

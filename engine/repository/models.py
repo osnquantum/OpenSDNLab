@@ -50,6 +50,9 @@ class ExperimentResult:
 
     throughput: float
 
+    # Research QoS Metric
+    one_way_delay: float
+
     ############################################################
 
     created_at: datetime = datetime.now()

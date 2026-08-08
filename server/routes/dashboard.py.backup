@@ -1,0 +1,39 @@
+from flask import Blueprint, render_template
+
+
+dashboard = Blueprint(
+    "dashboard",
+    __name__
+)
+
+
+@dashboard.route("/")
+def home():
+
+    return render_template(
+        "dashboard.html"
+    )
+
+
+@dashboard.route("/experiment")
+def experiment():
+
+    return render_template(
+        "experiment_create.html"
+    )
+
+
+@dashboard.route("/topology")
+def topology():
+
+    return render_template(
+        "topology.html"
+    )
+
+
+@dashboard.route("/analytics")
+def analytics():
+
+    return render_template(
+        "analytics.html"
+    )

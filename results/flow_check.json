@@ -1,0 +1,22 @@
+{
+    "experiment_name": "flow_check",
+    "experiment_id": "fd3b824c-3ebb-4d63-a19f-ac385340145f",
+    "topology": "linear",
+    "hosts": 2,
+    "switches": 1,
+    "links": 2,
+    "protocol": "ipv4",
+    "controller": "osken",
+    "bandwidth": 100,
+    "delay": "10ms",
+    "loss": 0,
+    "minimum_rtt": 0.0,
+    "average_rtt": 0.0,
+    "maximum_rtt": 0.0,
+    "jitter": 0.0,
+    "packet_loss": 100.0,
+    "throughput": 0.0,
+    "created_at": "2026-08-07 09:11:14.516810",
+    "status": "SUCCESS",
+    "notes": ""
+}

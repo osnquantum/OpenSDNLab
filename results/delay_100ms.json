@@ -1,0 +1,22 @@
+{
+    "experiment_name": "delay_100ms",
+    "experiment_id": "b94949a4-1319-4af5-9f6c-a96cb7c9681e",
+    "topology": "unknown",
+    "hosts": 2,
+    "switches": 1,
+    "links": 2,
+    "protocol": "ipv4",
+    "controller": "osken",
+    "bandwidth": 100,
+    "delay": "100ms",
+    "loss": 0,
+    "minimum_rtt": 415.75,
+    "average_rtt": 673.123,
+    "maximum_rtt": 1311.614,
+    "jitter": 372.325,
+    "packet_loss": 0.0,
+    "throughput": 1.05,
+    "created_at": "2026-08-07 08:13:29.243484",
+    "status": "SUCCESS",
+    "notes": ""
+}

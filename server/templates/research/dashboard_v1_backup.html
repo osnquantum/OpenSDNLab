@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>
+OpenSDNLab Research Dashboard
+</title>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<style>
+
+body{
+font-family:Arial;
+margin:30px;
+background:#f4f6f8;
+}
+
+
+.card{
+
+background:white;
+padding:20px;
+margin:15px;
+border-radius:10px;
+box-shadow:0 2px 8px #ccc;
+
+}
+
+
+.metric{
+
+display:inline-block;
+padding:15px;
+margin:10px;
+background:#eef;
+
+}
+
+
+button{
+
+padding:10px;
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>
+OpenSDNLab Research Dashboard
+</h1>
+
+
+<div class="card">
+
+<h2>
+Experiments
+</h2>
+
+
+<div id="experiments">
+
+Loading...
+
+</div>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>
+QoS Visualization
+</h2>
+
+
+<canvas id="qosChart"></canvas>
+
+
+</div>
+
+
+
+<script>
+
+
+let chart;
+
+
+
+async function loadExperiments(){
+
+
+let response =
+await fetch(
+"/api/research/experiments"
+);
+
+
+let data =
+await response.json();
+
+
+
+let div =
+document.getElementById(
+"experiments"
+);
+
+
+
+div.innerHTML="";
+
+
+
+data.experiments.forEach(exp=>{
+
+
+let box=document.createElement("div");
+
+
+box.className="card";
+
+
+box.innerHTML=`
+
+<h3>${exp.name}</h3>
+
+Controller:
+${exp.controller}
+
+<br>
+
+Topology:
+${exp.topology}
+
+<br>
+
+RTT:
+${exp.metrics.rtt}
+
+ms
+
+<br>
+
+Throughput:
+${exp.metrics.throughput}
+
+Mbps
+
+
+<br><br>
+
+
+<button onclick="loadDetail('${exp.name}')">
+
+View
+
+</button>
+
+`;
+
+
+
+div.appendChild(box);
+
+
+});
+
+
+}
+
+
+
+async function loadDetail(name){
+
+
+let response =
+await fetch(
+"/api/research/experiment/"+name
+);
+
+
+let data =
+await response.json();
+
+
+
+let p =
+data.experiment.performance;
+
+
+
+drawChart(
+
+p.average_rtt,
+
+p.throughput
+
+);
+
+
+}
+
+
+
+function drawChart(rtt,throughput){
+
+
+let ctx =
+document
+.getElementById(
+"qosChart"
+);
+
+
+
+if(chart)
+chart.destroy();
+
+
+
+chart =
+new Chart(ctx,{
+
+type:"bar",
+
+data:{
+
+
+labels:[
+"RTT(ms)",
+"Throughput(Mbps)"
+],
+
+
+datasets:[{
+
+label:"QoS",
+
+data:[
+rtt,
+throughput
+]
+
+}]
+
+}
+
+});
+
+
+}
+
+
+loadExperiments();
+
+
+</script>
+
+
+</body>
+
+</html>

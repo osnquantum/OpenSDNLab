@@ -1,0 +1,22 @@
+{
+    "experiment_name": "linear_baseline_v2",
+    "experiment_id": "1f1790ed-41a1-4e30-a888-bed111d83ef0",
+    "topology": "linear",
+    "hosts": 2,
+    "switches": 1,
+    "links": 2,
+    "protocol": "ipv4",
+    "controller": "osken",
+    "bandwidth": 100,
+    "delay": "10ms",
+    "loss": 0,
+    "minimum_rtt": 60.888,
+    "average_rtt": 84.718,
+    "maximum_rtt": 102.952,
+    "jitter": 18.651,
+    "packet_loss": 0.0,
+    "throughput": 14.7,
+    "created_at": "2026-08-07 11:13:46.564733",
+    "status": "SUCCESS",
+    "notes": ""
+}

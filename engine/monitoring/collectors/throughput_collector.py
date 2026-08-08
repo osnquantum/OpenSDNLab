@@ -12,16 +12,26 @@ from engine.core.logger import logger
 from engine.monitoring.collectors.base_collector import BaseCollector
 from engine.monitoring.models.metrics import Metrics
 
+from engine.metrics.metric_collector import MetricCollector
+
 
 class ThroughputCollector(BaseCollector):
 
+
     ############################################################
 
-    def collect(self, source, destination, duration=5):
+    def collect(
+        self,
+        source,
+        destination,
+        experiment_id=None,
+        duration=5
+    ):
 
         logger.info(
             f"Measuring throughput from {source.name} to {destination.name}"
         )
+
 
         ########################################################
         # Start iperf3 server
@@ -33,6 +43,7 @@ class ThroughputCollector(BaseCollector):
 
         time.sleep(1)
 
+
         ########################################################
         # Run client
         ########################################################
@@ -43,9 +54,13 @@ class ThroughputCollector(BaseCollector):
 
         )
 
+
         ########################################################
 
         metrics = Metrics()
+
+        collector = MetricCollector()
+
 
         match = re.search(
 
@@ -55,6 +70,7 @@ class ThroughputCollector(BaseCollector):
 
         )
 
+
         if match:
 
             metrics.throughput = float(
@@ -63,7 +79,24 @@ class ThroughputCollector(BaseCollector):
 
             )
 
+
+            if experiment_id:
+
+                collector.record(
+
+                    experiment_id,
+
+                    "throughput",
+
+                    metrics.throughput,
+
+                    node=source.name,
+
+
+                )
+
+
         destination.cmd("pkill -f iperf3")
 
-        return metrics
 
+        return metrics

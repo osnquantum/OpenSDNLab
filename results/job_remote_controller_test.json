@@ -1,0 +1,22 @@
+{
+    "experiment_name": "job_remote_controller_test",
+    "experiment_id": "99a6a900-090f-4670-a6db-3fccc32771d5",
+    "topology": "linear",
+    "hosts": 2,
+    "switches": 1,
+    "links": 2,
+    "protocol": "OpenFlow13",
+    "controller": "simple_switch_13",
+    "bandwidth": 100,
+    "delay": "10ms",
+    "loss": 0,
+    "minimum_rtt": 0.0,
+    "average_rtt": 0.0,
+    "maximum_rtt": 0.0,
+    "jitter": 0.0,
+    "packet_loss": 0.0,
+    "throughput": 0.0,
+    "created_at": "2026-08-07 16:46:38.919975",
+    "status": "SUCCESS",
+    "notes": ""
+}

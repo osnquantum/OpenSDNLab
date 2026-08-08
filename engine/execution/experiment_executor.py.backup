@@ -1,0 +1,117 @@
+"""
+OpenSDNLab Experiment Executor
+
+Coordinates complete SDN experiment lifecycle.
+"""
+
+from engine.network.factory.topology_factory import TopologyFactory
+from engine.network.inventory.inventory_manager import InventoryManager
+
+from engine.deployment.backends.mininet_backend import MininetBackend
+
+from engine.controllers.manager.controller_manager import ControllerManager
+
+from engine.monitoring.monitoring_manager import MonitoringManager
+
+from engine.network.traffic_manager import TrafficManager
+
+from engine.core.logger import logger
+
+
+class ExperimentExecutor:
+
+
+    def __init__(self):
+
+        self.topology_factory = TopologyFactory()
+
+        self.inventory_manager = InventoryManager()
+
+        self.backend = MininetBackend()
+
+        self.controller_manager = ControllerManager()
+
+        self.monitoring = MonitoringManager()
+
+        self.traffic = TrafficManager()
+
+
+
+    ########################################################
+
+
+    def execute(self, experiment):
+
+        logger.info(
+            f"Starting experiment {experiment.experiment_id}"
+        )
+
+
+        ####################################################
+        # 1. Create topology
+        ####################################################
+
+        topology = self.topology_factory.create(
+
+            topology=experiment.topology,
+
+            hosts=experiment.hosts,
+
+            switches=experiment.switches,
+
+            protocol=experiment.protocol,
+
+            controller=experiment.controller,
+
+            name=experiment.experiment_name
+
+        )
+
+
+        ####################################################
+        # 2. Build inventory
+        ####################################################
+
+        inventory = self.inventory_manager.build(
+            topology
+        )
+
+
+        ####################################################
+        # 3. Start controller
+        ####################################################
+
+        controller_info = self.controller_manager.start(
+            experiment.controller.lower()
+        )
+
+
+        logger.info(
+            controller_info
+        )
+
+
+        ####################################################
+        # 4. Deploy Mininet
+        ####################################################
+
+        net = self.backend.deploy(
+            inventory,
+            None
+        )
+
+
+        logger.info(
+            "Network deployed"
+        )
+
+
+        return {
+
+            "success": True,
+
+            "experiment_id":
+                experiment.experiment_id
+
+        }
+

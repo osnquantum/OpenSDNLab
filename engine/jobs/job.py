@@ -12,13 +12,17 @@ from engine.jobs.job_status import JobStatus
 @dataclass
 class Job:
 
+
     ############################################################
     # Identity
     ############################################################
 
-    id: str = field(default_factory=lambda: str(uuid4()))
+    id: str = field(
+        default_factory=lambda: str(uuid4())
+    )
 
     name: str = "Experiment"
+
 
     ############################################################
     # Status
@@ -28,11 +32,13 @@ class Job:
 
     progress: float = 0.0
 
+
     ############################################################
     # Configuration
     ############################################################
 
     configuration: object = None
+
 
     ############################################################
     # Result
@@ -40,21 +46,28 @@ class Job:
 
     result: object = None
 
+
     ############################################################
     # Logs
     ############################################################
 
-    logs: list = field(default_factory=list)
+    logs: list = field(
+        default_factory=list
+    )
+
 
     ############################################################
     # Timing
     ############################################################
 
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(
+        default_factory=datetime.now
+    )
 
     started_at: datetime | None = None
 
     finished_at: datetime | None = None
+
 
     ############################################################
 
@@ -66,3 +79,21 @@ class Job:
             f"[{timestamp}] {message}"
         )
 
+
+    ############################################################
+    # Progress Tracking
+    ############################################################
+
+    def update_progress(
+        self,
+        value,
+        message=None
+    ):
+
+        self.progress = value
+
+        if message:
+
+            self.add_log(
+                message
+            )

@@ -6,6 +6,8 @@ Coordinates the complete experiment lifecycle.
 
 from uuid import uuid4
 
+from engine.orchestration.system_manager import SystemManager
+from engine.core.logger import logger
 from engine.services.experiment_service import ExperimentService
 
 from engine.network.blueprint.network_blueprint import NetworkBlueprint
@@ -18,12 +20,15 @@ from engine.monitoring.monitoring_manager import MonitoringManager
 
 from engine.repository.experiment_repository import ExperimentRepository
 from engine.repository.sqlite.sqlite_repository import SQLiteRepository
+from engine.analysis.statistics.analyzer import StatisticsAnalyzer
 from engine.repository.models import ExperimentResult
 
 
 class ExperimentManager:
 
     def __init__(self):
+
+        self.system_manager = SystemManager()
 
         self.experiment_service = ExperimentService()
 
@@ -39,6 +44,8 @@ class ExperimentManager:
 
         self.sqlite_repository = SQLiteRepository()
 
+        self.statistics = StatisticsAnalyzer()
+
     ############################################################
 
     def build_experiment(
@@ -49,6 +56,7 @@ class ExperimentManager:
         switches,
         protocol,
         controller,
+        addressing="ipv4",
     ):
 
         network = self.experiment_service.create_experiment(
@@ -66,12 +74,18 @@ class ExperimentManager:
 
         self.address_manager.assign(
             blueprint,
-            protocol=protocol,
+            protocol=addressing,
         )
 
         inventory = self.inventory_manager.build(
-            blueprint
+        blueprint
         )
+
+        inventory.metadata["topology"] = topology
+        inventory.metadata["hosts"] = hosts
+        inventory.metadata["switches"] = switches
+        inventory.metadata["protocol"] = protocol
+        inventory.metadata["controller"] = controller
 
         return inventory
 
@@ -120,16 +134,20 @@ class ExperimentManager:
     def monitor_experiment(
         self,
         net,
+        experiment_id,
     ):
 
         report = self.monitoring_manager.collect_all(
             net["h1"],
             net["h2"],
+            experiment_id,
         )
 
         ping = report["ping"]
 
         throughput = report["throughput"]
+
+        packet_capture = report["packet_capture"]
 
         return {
 
@@ -145,6 +163,8 @@ class ExperimentManager:
 
             "throughput": throughput.throughput,
 
+            "one_way_delay": ping.average_rtt / 2,
+
         }
 
     ############################################################
@@ -156,6 +176,7 @@ class ExperimentManager:
         metrics,
         protocol,
         controller,
+        addressing="ipv4",
     ):
 
         link = inventory.links[0] if inventory.links else None
@@ -213,6 +234,8 @@ class ExperimentManager:
 
             throughput=metrics["throughput"],
 
+            one_way_delay=metrics["one_way_delay"],
+
         )
     ############################################################
 
@@ -245,10 +268,21 @@ class ExperimentManager:
 
     ############################################################
 
-    def run(
+    ############################################################
+    # Execute one measurement run
+    ############################################################
+
+    def execute_single_run(
         self,
         config,
+        experiment_id,
+        run_number,
+        job=None,
     ):
+
+        logger.info(
+            f"Starting measurement run {run_number}"
+        )
 
         inventory = self.build_experiment(
 
@@ -264,58 +298,142 @@ class ExperimentManager:
 
             controller=config.controller["name"],
 
+            addressing=config.network.get(
+                "addressing",
+                "ipv4"
+            ),
+
         )
+
 
         self.apply_deployment_profile(
-
             inventory,
-
             config.deployment,
-
         )
+
 
         net = self.deploy_experiment(
-
             inventory,
-
             config.controller,
-
         )
+
 
         metrics = self.monitor_experiment(
-            net
+            net,
+            config.name,
         )
 
-        result = self.create_result(
 
-            experiment_name=config.name,
-
-            inventory=inventory,
-
-            metrics=metrics,
-
-            protocol=config.network["protocol"],
-
-            controller=config.controller["name"],
-
+        self.sqlite_repository.save_run(
+            experiment_id,
+            run_number,
+            metrics
         )
 
-        filename = self.save_result(
-            result
-        )
 
         self.cleanup()
 
+
+        logger.info(
+            f"Completed measurement run {run_number}"
+        )
+
+
+        return metrics
+
+
+    ############################################################
+
+
+    def run(
+        self,
+        config,
+        job=None,
+    ):
+
+        experiment_id = str(uuid4())
+
+        logger.info(
+            f"Experiment ID: {experiment_id}"
+        )
+
+        logger.info('STEP 1: Preparing system')
+
+        self.system_manager.controller_guard.check()
+
+        if job:
+            job.update_progress(
+                10,
+                "System prepared"
+            )
+
+        logger.info('STEP 2: Running experiment repetitions')
+
+
+        total_runs = config.runs
+
+
+        all_metrics = []
+
+
+        for run_number in range(1, total_runs + 1):
+
+            logger.info(
+                f"Executing run {run_number}/{total_runs}"
+            )
+
+
+            metrics = self.execute_single_run(
+
+                config,
+
+                experiment_id,
+
+                run_number,
+
+                job
+
+            )
+
+
+            all_metrics.append(metrics)
+
+
+            if job:
+
+                progress = int(
+                    20 + (70 * run_number / total_runs)
+                )
+
+                job.update_progress(
+
+                    progress,
+
+                    f"Run {run_number}/{total_runs} completed"
+
+                )
+
+
+        logger.info(
+            "All measurement runs completed"
+        )
+
+
+        statistics_report = self.statistics.analyze(
+            all_metrics
+        )
+
+
         return {
 
-            "result": result,
+            "runs": len(all_metrics),
 
-            "metrics": metrics,
+            "measurements": all_metrics,
 
-            "result_file": str(filename),
+            "statistics": statistics_report
 
         }
-    ############################################################
+
 
     def run_batch(
         self,

@@ -1,5 +1,7 @@
 """
-CSV Exporter
+OpenSDNLab CSV Exporter
+
+Exports experiment runs for research analysis.
 """
 
 import csv
@@ -8,93 +10,68 @@ from pathlib import Path
 
 class CSVExporter:
 
-    def export(
+
+    def export_runs(
         self,
-        results,
-        filename="results/delay_analysis.csv",
+        experiment_id,
+        runs
     ):
 
-        output = Path(filename)
+        directory = Path(
+            "storage/results"
+        ) / experiment_id
 
-        output.parent.mkdir(
+        directory.mkdir(
             parents=True,
-            exist_ok=True,
+            exist_ok=True
         )
 
+
+        file = directory / "raw_measurements.csv"
+
+
         with open(
-            output,
+            file,
             "w",
             newline=""
-        ) as file:
+        ) as f:
 
-            writer = csv.writer(file)
 
-            writer.writerow(
+            writer = csv.writer(f)
 
-                [
 
-                    "Experiment",
+            writer.writerow([
 
-                    "Protocol",
+                "run_number",
+                "average_rtt",
+                "jitter",
+                "packet_loss",
+                "throughput",
+                "one_way_delay"
 
-                    "Controller",
+            ])
 
-                    "Bandwidth",
 
-                    "Delay",
+            for index, run in enumerate(
+                runs,
+                start=1
+            ):
 
-                    "Loss",
+                writer.writerow([
 
-                    "Minimum RTT",
+                    index,
 
-                    "Average RTT",
+                    run["average_rtt"],
 
-                    "Maximum RTT",
+                    run["jitter"],
 
-                    "Jitter",
+                    run["packet_loss"],
 
-                    "Packet Loss",
+                    run["throughput"],
 
-                    "Throughput"
+                    run["one_way_delay"]
 
-                ]
+                ])
 
-            )
 
-            for item in results:
-
-                result = item["result"]
-
-                writer.writerow(
-
-                    [
-
-                        result.experiment_name,
-
-                        result.protocol,
-
-                        result.controller,
-
-                        result.bandwidth,
-
-                        result.delay,
-
-                        result.loss,
-
-                        result.minimum_rtt,
-
-                        result.average_rtt,
-
-                        result.maximum_rtt,
-
-                        result.jitter,
-
-                        result.packet_loss,
-
-                        result.throughput,
-
-                    ]
-
-                )
-
-        return output
+        return str(file)

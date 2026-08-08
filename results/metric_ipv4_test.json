@@ -1,0 +1,22 @@
+{
+    "experiment_name": "metric_ipv4_test",
+    "experiment_id": "ed007989-1f4f-49b0-918a-d343966b8406",
+    "topology": "linear",
+    "hosts": 2,
+    "switches": 1,
+    "links": 2,
+    "protocol": "OpenFlow13",
+    "controller": "simple_switch_13",
+    "bandwidth": 100,
+    "delay": "10ms",
+    "loss": 0,
+    "minimum_rtt": 53.367,
+    "average_rtt": 64.046,
+    "maximum_rtt": 74.654,
+    "jitter": 7.55,
+    "packet_loss": 0.0,
+    "throughput": 10.5,
+    "created_at": "2026-08-07 17:28:41.573000",
+    "status": "SUCCESS",
+    "notes": ""
+}

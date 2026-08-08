@@ -24,6 +24,14 @@ class Topology:
 
     metadata: dict = field(default_factory=dict)
 
+
+
+    @property
+    def experiment_name(self):
+
+        return self.name
+
+
     def summary(self):
 
         print()

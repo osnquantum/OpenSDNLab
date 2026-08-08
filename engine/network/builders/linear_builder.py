@@ -34,8 +34,16 @@ class LinearBuilder(BaseBuilder):
             )
 
         for i in range(1, hosts + 1):
+
             topology.hosts.append(
-                Host(f"h{i}")
+
+                Host(
+                    name=f"h{i}",
+                    ipv4=f"10.0.0.{i}/24",
+                    ipv6=f"2001:db8::{i}",
+                    mac=f"00:00:00:00:00:{i:02x}"
+                )
+
             )
 
         for i in range(hosts):

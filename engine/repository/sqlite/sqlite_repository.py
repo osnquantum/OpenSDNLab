@@ -66,6 +66,8 @@ class SQLiteRepository:
 
                 throughput REAL,
 
+            one_way_delay REAL,
+
                 created_at TEXT,
 
                 status TEXT,
@@ -74,6 +76,39 @@ class SQLiteRepository:
 
             )
             """
+        )
+
+        self.connection.commit()
+
+
+        cursor.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS experiment_runs (
+
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                experiment_id TEXT,
+
+                run_number INTEGER,
+
+                minimum_rtt REAL,
+
+                average_rtt REAL,
+
+                maximum_rtt REAL,
+
+                jitter REAL,
+
+                packet_loss REAL,
+
+                throughput REAL,
+
+                estimated_one_way_delay REAL,
+
+                created_at TEXT
+
+            )
+            '''
         )
 
         self.connection.commit()
@@ -109,6 +144,8 @@ class SQLiteRepository:
                 jitter,
                 packet_loss,
                 throughput,
+
+            one_way_delay,
                 created_at,
                 status,
                 notes
@@ -134,6 +171,8 @@ class SQLiteRepository:
                 :jitter,
                 :packet_loss,
                 :throughput,
+
+            :one_way_delay,
                 :created_at,
                 :status,
                 :notes
@@ -147,3 +186,74 @@ class SQLiteRepository:
 
         return cursor.lastrowid
 
+
+
+    ############################################################
+    # Save repeated experiment measurement run
+    ############################################################
+
+    def save_run(
+        self,
+        experiment_id,
+        run_number,
+        metrics
+    ):
+
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO experiment_runs (
+
+                experiment_id,
+                run_number,
+                minimum_rtt,
+                average_rtt,
+                maximum_rtt,
+                jitter,
+                packet_loss,
+                throughput,
+                estimated_one_way_delay,
+                created_at
+
+            )
+
+            VALUES (
+
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                datetime('now')
+
+            )
+            """,
+
+            (
+
+                experiment_id,
+                run_number,
+
+                metrics["minimum_rtt"],
+                metrics["average_rtt"],
+                metrics["maximum_rtt"],
+
+                metrics["jitter"],
+                metrics["packet_loss"],
+
+                metrics["throughput"],
+
+                metrics["one_way_delay"]
+
+            )
+
+        )
+
+        self.connection.commit()
+
+        return cursor.lastrowid

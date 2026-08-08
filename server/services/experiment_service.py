@@ -40,6 +40,12 @@ class ExperimentService:
                 "Web Experiment"
             ),
 
+            runs=data.get(
+                "runs",
+                default.runs
+            ),
+
+
 
             topology=data.get(
                 "topology",

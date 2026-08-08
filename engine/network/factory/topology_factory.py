@@ -33,7 +33,9 @@ class TopologyFactory:
 
         logger.info(f"Creating topology: {topology}")
 
-        builder = self.builders.get(topology)
+        builder = self.builders.get(
+            topology.lower()
+        )
 
         if builder is None:
 
