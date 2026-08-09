@@ -34,6 +34,7 @@ from server.routes.research.dashboard import research_dashboard
 from server.routes.research.campaign import campaign_analysis
 from server.routes.research.generator import experiment_generator
 from server.routes.research.execution import experiment_execution
+from server.routes.analysis_api import analysis_api
 
 
 

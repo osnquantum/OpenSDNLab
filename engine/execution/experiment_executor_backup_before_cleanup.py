@@ -16,7 +16,6 @@ from engine.monitoring.monitoring_manager import MonitoringManager
 from engine.network.traffic_manager import TrafficManager
 from engine.repository.sqlite.sqlite_repository import SQLiteRepository
 from engine.monitoring.metric_parser import MetricParser
-from engine.system.runtime_state import RuntimeState
 
 from engine.core.logger import logger
 from engine.system.cleanup_manager import CleanupManager
@@ -52,13 +51,6 @@ class ExperimentExecutor:
 
         CleanupManager.cleanup()
 
-        RuntimeState.update(
-            status="STARTING",
-            experiment_id=experiment.experiment_id,
-            stage="Cleanup",
-            start_time=__import__("time").time()
-        )
-
         logger.info(
             f"Starting experiment {experiment.experiment_id}"
         )
@@ -93,12 +85,6 @@ class ExperimentExecutor:
             topology
         )
 
-        RuntimeState.update(
-            stage="Topology Created",
-            hosts=experiment.hosts,
-            switches=experiment.switches
-        )
-
 
         ####################################################
         # 3. Start controller
@@ -110,12 +96,6 @@ class ExperimentExecutor:
 
 
         controller_info = controller.start()
-
-
-        RuntimeState.update(
-            stage="Controller Running",
-            controller=str(experiment.controller)
-        )
 
 
         logger.info(
@@ -138,25 +118,12 @@ class ExperimentExecutor:
         )
 
 
-        import time
-
-        logger.info(
-            "Waiting for network stabilization"
-        )
-
-        time.sleep(5)
-
-
         ####################################################
         # 5. Generate Traffic
         ####################################################
 
         logger.info(
             "Starting traffic experiment"
-        )
-
-        RuntimeState.update(
-            stage="Traffic Measurement"
         )
 
 
@@ -180,11 +147,6 @@ class ExperimentExecutor:
             traffic_report["throughput"]
         )
 
-        RuntimeState.update(
-            stage="Metrics Collected",
-            metrics=metrics
-        )
-
 
         previous = self.database.connection.execute(
             "SELECT MAX(run_number) FROM experiment_runs WHERE experiment_id=?",
@@ -201,24 +163,6 @@ class ExperimentExecutor:
             metrics
         )
 
-
-        logger.info(
-            "Stopping Mininet after successful experiment"
-        )
-
-        try:
-            self.backend.stop()
-        except Exception:
-            pass
-
-
-        CleanupManager.cleanup()
-
-
-        RuntimeState.update(
-            status="COMPLETED",
-            stage="Finished"
-        )
 
         return {
 

@@ -33,7 +33,7 @@ class MetricParser:
 
 
         rtt = re.search(
-            r"= ([0-9.]+)/([0-9.]+)/([0-9.]+)/([0-9.]+) ms",
+            r"=\s*([0-9.]+)/([0-9.]+)/([0-9.]+)/([0-9.]+)\s*ms",
             output
         )
 
@@ -59,7 +59,7 @@ class MetricParser:
 
 
         result = re.search(
-            r"([0-9.]+)\s+Mbits/sec",
+            r"([0-9.]+)\s+Mbits/sec\s*$",
             output
         )
 
