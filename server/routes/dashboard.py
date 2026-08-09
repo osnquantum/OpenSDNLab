@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, render_template
 from engine.execution.experiment_executor import ExperimentExecutor
 from engine.repository.sqlite.sqlite_repository import SQLiteRepository
 from engine.system.runtime_state import RuntimeState
+from engine.system.system_monitor import SystemMonitor
 
 
 dashboard = Blueprint(
@@ -12,6 +13,8 @@ dashboard = Blueprint(
 
 
 db = SQLiteRepository()
+
+monitor = SystemMonitor()
 
 executor = ExperimentExecutor()
 
@@ -128,5 +131,17 @@ def live_status():
 
     return jsonify(
         RuntimeState.get()
+    )
+
+
+
+@dashboard.route(
+    "/api/dashboard/system",
+    methods=["GET"]
+)
+def system_status():
+
+    return jsonify(
+        monitor.get_status()
     )
 

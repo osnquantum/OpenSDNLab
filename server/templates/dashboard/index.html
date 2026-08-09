@@ -318,6 +318,109 @@ update();
 </script>
 
 
+
+
+<div class="card">
+
+<h2>
+System Monitor
+</h2>
+
+
+<p>
+Flask:
+<b id="flask">-</b>
+</p>
+
+
+<p>
+Controller:
+<b id="controller">-</b>
+</p>
+
+
+<p>
+Mininet:
+<b id="mininet">-</b>
+</p>
+
+
+<p>
+OVS Bridges:
+<b id="ovs">-</b>
+</p>
+
+
+</div>
+
+
+<script>
+
+
+function updateSystem(){
+
+
+fetch(
+"/api/dashboard/system"
+)
+
+.then(
+r=>r.json()
+)
+
+.then(
+data=>{
+
+
+document.getElementById(
+"flask"
+).innerHTML =
+data.flask.running ?
+"🟢 RUNNING" :
+"🔴 STOPPED";
+
+
+document.getElementById(
+"controller"
+).innerHTML =
+data.controller.running ?
+"🟢 RUNNING" :
+"🔴 STOPPED";
+
+
+document.getElementById(
+"mininet"
+).innerHTML =
+data.mininet.running ?
+"🟢 RUNNING" :
+"🔴 STOPPED";
+
+
+document.getElementById(
+"ovs"
+).innerHTML =
+data.ovs.bridges.join(", ");
+
+}
+
+);
+
+}
+
+
+
+setInterval(
+updateSystem,
+3000
+);
+
+
+updateSystem();
+
+
+</script>
+
+
 </body>
 
 </html>
