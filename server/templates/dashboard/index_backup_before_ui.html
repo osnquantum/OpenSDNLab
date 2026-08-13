@@ -1,0 +1,806 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+<div class="dashboard-grid">
+
+<div class="command-card">
+
+<h3>
+System Status
+</h3>
+
+<div id="readiness">
+Checking system...
+</div>
+
+</div>
+
+
+
+
+<style>
+
+.dashboard-grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:15px;
+}
+
+
+.command-card{
+
+background:#111827;
+border:1px solid #334155;
+border-radius:12px;
+padding:20px;
+
+}
+
+
+.command-card h3{
+
+color:#38bdf8;
+
+}
+
+
+.status-green{
+
+color:#22c55e;
+font-weight:bold;
+
+}
+
+
+.status-red{
+
+color:#ef4444;
+font-weight:bold;
+
+}
+
+
+.terminal{
+
+background:#000;
+height:300px;
+overflow:auto;
+padding:15px;
+color:#22c55e;
+border-radius:10px;
+font-family:Consolas,monospace;
+
+}
+
+
+.nav-grid{
+
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+
+}
+
+
+.nav-button{
+
+background:#2563eb;
+padding:15px;
+border-radius:10px;
+text-align:center;
+color:white;
+text-decoration:none;
+
+}
+
+
+</style>
+
+
+
+
+
+
+<h1>
+OpenSDNLab Live Monitoring
+</h1>
+
+
+<div class="card">
+
+<h2>
+Experiment Control
+</h2>
+
+
+<input id="expid"
+value="EXP-20260808-0842bf"
+size="30">
+
+
+<br><br>
+
+
+<label>
+Number of Runs
+</label>
+
+
+<input id="runs"
+value="1"
+type="number"
+min="1">
+
+
+<br><br>
+
+
+
+
+
+<br><br>
+
+
+<button onclick="startExecution()">
+START
+</button>
+
+
+</div>
+
+
+
+<div class="grid">
+
+
+<div class="card">
+
+<h3>Status</h3>
+
+<div id="status" class="value">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Stage</h3>
+
+<div id="stage" class="value">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Experiment</h3>
+
+<div id="experiment" class="value">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Hosts</h3>
+
+<div id="hosts" class="value">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Switches</h3>
+
+<div id="switches" class="value">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Elapsed</h3>
+
+<div id="elapsed" class="value">
+-
+</div>
+
+</div>
+
+
+
+</div>
+
+
+
+
+<div class="card">
+
+<h2>
+Latest Metrics
+</h2>
+
+
+<p>
+RTT:
+<b id="rtt">-</b>
+ms
+</p>
+
+
+<p>
+Jitter:
+<b id="jitter">-</b>
+ms
+</p>
+
+
+<p>
+Throughput:
+<b id="throughput">-</b>
+Mbps
+</p>
+
+
+<p>
+Packet Loss:
+<b id="loss">-</b>
+%
+</p>
+
+
+</div>
+
+
+
+<script>
+
+
+function runExperiment(){
+
+
+let id=document.getElementById(
+"expid"
+).value;
+
+
+fetch(
+"/api/dashboard/run/"+id,
+{
+method:"POST"
+}
+);
+
+
+}
+
+
+
+function startExecution(){
+
+
+let mode =
+document.getElementById(
+"mode"
+).value;
+
+
+let runs =
+parseInt(
+document.getElementById(
+"runs"
+).value
+);
+
+
+
+if(mode=="single" || runs==1){
+
+
+    runExperiment();
+
+
+}
+else{
+
+
+    createBatch();
+
+
+}
+
+
+
+}
+
+
+
+function update(){
+
+
+fetch(
+"/api/dashboard/live"
+)
+
+.then(
+r=>r.json()
+)
+
+.then(
+data=>{
+
+
+document.getElementById(
+"status"
+).innerHTML=data.status;
+
+
+document.getElementById(
+"stage"
+).innerHTML=data.stage || "-";
+
+
+document.getElementById(
+"experiment"
+).innerHTML=data.experiment_id || "-";
+
+
+document.getElementById(
+"hosts"
+).innerHTML=data.hosts;
+
+
+document.getElementById(
+"switches"
+).innerHTML=data.switches;
+
+
+document.getElementById(
+"elapsed"
+).innerHTML=data.elapsed_seconds || 0;
+
+
+
+let m=data.metrics || {};
+
+
+document.getElementById(
+"rtt"
+).innerHTML=m.average_rtt || 0;
+
+
+document.getElementById(
+"jitter"
+).innerHTML=m.jitter || 0;
+
+
+document.getElementById(
+"throughput"
+).innerHTML=m.throughput || 0;
+
+
+document.getElementById(
+"loss"
+).innerHTML=m.packet_loss || 0;
+
+
+}
+
+);
+
+
+}
+
+
+
+setInterval(
+update,
+2000
+);
+
+
+update();
+
+
+</script>
+
+
+
+
+<div class="card">
+
+<h2>
+System Monitor
+</h2>
+
+
+<p>
+Flask:
+<b id="flask">-</b>
+</p>
+
+
+<p>
+Controller:
+<b id="controller">-</b>
+</p>
+
+
+<p>
+Mininet:
+<b id="mininet">-</b>
+</p>
+
+
+<p>
+OVS Bridges:
+<b id="ovs">No active bridges</b>
+</p>
+
+
+</div>
+
+</div>
+
+
+<script>
+
+
+function updateSystem(){
+
+
+fetch(
+"/api/dashboard/system"
+)
+
+.then(
+r=>r.json()
+)
+
+.then(
+data=>{
+
+
+document.getElementById(
+"flask"
+).innerHTML =
+data.flask.running ?
+"🟢 RUNNING" :
+"🔴 STOPPED";
+
+
+document.getElementById(
+"controller"
+).innerHTML =
+data.controller.running ?
+"🟢 RUNNING" :
+"🔴 STOPPED";
+
+
+document.getElementById(
+"mininet"
+).innerHTML =
+data.mininet.running ?
+"🟢 RUNNING" :
+"🔴 STOPPED";
+
+
+document.getElementById(
+"ovs"
+).innerHTML =
+data.ovs.bridges.join(", ");
+
+}
+
+);
+
+}
+
+
+
+setInterval(
+updateSystem,
+3000
+);
+
+
+updateSystem();
+
+
+</script>
+
+
+
+
+
+
+
+
+<script>
+
+
+let currentJob=null;
+
+
+
+function createBatch(){
+
+
+fetch(
+"/api/batch/create",
+{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+experiment_id:
+document.getElementById(
+"batch_exp"
+).value,
+
+runs:
+parseInt(
+document.getElementById(
+"batch_runs"
+).value
+)
+
+})
+
+}
+
+)
+
+.then(r=>r.json())
+
+.then(data=>{
+
+
+if(data.success && data.job){
+
+    currentJob =
+    data.job.job_id;
+
+    document.getElementById(
+    "batch_job"
+    ).innerHTML=currentJob;
+
+}
+else{
+
+    alert(
+    data.message || "Batch creation failed"
+    );
+
+}
+
+
+document.getElementById(
+"batch_job"
+).innerHTML=currentJob;
+
+
+});
+
+
+}
+
+
+
+
+function startBatch(){
+
+
+if(!currentJob){
+
+alert(
+"Create batch first"
+);
+
+return;
+
+}
+
+
+
+fetch(
+"/api/batch/start/"+currentJob,
+{
+method:"POST"
+}
+);
+
+
+}
+
+
+
+
+function updateBatch(){
+
+
+if(!currentJob)
+return;
+
+
+
+fetch(
+"/api/batch/status/"+currentJob
+)
+
+.then(r=>r.json())
+
+.then(data=>{
+
+
+let job=data.job;
+
+
+if(job){
+
+
+document.getElementById(
+"batch_status"
+).innerHTML =
+job.status;
+
+
+document.getElementById(
+"batch_progress"
+).innerHTML =
+job.current_run+
+"/"+
+job.total_runs;
+
+
+
+document.getElementById(
+"batch_success"
+).innerHTML =
+job.successful;
+
+
+
+document.getElementById(
+"batch_failed"
+).innerHTML =
+job.failed;
+
+
+}
+
+
+});
+
+
+}
+
+
+
+setInterval(
+updateBatch,
+3000
+);
+
+
+
+
+async function checkReadiness(){
+
+    try{
+
+        let r = await fetch("/api/readiness");
+
+        let data = await r.json();
+
+        let box=document.getElementById("readiness");
+
+        if(data.ready){
+
+            box.innerHTML=
+            "🟢 SYSTEM READY<br>" +
+            "API ✅<br>" +
+            "Controller ✅<br>" +
+            "OVS ✅<br>" +
+            "Mininet ✅<br>" +
+            "Database ✅";
+
+        }
+        else{
+
+            box.innerHTML=
+            "🔴 SYSTEM NOT READY<br>" +
+            JSON.stringify(data.checks);
+
+        }
+
+    }
+
+    catch(e){
+
+        document.getElementById("readiness").innerHTML =
+        "ERROR CHECKING SYSTEM";
+
+    }
+
+}
+
+
+checkReadiness();
+
+setInterval(
+    checkReadiness,
+    5000
+);
+
+</script>
+
+
+
+
+<div class="card">
+
+<h2>
+Batch Status
+</h2>
+
+
+<p>
+Job:
+<b id="batch_job">-</b>
+</p>
+
+
+<p>
+Status:
+<b id="batch_status">-</b>
+</p>
+
+
+<p>
+Progress:
+<b id="batch_progress">0</b>
+</p>
+
+
+<p>
+Success:
+<b id="batch_success">0</b>
+</p>
+
+
+<p>
+Failed:
+<b id="batch_failed">0</b>
+</p>
+
+
+</div>
+
+
+
+
+
+{% endblock %}

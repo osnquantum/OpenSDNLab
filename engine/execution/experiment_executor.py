@@ -48,7 +48,7 @@ class ExperimentExecutor:
     ########################################################
 
 
-    def execute(self, experiment):
+    def execute(self, experiment, job=None):
 
         CleanupManager.cleanup()
 

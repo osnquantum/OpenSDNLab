@@ -78,6 +78,37 @@ class SQLiteRepository:
             """
         )
 
+        
+
+        self.connection.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS batch_jobs
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                job_id TEXT UNIQUE,
+
+                experiment_id TEXT,
+
+                total_runs INTEGER,
+
+                current_run INTEGER DEFAULT 0,
+
+                successful INTEGER DEFAULT 0,
+
+                failed INTEGER DEFAULT 0,
+
+                status TEXT,
+
+                created_at REAL,
+
+                started_at REAL
+            )
+            '''
+        )
+
+
+
         self.connection.commit()
 
 
@@ -110,6 +141,37 @@ class SQLiteRepository:
             )
             '''
         )
+
+        
+
+        self.connection.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS batch_jobs
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                job_id TEXT UNIQUE,
+
+                experiment_id TEXT,
+
+                total_runs INTEGER,
+
+                current_run INTEGER DEFAULT 0,
+
+                successful INTEGER DEFAULT 0,
+
+                failed INTEGER DEFAULT 0,
+
+                status TEXT,
+
+                created_at REAL,
+
+                started_at REAL
+            )
+            '''
+        )
+
+
 
         self.connection.commit()
 
@@ -182,6 +244,37 @@ class SQLiteRepository:
             data
         )
 
+        
+
+        self.connection.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS batch_jobs
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                job_id TEXT UNIQUE,
+
+                experiment_id TEXT,
+
+                total_runs INTEGER,
+
+                current_run INTEGER DEFAULT 0,
+
+                successful INTEGER DEFAULT 0,
+
+                failed INTEGER DEFAULT 0,
+
+                status TEXT,
+
+                created_at REAL,
+
+                started_at REAL
+            )
+            '''
+        )
+
+
+
         self.connection.commit()
 
         return cursor.lastrowid
@@ -214,6 +307,7 @@ class SQLiteRepository:
                 packet_loss,
                 throughput,
                 estimated_one_way_delay,
+                  mos,
                 created_at
 
             )
@@ -248,11 +342,44 @@ class SQLiteRepository:
 
                 metrics["throughput"],
 
-                metrics["one_way_delay"]
+                  metrics["one_way_delay"],
+
+                  metrics["mos"]
 
             )
 
         )
+
+        
+
+        self.connection.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS batch_jobs
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                job_id TEXT UNIQUE,
+
+                experiment_id TEXT,
+
+                total_runs INTEGER,
+
+                current_run INTEGER DEFAULT 0,
+
+                successful INTEGER DEFAULT 0,
+
+                failed INTEGER DEFAULT 0,
+
+                status TEXT,
+
+                created_at REAL,
+
+                started_at REAL
+            )
+            '''
+        )
+
+
 
         self.connection.commit()
 

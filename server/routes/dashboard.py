@@ -1,8 +1,10 @@
 from flask import Blueprint, jsonify, render_template
+import threading
 
 from engine.execution.experiment_executor import ExperimentExecutor
 from engine.repository.sqlite.sqlite_repository import SQLiteRepository
 from engine.system.runtime_state import RuntimeState
+from engine.system.runtime_logger import RuntimeLogger
 from engine.system.system_monitor import SystemMonitor
 
 
@@ -45,6 +47,38 @@ def dashboard_page():
 def status():
 
     return jsonify(current_status)
+
+
+
+
+def execute_background(exp):
+
+
+    try:
+
+        current_status["state"]="RUNNING"
+
+        current_status["stage"]="EXECUTING"
+
+
+        result = executor.execute(exp)
+
+
+        current_status["state"]="COMPLETED"
+
+        current_status["stage"]="FINISHED"
+
+        current_status["result"]=result
+
+
+
+    except Exception as e:
+
+
+        current_status["state"]="FAILED"
+
+        current_status["stage"]=str(e)
+
 
 
 
@@ -145,3 +179,14 @@ def system_status():
         monitor.get_status()
     )
 
+
+
+@dashboard.route(
+    "/api/dashboard/logs",
+    methods=["GET"]
+)
+def execution_logs():
+
+    return jsonify(
+        RuntimeLogger.get()
+    )

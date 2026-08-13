@@ -37,6 +37,33 @@ class LatencyService:
         values=sorted(values)
 
 
+        if not values:
+
+            return {
+
+                "cdf": [],
+
+                "percentile": {
+
+                    "P50": 0,
+                    "P90": 0,
+                    "P95": 0,
+                    "P99": 0
+
+                },
+
+                "statistics": {
+
+                    "mean": 0,
+                    "median": 0,
+                    "min": 0,
+                    "max": 0
+
+                }
+
+            }
+
+
         cdf=[]
 
         total=len(values)

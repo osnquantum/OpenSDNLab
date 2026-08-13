@@ -47,22 +47,24 @@ class ExperimentService:
 
 
 
-            topology=data.get(
-                "topology",
-                default.topology
-            ),
+            topology={
+                "type": data.get("topology", "linear"),
+                "hosts": data.get("hosts", 2),
+                "switches": data.get("switches", 1)
+            },
 
 
-            network=data.get(
-                "network",
-                default.network
-            ),
+            network={
+                "protocol": data.get("protocol", "ipv4")
+            },
 
 
-            controller=data.get(
-                "controller",
-                default.controller
-            ),
+            controller={
+                "type": "remote",
+                "name": data.get("controller", "osken"),
+                "ip": "127.0.0.1",
+                "port": 6653
+            },
 
 
             deployment=data.get(

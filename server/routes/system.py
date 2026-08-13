@@ -38,3 +38,10 @@ def restart():
 def status():
 
     return service.status()
+
+
+
+@system.route("/readiness")
+def readiness():
+
+    return service.readiness()

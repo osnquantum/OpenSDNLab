@@ -74,7 +74,7 @@ class SystemMonitor:
     def ovs_status(self):
 
         bridges = self.command(
-            "ovs-vsctl list-br"
+            "sudo -n ovs-vsctl list-br"
         )
 
 
@@ -99,7 +99,7 @@ class SystemMonitor:
     def mininet_status(self):
 
         bridges = self.command(
-            "ovs-vsctl list-br"
+            "sudo -n ovs-vsctl list-br"
         )
 
 

@@ -1,0 +1,152 @@
+<div class="sidebar">
+
+<h2>
+⚡ OpenSDNLab
+</h2>
+
+
+<a href="/dashboard">
+🏠 Dashboard
+</a>
+
+
+<div class="dropdown">
+
+<a href="javascript:void(0)" onclick="toggleExperiments()">
+🧪 Experiments ▾
+</a>
+
+<div class="dropdown-content" id="experiment-menu">
+
+<a href="/experiments">
+▶ Experiment Control
+</a>
+
+<a href="/research">
+📚 Research Dashboard
+</a>
+
+</div>
+
+</div>
+
+
+<a href="/system-control">
+🎛 Controller
+</a>
+
+
+<a href="/topology">
+🌐 Topology
+</a>
+
+<a href="/admin">
+⚙ Administration
+</a>
+
+
+
+<div class="dropdown">
+
+<a href="javascript:void(0)" onclick="toggleAnalytics()">
+📊 Analytics ▾
+</a>
+
+<div class="dropdown-content" id="analytics-menu">
+
+<a href="/analytics/demo">
+Demo Analytics
+</a>
+
+<a href="/correlation">
+Correlation
+</a>
+
+<a href="/matrix">
+Matrix
+</a>
+
+<a href="/scatter">
+Scatter
+</a>
+
+<a href="/cdf">
+CDF
+</a>
+
+<a href="/percentile">
+Percentile
+</a>
+
+<a href="/compare">
+Compare
+</a>
+
+</div>
+
+</div>
+
+
+<a href="/running/demo">
+▶ Running Jobs
+</a>
+
+
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+    document.querySelectorAll(".dropdown-content")
+    .forEach(function(menu){
+        menu.style.display="none";
+    });
+
+});
+</script>
+
+
+
+<script>
+function toggleAnalytics(){
+
+let menu=document.getElementById("analytics-menu");
+
+if(menu.style.display==="block"){
+    menu.style.display="none";
+}
+else{
+    menu.style.display="block";
+}
+
+}
+
+
+document.addEventListener("DOMContentLoaded",function(){
+
+let menu=document.querySelector(".dropdown-content");
+
+if(menu){
+    menu.style.display="none";
+}
+
+});
+</script>
+
+
+<script>
+function toggleExperiments(){
+
+let menu=document.getElementById("experiment-menu");
+
+if(menu.style.display==="block"){
+    menu.style.display="none";
+}
+else{
+    menu.style.display="block";
+}
+
+}
+</script>
+

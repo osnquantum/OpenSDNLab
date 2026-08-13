@@ -1,85 +1,310 @@
-<!DOCTYPE html>
+{% extends "layout/base.html" %}
 
-<html>
+{% block content %}
+<div class="dashboard-container">
 
-<head>
+<div class="dashboard-grid">
 
-<title>
-OpenSDNLab Dashboard
-</title>
+<div class="command-card">
+
+<h3>
+System Status
+</h3>
+
+<div id="readiness">
+Checking system...
+</div>
+
+</div>
+
+
 
 
 <style>
 
-body{
-    font-family:Arial;
-    margin:40px;
-    background:#f5f5f5;
+.dashboard-container{
+margin-top:10px;
 }
 
 
-.card{
 
-    background:white;
-    padding:20px;
-    margin:20px;
-    border-radius:10px;
+
+
+.history-card{
+grid-column:1 / -1;
+}
+
+.history-table-container{
+max-height:450px;
+overflow-y:auto;
+overflow-x:auto;
+}
+
+.dashboard-grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:15px;
+}
+
+
+.command-card{
+
+background:#111827;
+border:1px solid #334155;
+border-radius:12px;
+padding:20px;
 
 }
 
 
-.value{
+.command-card h3{
 
-    font-size:22px;
-    font-weight:bold;
+color:#38bdf8;
+
+}
+
+
+.status-green{
+
+color:#22c55e;
+font-weight:bold;
 
 }
 
 
-button{
+.status-red{
 
-    padding:12px 25px;
-    font-size:16px;
+color:#ef4444;
+font-weight:bold;
 
 }
 
-.grid{
 
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:20px;
+.terminal{
+
+background:#000;
+height:300px;
+overflow:auto;
+padding:15px;
+color:#22c55e;
+border-radius:10px;
+font-family:Consolas,monospace;
+
+}
+
+
+.nav-grid{
+
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+
+}
+
+
+.nav-button{
+
+background:#2563eb;
+padding:15px;
+border-radius:10px;
+text-align:center;
+color:white;
+text-decoration:none;
+
+}
+
+
+
+
+.input-box{
+width:90%;
+padding:12px;
+margin:8px 0 15px 0;
+background:#0f172a;
+border:1px solid #334155;
+border-radius:8px;
+color:white;
+}
+
+
+.primary-btn{
+background:#2563eb;
+color:white;
+padding:12px 25px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+}
+
+
+.primary-btn:hover{
+background:#1d4ed8;
+}
+
+
+
+.status-row{
+display:flex;
+justify-content:space-between;
+padding:12px;
+margin:8px 0;
+background:#0f172a;
+border-radius:8px;
+}
+
+
+.status-row span{
+color:#94a3b8;
+}
+
+
+.status-row b{
+color:#38bdf8;
+}
+
+
+
+.metric-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:15px;
+}
+
+
+.metric-card{
+background:#0f172a;
+border:1px solid #334155;
+border-radius:12px;
+padding:20px;
+text-align:center;
+}
+
+
+.metric-card span{
+display:block;
+color:#94a3b8;
+margin-bottom:12px;
+}
+
+
+.metric-card strong{
+font-size:24px;
+color:#38bdf8;
+}
+
+
+@media(max-width:900px){
+
+.metric-grid{
+grid-template-columns:repeat(2,1fr);
+}
+
+}
+
+
+@media(max-width:600px){
+
+.metric-grid{
+grid-template-columns:1fr;
+}
+
+}
+
+
+
+@media(max-width:900px){
+
+.dashboard-grid{
+grid-template-columns:1fr;
+}
 
 }
 
 </style>
 
+<style>
 
-</head>
+.history-table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+.history-table th,
+.history-table td{
+padding:12px;
+text-align:center;
+border-bottom:1px solid #334155;
+}
+
+.history-table th{
+color:#38bdf8;
+}
+
+.history-table td{
+color:#e2e8f0;
+}
+
+</style>
 
 
-<body>
 
 
-<h1>
-OpenSDNLab Live Monitoring
-</h1>
 
 
-<div class="card">
+
+
+
+
+
+<div class="command-card">
 
 <h2>
-Experiment Control
+🧪 Experiment Workflow
 </h2>
 
 
-<input id="expid"
-value="EXP-20260808-0842bf"
-size="30">
+<div class="status-row">
+<span>1. Environment Cleanup</span>
+<b id="wf_cleanup">⏳ WAITING</b>
+</div>
 
 
-<button onclick="runExperiment()">
-START
-</button>
+<div class="status-row">
+<span>2. Topology Creation</span>
+<b id="wf_topology">⏳ WAITING</b>
+</div>
+
+
+<div class="status-row">
+<span>3. Controller Startup</span>
+<b id="wf_controller">⏳ WAITING</b>
+</div>
+
+
+<div class="status-row">
+<span>4. Mininet Deployment</span>
+<b id="wf_mininet">⏳ WAITING</b>
+</div>
+
+
+<div class="status-row">
+<span>5. Traffic Measurement</span>
+<b id="wf_traffic">⏳ WAITING</b>
+</div>
+
+
+<div class="status-row">
+<span>6. Metrics Collection</span>
+<b id="wf_metrics">⏳ WAITING</b>
+</div>
+
+
+<div class="status-row">
+<span>7. Finished</span>
+<b id="wf_finished">⏳ WAITING</b>
+</div>
 
 
 </div>
@@ -166,40 +391,49 @@ START
 
 
 
-<div class="card">
+<div class="command-card">
 
 <h2>
-Latest Metrics
+📊 Network Metrics
 </h2>
 
 
-<p>
-RTT:
-<b id="rtt">-</b>
-ms
-</p>
+<div class="metric-grid">
 
 
-<p>
-Jitter:
-<b id="jitter">-</b>
-ms
-</p>
+<div class="metric-card">
+<span>⚡ RTT</span>
+<strong>
+<b id="rtt">-</b> ms
+</strong>
+</div>
 
 
-<p>
-Throughput:
-<b id="throughput">-</b>
-Mbps
-</p>
+<div class="metric-card">
+<span>📡 Jitter</span>
+<strong>
+<b id="jitter">-</b> ms
+</strong>
+</div>
 
 
-<p>
-Packet Loss:
-<b id="loss">-</b>
-%
-</p>
+<div class="metric-card">
+<span>🚀 Throughput</span>
+<strong>
+<b id="throughput">-</b> Mbps
+</strong>
+</div>
 
+
+<div class="metric-card">
+<span>❌ Packet Loss</span>
+<strong>
+<b id="loss">-</b> %
+</strong>
+</div>
+
+
+</div>
 
 </div>
 
@@ -222,6 +456,45 @@ fetch(
 method:"POST"
 }
 );
+
+
+}
+
+
+
+function startExecution(){
+
+
+let mode =
+document.getElementById(
+"mode"
+).value;
+
+
+let runs =
+parseInt(
+document.getElementById(
+"runs"
+).value
+);
+
+
+
+if(mode=="single" || runs==1){
+
+
+    runExperiment();
+
+
+}
+else{
+
+
+    createBatch();
+
+
+}
+
 
 
 }
@@ -320,10 +593,12 @@ update();
 
 
 
-<div class="card">
+<div class="dashboard-grid">
+
+<div class="command-card">
 
 <h2>
-System Monitor
+🖥 System Monitor
 </h2>
 
 
@@ -345,11 +620,43 @@ Mininet:
 </p>
 
 
+
+
+
+</div>
+
+<div class="command-card">
+
+<h2>
+📦 Batch Status
+</h2>
+
 <p>
-OVS Bridges:
-<b id="ovs">-</b>
+Job:
+<b id="batch_job">-</b>
 </p>
 
+<p>
+Status:
+<b id="batch_status">-</b>
+</p>
+
+<p>
+Progress:
+<b id="batch_progress">0</b>
+</p>
+
+<p>
+Success:
+<b id="batch_success">0</b>
+</p>
+
+<p>
+Failed:
+<b id="batch_failed">0</b>
+</p>
+
+</div>
 
 </div>
 
@@ -376,7 +683,7 @@ document.getElementById(
 "flask"
 ).innerHTML =
 data.flask.running ?
-"🟢 RUNNING" :
+  "🟢 RUNNING" :
 "🔴 STOPPED";
 
 
@@ -396,10 +703,7 @@ data.mininet.running ?
 "🔴 STOPPED";
 
 
-document.getElementById(
-"ovs"
-).innerHTML =
-data.ovs.bridges.join(", ");
+
 
 }
 
@@ -421,6 +725,334 @@ updateSystem();
 </script>
 
 
-</body>
 
-</html>
+
+
+
+
+
+<script>
+
+
+let currentJob=null;
+
+
+
+function createBatch(){
+
+
+fetch(
+"/api/batch/create",
+{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+experiment_id:
+document.getElementById(
+"batch_exp"
+).value,
+
+runs:
+parseInt(
+document.getElementById(
+"batch_runs"
+).value
+)
+
+})
+
+}
+
+)
+
+.then(r=>r.json())
+
+.then(data=>{
+
+
+if(data.success && data.job){
+
+    currentJob =
+    data.job.job_id;
+
+    document.getElementById(
+    "batch_job"
+    ).innerHTML=currentJob;
+
+}
+else{
+
+    alert(
+    data.message || "Batch creation failed"
+    );
+
+}
+
+
+document.getElementById(
+"batch_job"
+).innerHTML=currentJob;
+
+
+});
+
+
+}
+
+
+
+
+function startBatch(){
+
+
+if(!currentJob){
+
+alert(
+"Create batch first"
+);
+
+return;
+
+}
+
+
+
+fetch(
+"/api/batch/start/"+currentJob,
+{
+method:"POST"
+}
+);
+
+
+}
+
+
+
+
+function updateBatch(){
+
+
+if(!currentJob)
+return;
+
+
+
+fetch(
+"/api/batch/status/"+currentJob
+)
+
+.then(r=>r.json())
+
+.then(data=>{
+
+
+let job=data.job;
+
+
+if(job){
+
+
+document.getElementById(
+"batch_status"
+).innerHTML =
+job.status;
+
+
+document.getElementById(
+"batch_progress"
+).innerHTML =
+job.current_run+
+"/"+
+job.total_runs;
+
+
+
+document.getElementById(
+"batch_success"
+).innerHTML =
+job.successful;
+
+
+
+document.getElementById(
+"batch_failed"
+).innerHTML =
+job.failed;
+
+
+}
+
+
+});
+
+
+}
+
+
+
+setInterval(
+updateBatch,
+3000
+);
+
+
+
+
+async function checkReadiness(){
+
+    try{
+
+        let r = await fetch("/api/readiness");
+
+        let data = await r.json();
+
+        let box=document.getElementById("readiness");
+
+        if(data.ready){
+
+            box.innerHTML=
+            "🟢 SYSTEM READY<br>" +
+            "API ✅<br>" +
+            "Controller ✅<br>" +
+            "OVS ✅<br>" +
+            "Mininet ✅<br>" +
+            "Database ✅";
+
+        }
+        else{
+
+            box.innerHTML=
+            "🔴 SYSTEM NOT READY<br>" +
+            JSON.stringify(data.checks);
+
+        }
+
+    }
+
+    catch(e){
+
+        document.getElementById("readiness").innerHTML =
+        "ERROR CHECKING SYSTEM";
+
+    }
+
+}
+
+
+checkReadiness();
+
+setInterval(
+    checkReadiness,
+    5000
+);
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+<div class="command-card history-card">
+
+<h2>
+📚 Experiment History
+</h2>
+
+
+<div class="history-table-container">\n\n<table class="history-table">
+
+<thead>
+
+<tr>
+<th>ID</th>
+<th>Run</th>
+<th>RTT</th>
+<th>Throughput</th>
+<th>Loss</th>
+<th>MOS</th>
+<th>Analytics</th>
+</tr>
+
+</thead>
+
+
+<tbody id="experiment_history">
+
+<tr>
+<td colspan="6">
+Loading...
+</td>
+</tr>
+
+</tbody>
+
+
+</table>
+
+</div>
+
+
+<script>
+
+function loadHistory(){
+
+fetch("/api/history")
+.then(r=>r.json())
+.then(data=>{
+
+
+let html="";
+
+
+data.forEach(x=>{
+
+html +=
+
+"<tr>"+
+"<td>"+x.experiment_id+"</td>"+
+"<td>"+x.run_number+"</td>"+
+"<td>"+x.rtt+"</td>"+
+"<td>"+x.throughput+"</td>"+
+"<td>"+x.loss+"</td>"+
+"<td>"+x.mos+"</td>"+
+"<td><a target='_blank' href='/analytics/"+x.experiment_id+"'>View</a></td>"+
+"</tr>";
+
+});
+
+
+document.getElementById(
+"experiment_history"
+).innerHTML=html;
+
+
+});
+
+
+}
+
+
+setInterval(
+loadHistory,
+5000
+);
+
+loadHistory();
+
+
+</script>
+
+{% endblock %}

@@ -22,3 +22,14 @@ def get_jobs():
         })
 
     return success(data, "Jobs loaded successfully.")
+
+
+@jobs.route("/jobs/latest", methods=["GET"])
+def latest_job():
+
+    job = job_service.latest_job()
+
+    return success(
+        job,
+        "Latest job loaded."
+    )

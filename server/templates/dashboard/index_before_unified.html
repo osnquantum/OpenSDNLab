@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>
+OpenSDNLab Dashboard
+</title>
+
+
+<style>
+
+body{
+    font-family:Arial;
+    margin:40px;
+    background:#f5f5f5;
+}
+
+
+.card{
+
+    background:white;
+    padding:20px;
+    margin:20px;
+    border-radius:10px;
+
+}
+
+
+.value{
+
+    font-size:22px;
+    font-weight:bold;
+
+}
+
+
+button{
+
+    padding:12px 25px;
+    font-size:16px;
+
+}
+
+.grid{
+
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+
+}
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<h1>
+OpenSDNLab Live Monitoring
+</h1>
+
+
+<div class="card">
+
+<h2>
+Experiment Control
+</h2>
+
+
+<input id="expid"
+value="EXP-20260808-0842bf"
+size="30">
+
+
+<button onclick="runExperiment()">
+START
+</button>
+
+
+</div>
+
+
+
+<div class="grid">
+
+
+<div class="card">
+
+<h3>Status</h3>
+
+<div id="status" class="value">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Stage</h3>
+
+<div id="stage" class="value">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Experiment</h3>
+
+<div id="experiment" class="value">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Hosts</h3>
+
+<div id="hosts" class="value">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Switches</h3>
+
+<div id="switches" class="value">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+
+<h3>Elapsed</h3>
+
+<div id="elapsed" class="value">
+-
+</div>
+
+</div>
+
+
+
+</div>
+
+
+
+
+<div class="card">
+
+<h2>
+Latest Metrics
+</h2>
+
+
+<p>
+RTT:
+<b id="rtt">-</b>
+ms
+</p>
+
+
+<p>
+Jitter:
+<b id="jitter">-</b>
+ms
+</p>
+
+
+<p>
+Throughput:
+<b id="throughput">-</b>
+Mbps
+</p>
+
+
+<p>
+Packet Loss:
+<b id="loss">-</b>
+%
+</p>
+
+
+</div>
+
+
+
+<script>
+
+
+function runExperiment(){
+
+
+let id=document.getElementById(
+"expid"
+).value;
+
+
+fetch(
+"/api/dashboard/run/"+id,
+{
+method:"POST"
+}
+);
+
+
+}
+
+
+
+function update(){
+
+
+fetch(
+"/api/dashboard/live"
+)
+
+.then(
+r=>r.json()
+)
+
+.then(
+data=>{
+
+
+document.getElementById(
+"status"
+).innerHTML=data.status;
+
+
+document.getElementById(
+"stage"
+).innerHTML=data.stage || "-";
+
+
+document.getElementById(
+"experiment"
+).innerHTML=data.experiment_id || "-";
+
+
+document.getElementById(
+"hosts"
+).innerHTML=data.hosts;
+
+
+document.getElementById(
+"switches"
+).innerHTML=data.switches;
+
+
+document.getElementById(
+"elapsed"
+).innerHTML=data.elapsed_seconds || 0;
+
+
+
+let m=data.metrics || {};
+
+
+document.getElementById(
+"rtt"
+).innerHTML=m.average_rtt || 0;
+
+
+document.getElementById(
+"jitter"
+).innerHTML=m.jitter || 0;
+
+
+document.getElementById(
+"throughput"
+).innerHTML=m.throughput || 0;
+
+
+document.getElementById(
+"loss"
+).innerHTML=m.packet_loss || 0;
+
+
+}
+
+);
+
+
+}
+
+
+
+setInterval(
+update,
+2000
+);
+
+
+update();
+
+
+</script>
+
+
+
+
+<div class="card">
+
+<h2>
+System Monitor
+</h2>
+
+
+<p>
+Flask:
+<b id="flask">-</b>
+</p>
+
+
+<p>
+Controller:
+<b id="controller">-</b>
+</p>
+
+
+<p>
+Mininet:
+<b id="mininet">-</b>
+</p>
+
+
+<p>
+OVS Bridges:
+<b id="ovs">-</b>
+</p>
+
+
+</div>
+
+
+<script>
+
+
+function updateSystem(){
+
+
+fetch(
+"/api/dashboard/system"
+)
+
+.then(
+r=>r.json()
+)
+
+.then(
+data=>{
+
+
+document.getElementById(
+"flask"
+).innerHTML =
+data.flask.running ?
+"🟢 RUNNING" :
+"🔴 STOPPED";
+
+
+document.getElementById(
+"controller"
+).innerHTML =
+data.controller.running ?
+"🟢 RUNNING" :
+"🔴 STOPPED";
+
+
+document.getElementById(
+"mininet"
+).innerHTML =
+data.mininet.running ?
+"🟢 RUNNING" :
+"🔴 STOPPED";
+
+
+document.getElementById(
+"ovs"
+).innerHTML =
+data.ovs.bridges.join(", ");
+
+}
+
+);
+
+}
+
+
+
+setInterval(
+updateSystem,
+3000
+);
+
+
+updateSystem();
+
+
+</script>
+
+
+
+
+<div class="card">
+
+<h2>
+Batch Experiment Control
+</h2>
+
+
+<p>
+Experiment ID
+</p>
+
+
+<input id="batch_exp"
+value="EXP-20260808-0842bf"
+size="30">
+
+
+<br><br>
+
+
+<p>
+Number of Runs
+</p>
+
+
+<input id="batch_runs"
+value="30"
+type="number">
+
+
+<br><br>
+
+
+<button onclick="createBatch()">
+CREATE BATCH
+</button>
+
+
+<button onclick="startBatch()">
+START BATCH
+</button>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>
+Batch Status
+</h2>
+
+
+<p>
+Job:
+<b id="batch_job">-</b>
+</p>
+
+
+<p>
+Status:
+<b id="batch_status">-</b>
+</p>
+
+
+<p>
+Progress:
+<b id="batch_progress">0</b>
+</p>
+
+
+<p>
+Success:
+<b id="batch_success">0</b>
+</p>
+
+
+<p>
+Failed:
+<b id="batch_failed">0</b>
+</p>
+
+
+</div>
+
+
+
+<script>
+
+
+let currentJob=null;
+
+
+
+function createBatch(){
+
+
+fetch(
+"/api/batch/create",
+{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+experiment_id:
+document.getElementById(
+"batch_exp"
+).value,
+
+runs:
+parseInt(
+document.getElementById(
+"batch_runs"
+).value
+)
+
+})
+
+}
+
+)
+
+.then(r=>r.json())
+
+.then(data=>{
+
+
+if(data.success && data.job){
+
+    currentJob =
+    data.job.job_id;
+
+    document.getElementById(
+    "batch_job"
+    ).innerHTML=currentJob;
+
+}
+else{
+
+    alert(
+    data.message || "Batch creation failed"
+    );
+
+}
+
+
+document.getElementById(
+"batch_job"
+).innerHTML=currentJob;
+
+
+});
+
+
+}
+
+
+
+
+function startBatch(){
+
+
+if(!currentJob){
+
+alert(
+"Create batch first"
+);
+
+return;
+
+}
+
+
+
+fetch(
+"/api/batch/start/"+currentJob,
+{
+method:"POST"
+}
+);
+
+
+}
+
+
+
+
+function updateBatch(){
+
+
+if(!currentJob)
+return;
+
+
+
+fetch(
+"/api/batch/status/"+currentJob
+)
+
+.then(r=>r.json())
+
+.then(data=>{
+
+
+let job=data.job;
+
+
+if(job){
+
+
+document.getElementById(
+"batch_status"
+).innerHTML =
+job.status;
+
+
+document.getElementById(
+"batch_progress"
+).innerHTML =
+job.current_run+
+"/"+
+job.total_runs;
+
+
+
+document.getElementById(
+"batch_success"
+).innerHTML =
+job.successful;
+
+
+
+document.getElementById(
+"batch_failed"
+).innerHTML =
+job.failed;
+
+
+}
+
+
+});
+
+
+}
+
+
+
+setInterval(
+updateBatch,
+3000
+);
+
+
+</script>
+
+
+</body>
+
+</html>

@@ -2,33 +2,43 @@ controllers:
 
   local:
 
-    enabled: true
-
-  remote:
-
-    default: ryu
-
     available:
+
+      osken:
+
+        class: engine.controllers.plugins.osken.controller.OsKenController
+
 
       ryu:
 
-        ip: 127.0.0.1
+        class: engine.controllers.plugins.ryu.controller.RyuController
 
-        port: 6653
+
+  remote:
+
+    available:
 
       onos:
 
+        type: remote
+
         ip: 127.0.0.1
 
         port: 6653
+
 
       floodlight:
 
+        type: remote
+
         ip: 127.0.0.1
 
         port: 6653
 
+
       opendaylight:
+
+        type: remote
 
         ip: 127.0.0.1
 

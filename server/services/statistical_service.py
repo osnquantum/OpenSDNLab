@@ -33,6 +33,33 @@ class StatisticalService:
     def analyze(self,a,b):
 
 
+        if len(a) < 2 or len(b) < 2:
+
+            return {
+
+                "status":"NO_DATA",
+
+                "message":"Insufficient samples",
+
+                "mean_a":0,
+
+                "mean_b":0,
+
+                "difference":0,
+
+                "std_a":0,
+
+                "std_b":0,
+
+                "cohens_d":0,
+
+                "p_value":1,
+
+                "significant":False
+
+            }
+
+
         t_stat,p_value = stats.ttest_ind(
             a,
             b,

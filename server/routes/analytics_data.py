@@ -147,3 +147,70 @@ def analytics_dataset(experiment_id):
         data
 
     })
+
+
+@analytics_data.route("/api/analytics/metrics/<experiment_id>")
+def analytics_metrics(experiment_id):
+
+    rows = db.connection.execute(
+        """
+        SELECT
+        run_number,
+        average_rtt,
+        jitter,
+        packet_loss,
+        throughput
+        FROM experiment_runs
+        WHERE experiment_id=?
+        ORDER BY run_number
+        """,
+        (experiment_id,)
+    ).fetchall()
+
+
+    return jsonify([
+        {
+            "run":r[0],
+            "rtt":r[1],
+            "jitter":r[2],
+            "loss":r[3],
+            "throughput":r[4]
+        }
+        for r in rows
+    ])
+
+
+
+@analytics_data.route("/api/analytics/advanced/<experiment_id>")
+def advanced_metrics(experiment_id):
+
+    rows = db.connection.execute(
+        """
+        SELECT
+        run_number,
+        average_rtt,
+        jitter,
+        packet_loss,
+        throughput
+        FROM experiment_runs
+        WHERE experiment_id=?
+        ORDER BY run_number
+        """,
+        (experiment_id,)
+    ).fetchall()
+
+
+    return jsonify({
+
+        "runs":[r[0] for r in rows],
+
+        "rtt":[r[1] for r in rows],
+
+        "jitter":[r[2] for r in rows],
+
+        "loss":[r[3] for r in rows],
+
+        "throughput":[r[4] for r in rows]
+
+    })
+

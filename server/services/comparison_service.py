@@ -21,6 +21,22 @@ class ComparisonService:
     def summarize(self,a,b):
 
 
+        if (
+            not a.get("rtt") or
+            not b.get("rtt") or
+            not a.get("throughput") or
+            not b.get("throughput")
+        ):
+
+            return {
+
+                "status":"NO_DATA",
+
+                "message":"Insufficient experiment data"
+
+            }
+
+
         result={}
 
 

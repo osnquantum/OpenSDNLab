@@ -1,0 +1,307 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+<h2>📊 Experiment Run Comparison</h2>
+
+
+<h3>Overall Performance Trend</h3>
+
+
+<select id="experiment" onchange="loadRuns()">
+{% for exp in experiments %}
+<option value="{{exp}}">
+{{exp}}
+</option>
+{% endfor %}
+</select>
+
+
+<h3>Select Runs</h3>
+
+<button onclick="selectAll()">Select All</button>
+<button onclick="clearAll()">Clear All</button>
+
+<div id="runs"></div>
+
+<br>
+
+<button onclick="plot()">
+Plot Selected Runs
+</button>
+
+
+<hr>
+
+<h3>Overall Performance Trend</h3>
+<canvas id="overall"></canvas>
+
+
+<hr>
+
+<h3>RTT</h3>
+<canvas id="rtt"></canvas>
+
+<h3>Throughput</h3>
+<canvas id="throughput"></canvas>
+
+<h3>Jitter</h3>
+<canvas id="jitter"></canvas>
+
+<h3>Packet Loss</h3>
+<canvas id="loss"></canvas>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+let charts={};
+
+
+function loadRuns(){
+
+fetch(
+"/api/compare/runs?experiment_id="
++
+document.getElementById("experiment").value
+)
+
+.then(r=>r.json())
+
+.then(data=>{
+
+let html="";
+
+data.forEach(run=>{
+
+html += `
+<label style="display:inline-block;margin:5px">
+
+<input class="run"
+type="checkbox"
+value="${run}"
+checked>
+
+${run}
+
+</label>
+`;
+
+});
+
+
+document.getElementById("runs").innerHTML=html;
+
+
+});
+
+}
+
+
+
+function selectAll(){
+
+document
+.querySelectorAll(".run")
+.forEach(x=>x.checked=true);
+
+}
+
+
+
+function clearAll(){
+
+document
+.querySelectorAll(".run")
+.forEach(x=>x.checked=false);
+
+}
+
+
+
+function plot(){
+
+let selected=[
+
+...document.querySelectorAll(".run:checked")
+
+]
+.map(x=>x.value);
+
+
+
+fetch(
+
+"/api/compare/raw?experiment_id="
++
+document.getElementById("experiment").value
++
+"&runs="
++
+selected.join(",")
+
+)
+
+.then(r=>r.json())
+
+.then(data=>{
+
+drawOverall(data);
+
+
+draw(
+"rtt",
+data,
+"rtt",
+"RTT (ms)"
+);
+
+
+draw(
+"throughput",
+data,
+"throughput",
+"Throughput (Mbps)"
+);
+
+
+draw(
+"jitter",
+data,
+"jitter",
+"Jitter (ms)"
+);
+
+
+draw(
+"loss",
+data,
+"loss",
+"Packet Loss (%)"
+);
+
+
+});
+
+
+}
+
+
+
+
+
+function drawOverall(data){
+
+
+if(charts["overall"]){
+charts["overall"].destroy();
+}
+
+
+let maxRtt=Math.max(...data.map(x=>x.rtt));
+let maxThroughput=Math.max(...data.map(x=>x.throughput));
+let maxJitter=Math.max(...data.map(x=>x.jitter));
+let maxLoss=Math.max(...data.map(x=>x.loss));
+
+
+charts["overall"]=new Chart(
+
+document.getElementById("overall"),
+
+{
+
+type:"line",
+
+data:{
+
+labels:data.map(x=>x.run),
+
+datasets:[
+
+{
+label:"RTT",
+data:data.map(x=>(x.rtt/maxRtt*100))
+},
+
+{
+label:"Throughput",
+data:data.map(x=>x.throughput/maxThroughput*100)
+},
+
+{
+label:"Jitter",
+data:data.map(x=>(x.jitter/maxJitter*100))
+},
+
+{
+label:"Loss",
+data:data.map(x=>(x.loss/maxLoss*100))
+}
+
+]
+
+}
+
+}
+
+);
+
+
+}
+
+
+function draw(id,data,key,title){
+
+
+if(charts[id]){
+charts[id].destroy();
+}
+
+
+charts[id]=new Chart(
+
+document.getElementById(id),
+
+{
+
+type:"line",
+
+data:{
+
+labels:data.map(
+x=>x.run
+),
+
+datasets:[{
+
+label:title,
+
+data:data.map(
+x=>x[key]
+)
+
+}]
+
+},
+
+options:{
+responsive:true
+}
+
+}
+
+);
+
+
+}
+
+
+
+loadRuns();
+
+
+</script>
+
+
+{% endblock %}

@@ -47,7 +47,38 @@ class AnalyticsService:
 
         if not rows:
 
-            return {}
+            return {
+
+                "samples": 0,
+
+                "rtt": {
+                    "mean": 0,
+                    "median": 0,
+                    "min": 0,
+                    "max": 0,
+                    "std": 0
+                },
+
+                "jitter": {
+                    "mean": 0,
+                    "std": 0
+                },
+
+                "throughput": {
+                    "mean": 0,
+                    "min": 0,
+                    "max": 0
+                },
+
+                "packet_loss": {
+                    "mean": 0
+                },
+
+                "one_way_delay": {
+                    "mean": 0
+                }
+
+            }
 
 
         rtt = [x[0] for x in rows]
@@ -55,6 +86,7 @@ class AnalyticsService:
         throughput = [x[2] for x in rows]
         loss = [x[3] for x in rows]
         delay = [x[4] for x in rows]
+        mos = [x[5] for x in rows]
 
 
         return {
@@ -112,6 +144,17 @@ class AnalyticsService:
             "one_way_delay": {
 
                 "mean": statistics.mean(delay)
+
+            },
+
+
+            "mos": {
+
+                "mean": statistics.mean(mos),
+
+                "min": min(mos),
+
+                "max": max(mos)
 
             }
 

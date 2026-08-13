@@ -1,52 +1,8 @@
-<!DOCTYPE html>
+{% extends "layout/base.html" %}
 
-<html>
-
-<head>
-
-<title>OpenSDN Running</title>
-
-<style>
-
-body{
-background:#111827;
-color:white;
-font-family:Arial;
-}
+{% block content %}
 
 
-.card{
-
-background:#1f2937;
-padding:20px;
-margin:20px;
-border-radius:10px;
-
-}
-
-
-.progress{
-
-width:100%;
-height:25px;
-
-}
-
-.log{
-
-background:black;
-padding:15px;
-height:250px;
-overflow:auto;
-
-}
-
-</style>
-
-</head>
-
-
-<body>
 
 
 <h1>
@@ -61,7 +17,7 @@ Job ID
 </h2>
 
 <p>
-{{job_id}}
+{{job.id}}
 </p>
 
 
@@ -70,14 +26,15 @@ Progress
 </h3>
 
 
-<progress class="progress"
+<progress id="progress"
+class="progress"
 value="{{job.progress}}"
 max="100">
 </progress>
 
 
-<p>
-Run 45 / 100
+<p id="progress_text">
+Progress: {{job.progress}}%
 </p>
 
 
@@ -92,15 +49,17 @@ Execution Status
 </h2>
 
 
-<ul>
+<ul id="status">
 
-<li>System Preparation ✅</li>
+<li>System Preparation ⏳</li>
 
-<li>Topology Creation ✅</li>
+<li>Topology Creation ⏳</li>
 
-<li>Controller Deployment 🔄</li>
+<li>Controller Deployment ⏳</li>
 
 <li>Metric Collection ⏳</li>
+
+<li>Experiment Completion ⏳</li>
 
 </ul>
 
@@ -117,18 +76,11 @@ Live Logs
 </h2>
 
 
-<div class="log">
+<div class="log" id="logs">
 
-18:30:01 Preparing system<br>
-
-18:30:05 Creating topology<br>
-
-18:30:10 Controller connected<br>
-
-18:30:15 Running measurement<br>
-
-18:30:20 Saving result<br>
-
+{% for item in job.logs %}
+{{item}}<br>
+{% endfor %}
 
 </div>
 
@@ -154,6 +106,30 @@ function updateJob(){
         data => {
 
             let job = data.data;
+let status="";
+
+status += job.progress >= 10 ?
+"<li>System Preparation ✅</li>" :
+"<li>System Preparation ⏳</li>";
+
+status += job.progress >= 25 ?
+"<li>Topology Creation ✅</li>" :
+"<li>Topology Creation ⏳</li>";
+
+status += job.progress >= 40 ?
+"<li>Controller Deployment ✅</li>" :
+"<li>Controller Deployment ⏳</li>";
+
+status += job.progress >= 75 ?
+"<li>Metric Collection ✅</li>" :
+"<li>Metric Collection ⏳</li>";
+
+status += job.status=="COMPLETED" ?
+"<li>Experiment Completion ✅</li>" :
+"<li>Experiment Completion ⏳</li>";
+
+document.getElementById("status").innerHTML=status;
+
 
 
             document.getElementById(
@@ -169,7 +145,7 @@ function updateJob(){
             + "%";
 
 
-            let logs = "";
+            console.log("LOG DATA:", job.logs); let logs = "";
 
 
             job.logs.forEach(
@@ -203,6 +179,6 @@ updateJob();
 </script>
 
 
-</body>
 
-</html>
+
+{% endblock %}

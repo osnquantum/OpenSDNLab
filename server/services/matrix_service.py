@@ -10,6 +10,16 @@ class MatrixService:
         y=[float(v) for v in y]
 
 
+        if len(x) < 2 or len(y) < 2:
+            return 0
+
+
+        n=min(len(x),len(y))
+
+        x=x[:n]
+        y=y[:n]
+
+
         mx=statistics.mean(x)
         my=statistics.mean(y)
 

@@ -6,6 +6,8 @@ Extracts QoS metrics from ping and iperf output.
 
 import re
 
+from engine.analysis.qos.mos_calculator import calculate_mos
+
 
 class MetricParser:
 

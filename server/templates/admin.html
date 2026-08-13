@@ -1,0 +1,470 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+<h1>
+⚙ OpenSDNLab Administration
+</h1>
+
+
+<div class="command-card">
+
+<h2>Services</h2>
+
+
+<button onclick="restart()">
+🔄 Restart Flask
+</button>
+
+
+<button onclick="loadStatus()">
+🔍 Check Status
+</button>
+
+
+<button onclick="loadOVS()">
+🌐 Check OVS
+</button>
+
+
+</div>
+
+
+
+<div class="command-card">
+
+<h2>
+Terminal Output
+</h2>
+
+
+<pre id="terminal"
+style="
+background:black;
+color:#22c55e;
+padding:20px;
+height:400px;
+overflow:auto;">
+Ready...
+</pre>
+
+
+</div>
+
+
+
+
+<div class="command-card">
+
+<h2>
+📜 Flask Runtime Logs
+</h2>
+
+<pre id="flask_logs"
+style="
+background:black;
+color:#22c55e;
+padding:20px;
+height:400px;
+overflow:auto;">
+Loading logs...
+</pre>
+
+</div>
+
+
+<script>
+
+function loadFlaskLogs(){
+
+fetch("/api/flask/logs")
+.then(r=>r.json())
+.then(data=>{
+
+document.getElementById(
+"flask_logs"
+).innerHTML =
+data.logs.join("");
+
+});
+
+}
+
+
+setInterval(
+loadFlaskLogs,
+2000
+);
+
+loadFlaskLogs();
+
+</script>
+
+
+<script>
+
+function show(data){
+
+document.getElementById(
+"terminal"
+).innerText =
+JSON.stringify(data,null,2);
+
+}
+
+
+function loadStatus(){
+
+fetch(
+"/api/admin/status"
+)
+.then(r=>r.json())
+.then(show);
+
+}
+
+
+
+function loadOVS(){
+
+fetch(
+"/api/admin/ovs"
+)
+.then(r=>r.json())
+.then(show);
+
+}
+
+
+
+function restart(){
+
+fetch(
+"/api/admin/restart",
+{
+method:"POST"
+}
+)
+.then(r=>r.json())
+.then(show);
+
+}
+
+</script>
+
+
+
+
+<div class="command-card">
+
+<h2>
+⚡ Command Console
+</h2>
+
+
+<button onclick="runCmd('status')">
+📋 System Status
+</button>
+
+
+<button onclick="runCmd('ovs')">
+🌐 OVS Check
+</button>
+
+
+<button onclick="runCmd('readiness')">
+🩺 Readiness
+</button>
+
+
+<pre id="console"
+style="
+background:black;
+color:#22c55e;
+padding:20px;
+height:300px;
+overflow:auto;">
+Waiting...
+</pre>
+
+
+</div>
+
+
+<script>
+
+function runCmd(cmd){
+
+fetch(
+"/api/admin/run/"+cmd
+)
+.then(r=>r.json())
+.then(data=>{
+
+document.getElementById(
+"console"
+).innerText=data.output;
+
+});
+
+}
+
+</script>
+
+
+
+<div class="command-card">
+
+<h2>
+🎛 Service Control
+</h2>
+
+
+<h3>
+Flask Server
+</h3>
+
+<button onclick="adminAction('restart')">
+🔄 Restart Flask
+</button>
+
+
+
+<h3>
+SDN Controller
+</h3>
+
+<select id="controller_name">
+<option value="osken">osken</option>
+<option value="ryu">ryu</option>
+</select>
+
+<button onclick="controllerAction('start')">
+▶ Start
+</button>
+
+
+<button onclick="controllerAction('stop')">
+⏹ Stop
+</button>
+
+
+<button onclick="controllerAction('restart')">
+🔄 Restart
+</button>
+
+
+
+<h3>
+Open vSwitch
+</h3>
+
+<button onclick="ovsRestart()">
+🔄 Restart OVS
+</button>
+
+
+<pre id="service_output"
+style="
+background:black;
+color:#22c55e;
+padding:15px;
+margin-top:15px;
+border-radius:10px;">
+Ready...
+</pre>
+
+
+</div>
+
+
+<script>
+
+function showService(data){
+
+document.getElementById(
+"service_output"
+).innerText =
+JSON.stringify(data,null,2);
+
+}
+
+
+
+function adminAction(action){
+
+fetch(
+"/api/admin/"+action,
+{
+method:"POST"
+}
+)
+.then(r=>r.json())
+.then(showService);
+
+}
+
+
+
+function controllerAction(action){
+
+fetch(
+"/api/controllers/osken/"+action,
+{
+method:"POST"
+}
+)
+.then(r=>r.json())
+.then(showService);
+
+}
+
+
+
+function ovsRestart(){
+
+fetch(
+"/api/admin/ovs/restart",
+{
+method:"POST"
+}
+)
+.then(r=>r.json())
+.then(showService);
+
+}
+
+
+</script>
+
+
+<div class="command-card">
+
+<h2>Controller Health</h2>
+
+<pre id="controller_health">
+Checking...
+</pre>
+
+</div>
+
+
+<script>
+
+function refreshController(){
+
+fetch("/api/controllers")
+.then(r=>r.json())
+.then(data=>{
+
+let out="";
+
+data.forEach(c=>{
+
+out += c.name+
+" : "+
+(c.status.running?"🟢 RUNNING":"🔴 STOPPED")
++
+"\n";
+
+});
+
+
+document.getElementById(
+"controller_health"
+).innerText=out;
+
+
+});
+
+}
+
+setInterval(refreshController,5000);
+refreshController();
+
+</script>
+
+
+
+<div class="command-card">
+
+<h2>
+🌐 Open vSwitch Status
+</h2>
+
+<pre id="ovs_bridges">
+Checking...
+</pre>
+
+</div>
+
+
+<script>
+
+function refreshOVS(){
+
+fetch("/api/admin/ovs")
+.then(r=>r.json())
+.then(data=>{
+
+document.getElementById(
+"ovs_bridges"
+).innerText=data.output;
+
+});
+
+}
+
+
+setInterval(
+refreshOVS,
+5000
+);
+
+refreshOVS();
+
+</script>
+
+
+
+<div class="command-card">
+
+<h2>
+🖧 Mininet Topology Status
+</h2>
+
+<pre id="mininet_status">
+Checking...
+</pre>
+
+</div>
+
+
+<script>
+
+function refreshMininet(){
+
+fetch("/api/admin/mininet")
+.then(r=>r.json())
+.then(data=>{
+
+document.getElementById(
+"mininet_status"
+).innerText=data.output;
+
+});
+
+}
+
+
+setInterval(
+refreshMininet,
+5000
+);
+
+refreshMininet();
+
+
+</script>
+
+{% endblock %}

@@ -22,6 +22,7 @@ from engine.repository.experiment_repository import ExperimentRepository
 from engine.repository.sqlite.sqlite_repository import SQLiteRepository
 from engine.analysis.statistics.analyzer import StatisticsAnalyzer
 from engine.repository.models import ExperimentResult
+from engine.execution.experiment_executor import ExperimentExecutor
 
 
 class ExperimentManager:
@@ -45,6 +46,7 @@ class ExperimentManager:
         self.sqlite_repository = SQLiteRepository()
 
         self.statistics = StatisticsAnalyzer()
+        self.executor = ExperimentExecutor()
 
     ############################################################
 
@@ -351,88 +353,128 @@ class ExperimentManager:
         job=None,
     ):
 
-        experiment_id = str(uuid4())
+        class Experiment:
+            pass
 
-        logger.info(
-            f"Experiment ID: {experiment_id}"
+
+        experiment = Experiment()
+
+        experiment.experiment_id = str(uuid4())
+
+        experiment.experiment_name = config.name
+
+
+        experiment.topology = config.topology["type"]
+
+        experiment.hosts = config.topology["hosts"]
+
+        experiment.switches = config.topology["switches"]
+
+
+        experiment.protocol = config.network["protocol"]
+
+
+        experiment.controller = config.controller["name"]
+
+
+        ############################################################
+        # Register experiment metadata
+        ############################################################
+
+        initial_result = ExperimentResult(
+
+            experiment_name=experiment.experiment_name,
+
+            experiment_id=experiment.experiment_id,
+
+            topology=experiment.topology,
+
+            hosts=experiment.hosts,
+
+            switches=experiment.switches,
+
+            links=0,
+
+            protocol=experiment.protocol,
+
+            controller=experiment.controller,
+
+            bandwidth=config.deployment["bandwidth"],
+
+            delay=config.deployment["delay"],
+
+            loss=config.deployment["loss"],
+
+            minimum_rtt=0,
+
+            average_rtt=0,
+
+            maximum_rtt=0,
+
+            jitter=0,
+
+            packet_loss=0,
+
+            throughput=0,
+
+            one_way_delay=0,
+
+            status="RUNNING",
+
+            notes="Created from web experiment"
+
         )
 
-        logger.info('STEP 1: Preparing system')
 
-        self.system_manager.controller_guard.check()
+        self.sqlite_repository.save(
+            initial_result
+        )
+
+
+        logger.info(
+            f"Experiment registered {experiment.experiment_id}"
+        )
+
+
+        logger.info(
+            f"Starting experiment {experiment.experiment_id}"
+        )
+
 
         if job:
             job.update_progress(
                 10,
-                "System prepared"
+                "Experiment prepared"
             )
 
-        logger.info('STEP 2: Running experiment repetitions')
+
+        result = None
 
 
-        total_runs = config.runs
-
-
-        all_metrics = []
-
-
-        for run_number in range(1, total_runs + 1):
+        for run_number in range(
+            1,
+            config.runs + 1
+        ):
 
             logger.info(
-                f"Executing run {run_number}/{total_runs}"
+                f"Starting experiment run {run_number}/{config.runs}"
             )
-
-
-            metrics = self.execute_single_run(
-
-                config,
-
-                experiment_id,
-
-                run_number,
-
-                job
-
-            )
-
-
-            all_metrics.append(metrics)
 
 
             if job:
-
-                progress = int(
-                    20 + (70 * run_number / total_runs)
-                )
-
                 job.update_progress(
-
-                    progress,
-
-                    f"Run {run_number}/{total_runs} completed"
-
+                    10 + int((run_number-1) / config.runs * 80),
+                    f"Running experiment {run_number}/{config.runs}"
                 )
 
 
-        logger.info(
-            "All measurement runs completed"
-        )
+            result = self.executor.execute(
+                experiment,
+                job
+            )
 
 
-        statistics_report = self.statistics.analyze(
-            all_metrics
-        )
-
-
-        return {
-
-            "runs": len(all_metrics),
-
-            "measurements": all_metrics,
-
-            "statistics": statistics_report
-
-        }
+        return result
 
 
     def run_batch(

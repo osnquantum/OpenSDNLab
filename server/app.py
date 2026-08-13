@@ -4,6 +4,8 @@ OpenSDNLab Flask Server
 
 import os
 
+from server.routes.flask_logs import flask_logs
+
 from flask import Flask
 from server.routes.job import job
 from server.routes.health import health
@@ -12,6 +14,7 @@ from server.routes.jobs import jobs
 from server.routes.experiment import experiment
 from server.routes.system import system
 from server.routes.dashboard import dashboard
+from server.routes.batch import batch_api
 from server.routes.running import running
 from server.routes.topology import topology
 from server.routes.analytics import analytics
@@ -35,6 +38,13 @@ from server.routes.research.campaign import campaign_analysis
 from server.routes.research.generator import experiment_generator
 from server.routes.research.execution import experiment_execution
 from server.routes.analysis_api import analysis_api
+from server.routes.controllers import controllers_api
+from server.routes.system_control import system_control
+from server.routes.admin import admin
+from server.routes.compare_dashboard import compare_dashboard
+from server.routes.research_compare import research_compare
+from server.routes.history import history
+from server.routes.experiment_page import experiment_page
 
 
 
@@ -45,6 +55,10 @@ def create_app():
     ############################################################
     # Register API Blueprints
     ############################################################
+
+    app.register_blueprint(
+        experiment_page
+    )
 
     app.register_blueprint(
         health,
@@ -78,6 +92,11 @@ def create_app():
 
     app.register_blueprint(
         dashboard
+    )
+
+
+    app.register_blueprint(
+        batch_api
     )
 
 
@@ -174,7 +193,44 @@ def create_app():
         research_dashboard
     )
 
+
+    app.register_blueprint(
+        controllers_api
+    )
+
+    app.register_blueprint(
+        admin
+    )
+
+    app.register_blueprint(
+        compare_dashboard
+    )
+
+    app.register_blueprint(
+        research_compare
+    )
+
+    app.register_blueprint(
+        history
+    )
+
+    app.register_blueprint(
+        live
+    )
+
+
+    app.register_blueprint(
+        system_control
+    )
+
+
+    app.register_blueprint(
+        flask_logs
+    )
+
+
     return app
+
 
 
 
@@ -196,6 +252,7 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=8000,
-        debug=True,
-        use_reloader=False
+        debug=False, use_reloader=False,
     )
+
+# Flask runtime logs

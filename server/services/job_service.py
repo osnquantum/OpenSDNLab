@@ -69,4 +69,17 @@ class JobService:
         )
 
 
+    def latest_job(self):
+
+        jobs = job_executor.job_manager.list()
+
+        if not jobs:
+            return None
+
+        return self.serialize_job(
+            jobs[-1]
+        )
+
+
+
 job_service = JobService()

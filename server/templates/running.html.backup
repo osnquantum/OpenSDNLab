@@ -1,0 +1,165 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+
+
+
+<h1>
+OpenSDN Experiment Running
+</h1>
+
+
+<div class="card">
+
+<h2>
+Job ID
+</h2>
+
+<p>
+{{job.id}}
+</p>
+
+
+<h3>
+Progress
+</h3>
+
+
+<progress id="progress"
+class="progress"
+value="{{job.progress}}"
+max="100">
+</progress>
+
+
+<p id="progress_text">
+Progress: {{job.progress}}%
+</p>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>
+Execution Status
+</h2>
+
+
+<ul>
+
+<li>System Preparation ✅</li>
+
+<li>Topology Creation ✅</li>
+
+<li>Controller Deployment 🔄</li>
+
+<li>Metric Collection ⏳</li>
+
+</ul>
+
+
+</div>
+
+
+
+<div class="card">
+
+
+<h2>
+Live Logs
+</h2>
+
+
+<div class="log">
+
+18:30:01 Preparing system<br>
+
+18:30:05 Creating topology<br>
+
+18:30:10 Controller connected<br>
+
+18:30:15 Running measurement<br>
+
+18:30:20 Saving result<br>
+
+
+</div>
+
+
+</div>
+
+
+
+
+<script>
+
+function updateJob(){
+
+    fetch(
+        '/api/live/job/{{job.id}}'
+    )
+
+    .then(
+        response => response.json()
+    )
+
+    .then(
+        data => {
+
+            let job = data.data;
+
+
+            document.getElementById(
+                "progress"
+            ).value = job.progress;
+
+
+            document.getElementById(
+                "progress_text"
+            ).innerHTML =
+            "Progress: "
+            + job.progress
+            + "%";
+
+
+            let logs = "";
+
+
+            job.logs.forEach(
+                function(item){
+
+                    logs += item + "<br>";
+
+                }
+            );
+
+
+            document.getElementById(
+                "logs"
+            ).innerHTML = logs;
+
+        }
+    );
+
+}
+
+
+setInterval(
+    updateJob,
+    2000
+);
+
+
+updateJob();
+
+
+</script>
+
+
+
+
+{% endblock %}
