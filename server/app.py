@@ -42,10 +42,11 @@ from server.routes.controllers import controllers_api
 from server.routes.system_control import system_control
 from server.routes.admin import admin
 from server.routes.compare_dashboard import compare_dashboard
+from server.routes.controller_analysis import controller_analysis
 from server.routes.research_compare import research_compare
 from server.routes.history import history
 from server.routes.experiment_page import experiment_page
-
+from server.routes.qos_qoe import qos_qoe
 
 
 def create_app():
@@ -56,182 +57,82 @@ def create_app():
     # Register API Blueprints
     ############################################################
 
-    app.register_blueprint(
-        experiment_page
-    )
+    app.register_blueprint(experiment_page)
 
-    app.register_blueprint(
-        health,
-        url_prefix="/api"
-    )
+    app.register_blueprint(health, url_prefix="/api")
 
-    app.register_blueprint(
-        capabilities,
-        url_prefix="/api"
-    )
+    app.register_blueprint(capabilities, url_prefix="/api")
 
-    app.register_blueprint(
-        jobs,
-        url_prefix="/api"
-    )
+    app.register_blueprint(jobs, url_prefix="/api")
 
-    app.register_blueprint(
-        experiment,
-        url_prefix="/api"
-    )
-    app.register_blueprint(
-        job,
-        url_prefix="/api"
-    )
+    app.register_blueprint(experiment, url_prefix="/api")
+    app.register_blueprint(job, url_prefix="/api")
 
-    app.register_blueprint(
-        system,
-        url_prefix="/api"
-    )
+    app.register_blueprint(system, url_prefix="/api")
 
+    app.register_blueprint(dashboard)
 
-    app.register_blueprint(
-        dashboard
-    )
+    app.register_blueprint(batch_api)
 
+    app.register_blueprint(analytics)
 
-    app.register_blueprint(
-        batch_api
-    )
+    app.register_blueprint(running)
 
+    app.register_blueprint(analysis_bp, url_prefix="/api")
 
-    app.register_blueprint(
-        analytics
-    )
+    app.register_blueprint(analytics_data)
 
-    app.register_blueprint(
-        running
-    )
+    app.register_blueprint(correlation)
 
-    app.register_blueprint(
-        analysis_bp,
-        url_prefix="/api"
-    )
+    app.register_blueprint(matrix)
 
+    app.register_blueprint(scatter)
 
-    app.register_blueprint(
-        analytics_data
-    )
+    app.register_blueprint(cdf)
 
+    app.register_blueprint(percentile)
 
-    app.register_blueprint(
-        correlation
-    )
+    app.register_blueprint(latency)
 
+    app.register_blueprint(compare)
 
-    app.register_blueprint(
-        matrix
-    )
+    app.register_blueprint(statistical_compare)
 
+    app.register_blueprint(research_summary)
 
-    app.register_blueprint(
-        scatter
-    )
+    app.register_blueprint(research_experiments)
 
+    app.register_blueprint(research_detail)
 
-    app.register_blueprint(
-        cdf
-    )
+    app.register_blueprint(campaign_analysis)
 
+    app.register_blueprint(experiment_generator)
 
-    app.register_blueprint(
-        percentile
-    )
+    app.register_blueprint(experiment_execution)
 
+    app.register_blueprint(research_dashboard)
 
-    app.register_blueprint(
-        latency
-    )
+    app.register_blueprint(controllers_api)
 
+    app.register_blueprint(admin)
 
-    app.register_blueprint(
-        compare
-    )
+    app.register_blueprint(compare_dashboard)
 
+    app.register_blueprint(research_compare)
 
-    app.register_blueprint(
-        statistical_compare
-    )
+    app.register_blueprint(history)
 
+    app.register_blueprint(live)
 
-    app.register_blueprint(
-        research_summary
-    )
+    app.register_blueprint(system_control)
 
+    app.register_blueprint(flask_logs)
 
-    app.register_blueprint(
-        research_experiments
-    )
+    app.register_blueprint(qos_qoe)
 
-
-    app.register_blueprint(
-        research_detail
-    )
-
-
-    app.register_blueprint(
-        campaign_analysis
-    )
-
-
-    app.register_blueprint(
-        experiment_generator
-    )
-
-
-    app.register_blueprint(
-        experiment_execution
-    )
-
-
-    app.register_blueprint(
-        research_dashboard
-    )
-
-
-    app.register_blueprint(
-        controllers_api
-    )
-
-    app.register_blueprint(
-        admin
-    )
-
-    app.register_blueprint(
-        compare_dashboard
-    )
-
-    app.register_blueprint(
-        research_compare
-    )
-
-    app.register_blueprint(
-        history
-    )
-
-    app.register_blueprint(
-        live
-    )
-
-
-    app.register_blueprint(
-        system_control
-    )
-
-
-    app.register_blueprint(
-        flask_logs
-    )
-
+    app.register_blueprint(controller_analysis)
 
     return app
-
-
 
 
 app = create_app()

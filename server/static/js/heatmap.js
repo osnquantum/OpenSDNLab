@@ -9,6 +9,29 @@ async function loadHeatmap(exp){
     const result = await response.json();
 
 
+    if(result.valid === false){
+
+        document.getElementById(
+            "correlationHeatmap"
+        ).innerHTML = `
+        <div class="card">
+            <h3>⚠ Correlation Analysis Unavailable</h3>
+            <p>${result.message}</p>
+            <p>
+            Required samples:
+            ${result.required_samples}
+            </p>
+            <p>
+            Available samples:
+            ${result.available_samples}
+            </p>
+        </div>
+        `;
+
+        return;
+    }
+
+
     const matrix = result.matrix;
 
 

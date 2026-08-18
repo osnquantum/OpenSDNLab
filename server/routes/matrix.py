@@ -64,6 +64,27 @@ def correlation_matrix(experiment_id):
 
 
 
+
+    if len(rows) < 2:
+
+        return jsonify({
+
+            "success": True,
+
+            "experiment": experiment_id,
+
+            "valid": False,
+
+            "message": "Insufficient samples for correlation matrix",
+
+            "required_samples": 2,
+
+            "available_samples": len(rows),
+
+            "matrix": {}
+
+        })
+
     data = {
 
         "rtt":

@@ -26,8 +26,7 @@ class SQLiteRepository:
 
         cursor = self.connection.cursor()
 
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS experiments (
 
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,13 +74,9 @@ class SQLiteRepository:
                 notes TEXT
 
             )
-            """
-        )
+            """)
 
-        
-
-        self.connection.execute(
-            '''
+        self.connection.execute("""
             CREATE TABLE IF NOT EXISTS batch_jobs
             (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -104,16 +99,31 @@ class SQLiteRepository:
 
                 started_at REAL
             )
-            '''
-        )
+            """)
 
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS controller_metrics
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                experiment_id TEXT,
+
+                run_number INTEGER,
+
+                controller_id TEXT,
+
+                metric_name TEXT,
+
+                metric_value TEXT,
+
+                created_at TEXT
+            )
+        """)
 
         self.connection.commit()
 
-
-        cursor.execute(
-            '''
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS experiment_runs (
 
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -139,13 +149,9 @@ class SQLiteRepository:
                 created_at TEXT
 
             )
-            '''
-        )
+            """)
 
-        
-
-        self.connection.execute(
-            '''
+        self.connection.execute("""
             CREATE TABLE IF NOT EXISTS batch_jobs
             (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -168,10 +174,7 @@ class SQLiteRepository:
 
                 started_at REAL
             )
-            '''
-        )
-
-
+            """)
 
         self.connection.commit()
 
@@ -241,13 +244,10 @@ class SQLiteRepository:
 
             )
             """,
-            data
+            data,
         )
 
-        
-
-        self.connection.execute(
-            '''
+        self.connection.execute("""
             CREATE TABLE IF NOT EXISTS batch_jobs
             (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -270,27 +270,46 @@ class SQLiteRepository:
 
                 started_at REAL
             )
-            '''
-        )
-
-
+            """)
 
         self.connection.commit()
 
         return cursor.lastrowid
 
+    def save_qos_qoe_decision(self, experiment_id, run_number, decision):
 
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO qos_qoe_decisions
+            (
+                experiment_id,
+                run_number,
+                action,
+                reason
+            )
+
+            VALUES
+            (
+                ?,
+                ?,
+                ?,
+                ?
+            )
+            """,
+            (experiment_id, run_number, decision["action"], decision["reason"]),
+        )
+
+        self.connection.commit()
+
+        return cursor.lastrowid
 
     ############################################################
     # Save repeated experiment measurement run
     ############################################################
 
-    def save_run(
-        self,
-        experiment_id,
-        run_number,
-        metrics
-    ):
+    def save_run(self, experiment_id, run_number, metrics):
 
         cursor = self.connection.cursor()
 
@@ -328,33 +347,21 @@ class SQLiteRepository:
 
             )
             """,
-
             (
-
                 experiment_id,
                 run_number,
-
                 metrics["minimum_rtt"],
                 metrics["average_rtt"],
                 metrics["maximum_rtt"],
-
                 metrics["jitter"],
                 metrics["packet_loss"],
-
                 metrics["throughput"],
-
-                  metrics["one_way_delay"],
-
-                  metrics["mos"]
-
-            )
-
+                metrics["one_way_delay"],
+                metrics["mos"],
+            ),
         )
 
-        
-
-        self.connection.execute(
-            '''
+        self.connection.execute("""
             CREATE TABLE IF NOT EXISTS batch_jobs
             (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -377,11 +384,59 @@ class SQLiteRepository:
 
                 started_at REAL
             )
-            '''
-        )
-
-
+            """)
 
         self.connection.commit()
 
         return cursor.lastrowid
+
+
+    ############################################################
+    # Save Controller Monitoring Metrics
+    ############################################################
+
+    def save_controller_metrics(
+        self,
+        experiment_id,
+        run_number,
+        controller_id,
+        metrics
+    ):
+
+        cursor = self.connection.cursor()
+
+        for name, value in metrics.items():
+
+            cursor.execute(
+                """
+                INSERT INTO controller_metrics
+                (
+                    experiment_id,
+                    run_number,
+                    controller_id,
+                    metric_name,
+                    metric_value,
+                    created_at
+                )
+
+                VALUES
+                (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    datetime('now')
+                )
+                """,
+                (
+                    experiment_id,
+                    run_number,
+                    controller_id,
+                    name,
+                    str(value)
+                )
+            )
+
+        self.connection.commit()
+

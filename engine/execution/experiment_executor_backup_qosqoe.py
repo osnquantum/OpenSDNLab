@@ -4,6 +4,8 @@ OpenSDNLab Experiment Executor
 Coordinates complete SDN experiment lifecycle.
 """
 
+from engine.monitoring.models import metrics
+from engine.monitoring.models import metrics
 from engine.network.factory.topology_factory import TopologyFactory
 from engine.network.inventory.inventory_manager import InventoryManager
 
@@ -21,7 +23,7 @@ from engine.system.runtime_state import RuntimeState
 from engine.core.logger import logger
 from engine.system.cleanup_manager import CleanupManager
 from engine.control.qos_qoe_engine import QoSQoEEngine
-from engine.controllers.monitoring.controller_monitor import ControllerMonitor
+
 
 class ExperimentExecutor:
 
@@ -35,17 +37,15 @@ class ExperimentExecutor:
 
         self.controller_manager = ControllerManager()
 
-        self.controller_monitor = ControllerMonitor()
-
         self.monitoring = MonitoringManager()
 
         self.traffic = TrafficManager()
-
         self.database = SQLiteRepository()
 
         self.metric_parser = MetricParser()
-
         self.qos_qoe_engine = QoSQoEEngine()
+
+    ########################################################
 
     def execute(self, experiment, job=None):
 
@@ -60,6 +60,10 @@ class ExperimentExecutor:
 
         logger.info(f"Starting experiment {experiment.experiment_id}")
 
+        ####################################################
+        # 1. Create topology
+        ####################################################
+
         topology = self.topology_factory.create(
             topology=experiment.topology,
             hosts=experiment.hosts,
@@ -69,6 +73,10 @@ class ExperimentExecutor:
             name=experiment.experiment_name,
         )
 
+        ####################################################
+        # 2. Build inventory
+        ####################################################
+
         inventory = self.inventory_manager.build(topology)
 
         RuntimeState.update(
@@ -77,19 +85,23 @@ class ExperimentExecutor:
             switches=experiment.switches,
         )
 
-        controller = self.controller_manager.get(experiment.controller)
+        ####################################################
+        # 3. Start controller
+        ####################################################
 
-        controller_metrics = {}
+        controller = self.controller_manager.get(experiment.controller)
 
         controller_info = controller.start()
 
         RuntimeState.update(
-            stage="Controller Running",
-            controller=str(experiment.controller),
-            controller_metrics=controller_metrics
+            stage="Controller Running", controller=str(experiment.controller)
         )
 
         logger.info(controller_info)
+
+        ####################################################
+        # 4. Deploy Mininet
+        ####################################################
 
         net = self.backend.deploy(inventory, controller)
 
@@ -101,6 +113,10 @@ class ExperimentExecutor:
 
         time.sleep(5)
 
+        ####################################################
+        # 5. Generate Traffic
+        ####################################################
+
         logger.info("Starting traffic experiment")
 
         RuntimeState.update(stage="Traffic Measurement")
@@ -109,51 +125,40 @@ class ExperimentExecutor:
 
         logger.info(traffic_report)
 
+        ####################################################
+        # 6. Save Experiment Run
+        ####################################################
+
         metrics = self.metric_parser.parse(
             traffic_report["ping"], traffic_report["throughput"]
         )
-
         decision = self.qos_qoe_engine.evaluate(
             mos=metrics["mos"],
             rtt=metrics["average_rtt"],
             packet_loss=metrics["packet_loss"],
-            throughput=metrics["throughput"],
+            throughput=metrics["throughput"]
         )
 
-        logger.info(f"QoS-QoE Decision: {decision}")
 
-        RuntimeState.update(
-            stage="Metrics Collected", metrics=metrics, decision=decision
-        )
+logger.info(
+    f"QoS-QoE Decision: {decision}"
+)
 
-        previous = self.database.connection.execute(
+RuntimeState.update(stage="Metrics Collected", metrics=metrics)
+
+    previous = self.database.connection.execute(
             "SELECT MAX(run_number) FROM experiment_runs WHERE experiment_id=?",
             (experiment.experiment_id,),
         ).fetchone()[0]
 
-        run_number = (previous or 0) + 1
-
-        controller_metrics = self.controller_monitor.collect(
-            controller
-        )
-
-        self.database.save_controller_metrics(
-            experiment.experiment_id,
-            run_number,
-            controller.name(),
-            controller_metrics["metrics"]
-        )
+    run_number = (previous or 0) + 1
 
         self.database.save_run(experiment.experiment_id, run_number, metrics)
-        self.database.save_qos_qoe_decision(
-            experiment.experiment_id, run_number, decision
-        )
 
         logger.info("Stopping Mininet after successful experiment")
 
         try:
             self.backend.stop()
-
         except Exception:
             pass
 

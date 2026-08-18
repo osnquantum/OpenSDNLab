@@ -13,6 +13,9 @@ from os_ken.ofproto import ofproto_v1_3
 from os_ken.lib.packet import packet
 from os_ken.lib.packet import ethernet
 
+import json
+import os
+
 
 class SimpleSwitch13(app_manager.OSKenApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -20,6 +23,30 @@ class SimpleSwitch13(app_manager.OSKenApp):
     def __init__(self, *args, **kwargs):
         super(SimpleSwitch13, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
+
+        self.stats = {
+            "switch_count": 0,
+            "packet_in_count": 0,
+            "flow_install_count": 0
+        }
+
+
+    def export_stats(self):
+
+        path = "runtime/controller_stats/osken.json"
+
+        os.makedirs(
+            "runtime/controller_stats",
+            exist_ok=True
+        )
+
+        with open(path, "w") as f:
+
+            json.dump(
+                self.stats,
+                f,
+                indent=4
+            )
 
     ############################################################
 
@@ -44,6 +71,10 @@ class SimpleSwitch13(app_manager.OSKenApp):
 
         datapath.send_msg(mod)
 
+        self.stats["flow_install_count"] += 1
+
+        self.export_stats()
+
     ############################################################
 
     @set_ev_cls(
@@ -53,6 +84,9 @@ class SimpleSwitch13(app_manager.OSKenApp):
     def switch_features_handler(self, ev):
 
         datapath = ev.msg.datapath
+
+        self.stats["switch_count"] += 1
+
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
@@ -79,6 +113,10 @@ class SimpleSwitch13(app_manager.OSKenApp):
         MAIN_DISPATCHER
     )
     def packet_in_handler(self, ev):
+
+        self.stats["packet_in_count"] += 1
+
+        self.export_stats()
 
         msg = ev.msg
         datapath = msg.datapath

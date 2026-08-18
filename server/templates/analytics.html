@@ -50,6 +50,32 @@ font-weight:bold;
 }
 
 
+
+.qos-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+gap:12px;
+}
+
+.qos-item{
+background:#1f2937;
+padding:12px;
+border-radius:8px;
+font-size:14px;
+}
+
+.qos-run{
+font-size:18px;
+font-weight:bold;
+margin-bottom:8px;
+}
+
+.qos-time{
+font-size:12px;
+opacity:0.7;
+margin-top:8px;
+}
+
 </style>
 
 
@@ -91,6 +117,23 @@ OpenSDN Research Analytics
 Experiment
 </h2>
 
+<div class="card">
+
+<h2>
+QoS-QoE Adaptive Decision History
+</h2>
+
+
+<div id="qosQoeHistory" class="qos-grid">
+
+Loading...
+
+</div>
+
+
+</div>
+
+
 <p>
 {{experiment_name}}
 </p>
@@ -121,7 +164,34 @@ Mean RTT
 
 </div>
 
+<div class="card">
 
+<h3>
+Mean MOS
+</h3>
+
+<div class="value">
+
+{{data.mos.mean}}
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>
+QoE Quality
+</h3>
+
+<div class="value">
+
+{{data.mos.quality.level}}
+
+</div>
+
+</div>
 
 <div class="card">
 
@@ -441,6 +511,27 @@ loadScatter(
 
 
 <h2>
+Controller Impact Analysis
+</h2>
+
+
+<canvas id="controllerImpactChart"></canvas>
+
+
+<script src="/static/js/controller_impact.js"></script>
+
+
+<script>
+
+loadControllerImpact(
+"{{experiment_name}}"
+);
+
+</script>
+
+
+
+<h2>
 RTT CDF Analysis
 </h2>
 
@@ -534,7 +625,16 @@ loadLatency(
 
 </script>
 
+<script src="/static/js/qos_qoe.js"></script>
 
+
+<script>
+
+loadQoSQoEHistory(
+"{{experiment_name}}"
+);
+
+</script>
 </body>
 
 </html>
