@@ -29,7 +29,8 @@ class AnalyticsService:
             jitter,
             throughput,
             packet_loss,
-            estimated_one_way_delay
+            estimated_one_way_delay,
+              mos
 
             FROM experiment_runs
 

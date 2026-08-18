@@ -598,7 +598,7 @@ update();
 <div class="command-card">
 
 <h2>
-🖥 System Monitor
+🖥 Runtime Monitor
 </h2>
 
 
@@ -615,7 +615,7 @@ Controller:
 
 
 <p>
-Mininet:
+Experiment Execution:
 <b id="mininet">-</b>
 </p>
 
@@ -698,9 +698,9 @@ data.controller.running ?
 document.getElementById(
 "mininet"
 ).innerHTML =
-data.mininet.running ?
+data.experiment.status === "RUNNING" ?
 "🟢 RUNNING" :
-"🔴 STOPPED";
+"⚪ IDLE";
 
 
 

@@ -95,4 +95,10 @@ class MetricParser:
         )
 
 
+        metrics["mos"] = calculate_mos(
+            metrics["average_rtt"],
+            metrics["packet_loss"]
+        )
+
+
         return metrics

@@ -175,8 +175,12 @@ def live_status():
 )
 def system_status():
 
+    status = monitor.get_status()
+
+    status["experiment"] = RuntimeState.get()
+
     return jsonify(
-        monitor.get_status()
+        status
     )
 
 

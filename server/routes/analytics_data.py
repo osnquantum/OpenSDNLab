@@ -6,25 +6,16 @@ from flask import Blueprint, jsonify
 
 from engine.repository.sqlite.sqlite_repository import SQLiteRepository
 
-
-analytics_data = Blueprint(
-    "analytics_data",
-    __name__
-)
+analytics_data = Blueprint("analytics_data", __name__)
 
 
 db = SQLiteRepository()
 
 
-
-@analytics_data.route(
-    "/api/analytics/data/<experiment_id>"
-)
+@analytics_data.route("/api/analytics/data/<experiment_id>")
 def analytics_dataset(experiment_id):
 
-
     cursor = db.connection.cursor()
-
 
     cursor.execute(
         """
@@ -37,7 +28,8 @@ def analytics_dataset(experiment_id):
         jitter,
         packet_loss,
         throughput,
-        estimated_one_way_delay
+        estimated_one_way_delay,
+        mos
 
         FROM experiment_runs
 
@@ -46,107 +38,55 @@ def analytics_dataset(experiment_id):
         ORDER BY run_number
 
         """,
-        (experiment_id,)
+        (experiment_id,),
     )
-
 
     rows = cursor.fetchall()
 
-
-
     if not rows:
 
-        return jsonify({
-
-            "success":False,
-
-            "message":
-            "No experiment data found"
-
-        })
-
-
+        return jsonify({"success": False, "message": "No experiment data found"})
 
     data = {
-
         "runs": [],
-
         "rtt": [],
-
         "minimum_rtt": [],
-
         "maximum_rtt": [],
-
         "jitter": [],
-
         "packet_loss": [],
-
         "throughput": [],
-
-        "one_way_delay": []
-
+        "one_way_delay": [],
+        "mos": [],
     }
-
-
 
     for row in rows:
 
+        data["runs"].append(row[0])
 
-        data["runs"].append(
-            row[0]
-        )
+        data["minimum_rtt"].append(row[1])
 
+        data["rtt"].append(row[2])
 
-        data["minimum_rtt"].append(
-            row[1]
-        )
+        data["maximum_rtt"].append(row[3])
 
+        data["jitter"].append(row[4])
 
-        data["rtt"].append(
-            row[2]
-        )
+        data["packet_loss"].append(row[5])
 
+        data["throughput"].append(row[6])
 
-        data["maximum_rtt"].append(
-            row[3]
-        )
+        data["one_way_delay"].append(row[7])
 
+        data["mos"].append(row[8])
 
-        data["jitter"].append(
-            row[4]
-        )
-
-
-        data["packet_loss"].append(
-            row[5]
-        )
-
-
-        data["throughput"].append(
-            row[6]
-        )
-
-
-        data["one_way_delay"].append(
-            row[7]
-        )
-
-
-
-    return jsonify({
-
-        "success":True,
-
-        "experiment":
-        experiment_id,
-
-        "samples":
-        len(rows),
-
-        "data":
-        data
-
-    })
+    return jsonify(
+        {
+            "success": True,
+            "experiment": experiment_id,
+            "samples": len(rows),
+            "data": data,
+        }
+    )
 
 
 @analytics_data.route("/api/analytics/metrics/<experiment_id>")
@@ -164,21 +104,15 @@ def analytics_metrics(experiment_id):
         WHERE experiment_id=?
         ORDER BY run_number
         """,
-        (experiment_id,)
+        (experiment_id,),
     ).fetchall()
 
-
-    return jsonify([
-        {
-            "run":r[0],
-            "rtt":r[1],
-            "jitter":r[2],
-            "loss":r[3],
-            "throughput":r[4]
-        }
-        for r in rows
-    ])
-
+    return jsonify(
+        [
+            {"run": r[0], "rtt": r[1], "jitter": r[2], "loss": r[3], "throughput": r[4]}
+            for r in rows
+        ]
+    )
 
 
 @analytics_data.route("/api/analytics/advanced/<experiment_id>")
@@ -196,21 +130,15 @@ def advanced_metrics(experiment_id):
         WHERE experiment_id=?
         ORDER BY run_number
         """,
-        (experiment_id,)
+        (experiment_id,),
     ).fetchall()
 
-
-    return jsonify({
-
-        "runs":[r[0] for r in rows],
-
-        "rtt":[r[1] for r in rows],
-
-        "jitter":[r[2] for r in rows],
-
-        "loss":[r[3] for r in rows],
-
-        "throughput":[r[4] for r in rows]
-
-    })
-
+    return jsonify(
+        {
+            "runs": [r[0] for r in rows],
+            "rtt": [r[1] for r in rows],
+            "jitter": [r[2] for r in rows],
+            "loss": [r[3] for r in rows],
+            "throughput": [r[4] for r in rows],
+        }
+    )

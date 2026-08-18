@@ -22,7 +22,8 @@ def get_history():
             average_rtt,
             jitter,
             packet_loss,
-            throughput
+            throughput,
+              mos
         FROM experiment_runs
         ORDER BY id DESC
         LIMIT 20
@@ -41,7 +42,8 @@ def get_history():
             "rtt": r[2],
             "jitter": r[3],
             "loss": r[4],
-            "throughput": r[5]
+            "throughput": r[5],
+              "mos": r[6]
 
         })
 

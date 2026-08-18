@@ -26,6 +26,11 @@ const metricInfo = {
     packet_loss:{
         name:"Packet Loss",
         unit:"%"
+    },
+
+    mos:{
+        name:"Mean Opinion Score",
+        unit:"MOS"
     }
 
 };
