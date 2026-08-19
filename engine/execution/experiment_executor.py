@@ -60,13 +60,39 @@ class ExperimentExecutor:
 
         logger.info(f"Starting experiment {experiment.experiment_id}")
 
+        # Use the complete custom topology when available.
+        # Fall back to the legacy linear configuration.
+        topology_config = getattr(
+            experiment,
+            "topology_data",
+            None
+        )
+
+        if not isinstance(topology_config, dict):
+
+            topology_config = {
+                "type": experiment.topology,
+                "hosts": experiment.hosts,
+                "switches": experiment.switches
+            }
+
         topology = self.topology_factory.create(
-            topology=experiment.topology,
-            hosts=experiment.hosts,
-            switches=experiment.switches,
+            topology=topology_config.get(
+                "type",
+                "linear"
+            ),
+            hosts=topology_config.get(
+                "hosts",
+                experiment.hosts
+            ),
+            switches=topology_config.get(
+                "switches",
+                experiment.switches
+            ),
             protocol=experiment.protocol,
             controller=experiment.controller,
             name=experiment.experiment_name,
+            topology_data=topology_config,
         )
 
         inventory = self.inventory_manager.build(topology)
@@ -103,14 +129,37 @@ class ExperimentExecutor:
 
         logger.info("Starting traffic experiment")
 
+        print("===== TRAFFIC DEBUG 1 =====", flush=True)
+
         RuntimeState.update(stage="Traffic Measurement")
 
-        traffic_report = self.traffic.run(net.hosts[0], net.hosts[-1])
+        print("===== TRAFFIC DEBUG 2 =====", flush=True)
+
+        print(
+            f"===== TRAFFIC HOSTS: {net.hosts[0].name} -> "
+            f"{net.hosts[-1].name} =====",
+            flush=True
+        )
+
+        print("===== TRAFFIC DEBUG 3 =====", flush=True)
+
+        traffic_report = self.traffic.run(
+            net.hosts[0],
+            net.hosts[-1]
+        )
+
+        print("===== TRAFFIC DEBUG 4 =====", flush=True)
 
         logger.info(traffic_report)
 
+        logger.info("Batch DEBUG: traffic completed")
+
         metrics = self.metric_parser.parse(
             traffic_report["ping"], traffic_report["throughput"]
+        )
+
+        logger.info(
+            f"Batch DEBUG: metrics parsed: {metrics}"
         )
 
         decision = self.qos_qoe_engine.evaluate(
@@ -133,6 +182,8 @@ class ExperimentExecutor:
 
         run_number = (previous or 0) + 1
 
+        logger.info("Batch DEBUG: collecting controller metrics")
+
         controller_metrics = self.controller_monitor.collect(
             controller
         )
@@ -144,7 +195,12 @@ class ExperimentExecutor:
             controller_metrics["metrics"]
         )
 
-        self.database.save_run(experiment.experiment_id, run_number, metrics)
+        self.database.save_run(
+            experiment.experiment_id,
+            run_number,
+            metrics,
+            job_id=job
+        )
         self.database.save_qos_qoe_decision(
             experiment.experiment_id, run_number, decision
         )

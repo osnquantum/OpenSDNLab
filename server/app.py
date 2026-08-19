@@ -29,6 +29,7 @@ from server.routes.compare import compare
 from server.routes.statistical_compare import statistical_compare
 from server.routes.research_summary import research_summary
 from server.routes.topology_api import topology_api
+from server.routes.topology_save import topology_save
 from server.routes.live import live
 from server.routes.analysis import analysis_bp
 from server.routes.research.experiments import research_experiments
@@ -58,6 +59,9 @@ def create_app():
     ############################################################
 
     app.register_blueprint(experiment_page)
+    app.register_blueprint(topology)
+    app.register_blueprint(topology_api)
+    app.register_blueprint(topology_save)
 
     app.register_blueprint(health, url_prefix="/api")
 

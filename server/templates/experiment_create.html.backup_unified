@@ -1,0 +1,99 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+<h2>🧪 Create Experiment</h2>
+
+<form>
+
+<label>Name</label>
+<input id="name" value="Web Experiment"><br>
+
+<label>Topology</label>
+<select id="topology">
+<option>linear</option>
+<option>tree</option>
+<option>single</option>
+</select><br>
+
+<label>Hosts</label>
+<input id="hosts" value="2"><br>
+
+<label>Switches</label>
+<input id="switches" value="2"><br>
+
+<label>Controller</label>
+<select id="controller">
+<option>osken</option>
+<option>ryu</option>
+</select><br>
+
+<label>Protocol</label>
+<select id="protocol">
+<option>tcp</option>
+<option>udp</option>
+</select><br>
+
+<label>Runs</label>
+<input id="runs" value="10"><br><br>
+
+
+<button type="button" onclick="startExperiment()">
+▶ Start Experiment
+</button>
+
+</form>
+
+
+<pre id="result"></pre>
+
+
+
+<script>
+
+function startExperiment(){
+
+fetch("/api/experiments/run",
+{
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+name:name.value,
+
+topology:topology.value,
+
+hosts:Number(hosts.value),
+
+switches:Number(switches.value),
+
+controller:controller.value,
+
+protocol:protocol.value,
+
+runs:Number(runs.value)
+
+})
+
+})
+
+.then(r=>r.json())
+
+.then(data=>{
+
+let job=data.data.job_id;
+
+window.location.href="/running/"+job;
+
+});
+
+}
+
+</script>
+
+
+{% endblock %}

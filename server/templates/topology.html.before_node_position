@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>OpenSDNLab Topology Designer</title>
+
+<script src="/static/js/jsplumb.min.js"></script>
+
+
+<style>
+
+body{
+background:#111827;
+color:white;
+font-family:Arial;
+}
+
+
+.card{
+background:#1f2937;
+padding:20px;
+margin:20px;
+border-radius:10px;
+}
+
+
+button{
+
+padding:10px;
+margin:5px;
+cursor:pointer;
+
+}
+
+
+#canvas{
+
+height:600px;
+background:#0f172a;
+border:1px solid white;
+position:relative;
+
+}
+
+
+.device{
+
+position:absolute;
+
+padding:15px;
+
+border-radius:8px;
+
+cursor:move;
+
+background:#2563eb;
+
+}
+
+
+.device.switch{
+
+background:#16a34a;
+
+}
+
+
+.device.controller{
+
+background:#dc2626;
+
+}
+
+
+pre{
+
+background:#020617;
+padding:15px;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>
+OpenSDNLab Topology Designer
+</h1>
+
+
+<div class="card">
+
+
+<h2>
+Controller Configuration
+</h2>
+
+
+<select id="controller">
+
+
+<option>
+OS-Ken
+</option>
+
+
+<option>
+Ryu
+</option>
+
+
+<option>
+ONOS
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+<div class="card">
+
+
+<h2>
+Topology Controls
+</h2>
+
+
+<button onclick="addHost()">
++ Add Host
+</button>
+
+
+<button onclick="addSwitch()">
++ Add Switch
+</button>
+
+
+<button onclick="enableLinkMode()">
++ Connect Link
+</button>
+
+
+<button onclick="enableDeleteMode()">
+Delete Mode
+</button>
+
+
+<button onclick="clearTopology()">
+Clear All
+</button>
+
+
+<button onclick="saveTopology()">
+Save Topology
+</button>
+
+
+</div>
+
+
+
+<div class="card">
+
+
+<h2>
+Topology Canvas
+</h2>
+
+
+
+<div id="controllerNode" class="device controller"
+style="left:450px;top:20px">
+
+OS-Ken Controller
+
+</div>
+
+<div id="canvas">
+
+</div>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>
+Topology JSON
+</h2>
+
+
+<pre id="output">
+{}
+</pre>
+
+
+</div>
+
+
+
+<script>
+
+
+let topologyState={
+
+nodes:[],
+
+links:[],
+
+controller:"OS-Ken"
+
+};
+
+
+
+let hostCounter=0;
+
+let switchCounter=0;
+
+let linkMode=false;
+
+let selectedNode=null;
+
+
+let deleteMode=false;
+
+
+
+
+
+function getNextId(prefix){
+
+
+    let i=1;
+
+
+    while(
+        document.getElementById(prefix+i)
+    ){
+
+        i++;
+
+    }
+
+
+    return i;
+
+}
+
+
+
+function addHost(){
+
+
+hostCounter++;
+
+
+let id="h"+hostCounter;
+
+
+topologyState.nodes.push({
+
+id:id,
+
+type:"host"
+
+});
+
+
+createNode(id,"host");
+
+
+updateJSON();
+
+
+}
+
+
+
+
+function addSwitch(){
+
+
+switchCounter++;
+
+
+let id="s"+switchCounter;
+
+
+topologyState.nodes.push({
+
+id:id,
+
+type:"switch"
+
+});
+
+
+createNode(id,"switch");
+
+
+updateJSON();
+
+
+}
+
+
+
+
+function createNode(id,type){
+
+
+let canvas=document.getElementById("canvas");
+
+
+let node=document.createElement("div");
+
+
+node.id=id;
+
+
+node.className="device "+type;
+
+
+node.innerHTML=id;
+
+
+
+node.style.left=
+
+(50+Math.random()*400)+"px";
+
+
+node.style.top=
+
+(50+Math.random()*400)+"px";
+
+
+
+canvas.appendChild(node);
+
+
+
+jsPlumb.draggable(node);
+
+
+
+
+node.addEventListener(
+"click",
+function(e){
+
+
+    if(!linkMode){
+
+        return;
+
+    }
+
+
+    console.log(
+        "Selected node:",
+        id
+    );
+
+
+
+    if(selectedNode===null){
+
+
+        selectedNode=id;
+
+
+        node.style.border=
+        "3px solid yellow";
+
+
+        alert(
+        "First node: "+id
+        );
+
+
+    }
+    else{
+
+
+        if(selectedNode!==id){
+
+
+            console.log(
+            "Creating link:",
+            selectedNode,
+            id
+            );
+
+
+            createLink(
+                selectedNode,
+                id
+            );
+
+
+        }
+
+
+        let first =
+        document.getElementById(
+            selectedNode
+        );
+
+
+        if(first){
+
+            first.style.border="";
+
+        }
+
+
+        selectedNode=null;
+
+        linkMode=false;
+
+
+    }
+
+
+    e.stopPropagation();
+
+
+});
+
+
+
+
+node.onclick=function(e){
+
+
+    if(deleteMode){
+
+
+        deleteNode(id);
+
+
+        e.stopPropagation();
+
+
+    }
+
+
+};
+
+
+}
+
+
+
+
+
+function enableDeleteMode(){
+
+    deleteMode=true;
+
+    alert(
+        "Click a node to delete"
+    );
+
+}
+
+
+
+function deleteNode(id){
+
+
+    topologyState.nodes =
+    topologyState.nodes.filter(
+        n=>n.id!==id
+    );
+
+
+    topologyState.links =
+    topologyState.links.filter(
+        l=>
+        l.source!==id &&
+        l.target!==id
+    );
+
+
+    let node=
+    document.getElementById(id);
+
+
+    if(node){
+
+        node.remove();
+
+    }
+
+
+    deleteMode=false;
+
+    updateJSON();
+
+}
+
+
+
+
+function clearTopology(){
+
+    topologyState={
+
+        nodes:[],
+
+        links:[],
+
+        controller:
+        document.getElementById("controller").value
+
+    };
+
+
+    document.getElementById(
+        "canvas"
+    ).innerHTML="";
+
+
+    updateJSON();
+
+}
+
+
+
+
+function enableLinkMode(){
+
+    linkMode=true;
+
+    selectedNode=null;
+
+
+    alert(
+        "Select first node then second node"
+    );
+
+}
+
+
+
+function createLink(source,target){
+
+
+console.log(
+"LINK CREATED",
+source,
+target
+);
+
+
+
+    // avoid duplicate links
+
+    let exists =
+    topologyState.links.some(
+        l =>
+        (l.source===source &&
+         l.target===target)
+        ||
+        (l.source===target &&
+         l.target===source)
+    );
+
+
+    if(exists){
+
+        return;
+
+    }
+
+
+
+    topologyState.links.push({
+
+        source:source,
+
+        target:target
+
+    });
+
+
+
+    jsPlumb.connect({
+
+        source:source,
+
+        target:target,
+
+        connector:[
+            "Straight"
+        ],
+
+        paintStyle:{
+            stroke:"#ffffff",
+            strokeWidth:3
+        }
+
+    });
+
+
+    updateJSON();
+
+
+}
+
+function saveTopology(){
+
+
+    topologyState.controller =
+    document.getElementById("controller").value;
+
+
+
+    if(topologyState.nodes.length < 2){
+
+        alert(
+            "Topology must contain at least one host and one switch."
+        );
+
+        return;
+
+    }
+
+
+
+    if(topologyState.links.length < 1){
+
+        alert(
+            "Topology must contain at least one link."
+        );
+
+        return;
+
+    }
+
+
+
+    localStorage.setItem(
+
+        "opensdnlab_topology",
+
+        JSON.stringify(topologyState)
+
+    );
+
+
+
+    updateJSON();
+
+
+
+    alert(
+        "Topology saved successfully"
+    );
+
+
+}
+
+
+
+
+
+function updateJSON(){
+
+
+document.getElementById("output").innerHTML=
+
+JSON.stringify(
+
+topologyState,
+
+null,
+
+4
+
+);
+
+
+}
+
+
+
+</script>
+
+
+</body>
+
+
+</html>

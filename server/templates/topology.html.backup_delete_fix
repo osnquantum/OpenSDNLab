@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>OpenSDNLab Topology Designer</title>
+
+<script src="/static/js/jsplumb.min.js"></script>
+
+
+<style>
+
+body{
+background:#111827;
+color:white;
+font-family:Arial;
+}
+
+
+.card{
+background:#1f2937;
+padding:20px;
+margin:20px;
+border-radius:10px;
+}
+
+
+button{
+
+padding:10px;
+margin:5px;
+cursor:pointer;
+
+}
+
+
+#canvas{
+
+height:600px;
+background:#0f172a;
+border:1px solid white;
+position:relative;
+
+}
+
+
+.device{
+
+position:absolute;
+
+padding:15px;
+
+border-radius:8px;
+
+cursor:move;
+
+background:#2563eb;
+
+}
+
+
+
+.device.controller{
+
+background:#dc2626;
+
+}
+
+.device.switch{
+
+background:#16a34a;
+
+}
+
+
+.device.controller{
+
+background:#dc2626;
+
+}
+
+
+pre{
+
+background:#020617;
+padding:15px;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>
+OpenSDNLab Topology Designer
+</h1>
+
+
+<div class="card">
+
+
+<h2>
+Controller Configuration
+</h2>
+
+
+<select id="controller">
+
+
+<option>
+OS-Ken
+</option>
+
+
+<option>
+Ryu
+</option>
+
+
+<option>
+ONOS
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+<div class="card">
+
+
+<h2>
+Topology Controls
+</h2>
+
+
+<button onclick="addHost()">
++ Add Host
+</button>
+
+
+<button onclick="addSwitch()">
++ Add Switch
+</button>
+
+
+<button id="connectLinkBtn" onclick="enableLinkMode()">
++ Connect Link
+</button>
+
+
+<button id="deleteNodeBtn" onclick="enableDeleteMode()">
+Delete Node
+</button>
+
+<button id="deleteLinkBtn" onclick="enableDeleteLinkMode()">
+Delete Link
+</button>
+
+
+<button onclick="clearTopology()">
+Clear All
+</button>
+
+
+<button onclick="saveTopology()">
+Save Topology
+</button>
+
+
+</div>
+
+
+
+<div class="card">
+
+
+<h2>
+Topology Canvas
+</h2>
+
+
+
+
+
+<div id="canvas">
+
+
+<div id="controllerNode"
+class="device controller"
+style="left:450px;top:40px">
+
+OS-Ken Controller
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>
+Topology JSON
+</h2>
+
+
+<pre id="output">
+{}
+</pre>
+
+
+</div>
+
+
+
+<script>
+
+
+let topologyState={
+
+nodes:[],
+
+links:[],
+
+controller:"OS-Ken"
+
+};
+
+
+
+let hostCounter=0;
+
+let switchCounter=0;
+
+let linkMode=false;
+
+let selectedNode=null;
+
+
+let deleteMode=false;
+
+let deleteLinkMode=false;
+
+
+
+
+
+function getNextId(prefix){
+
+
+    let i=1;
+
+
+    while(
+        document.getElementById(prefix+i)
+    ){
+
+        i++;
+
+    }
+
+
+    return i;
+
+}
+
+
+
+function addHost(){
+
+
+hostCounter++;
+
+
+let id="h"+hostCounter;
+
+
+topologyState.nodes.push({
+
+id:id,
+
+type:"host"
+
+});
+
+
+createNode(id,"host");
+
+
+updateJSON();
+
+
+}
+
+
+
+
+function addSwitch(){
+
+
+switchCounter++;
+
+
+let id="s"+switchCounter;
+
+
+topologyState.nodes.push({
+
+id:id,
+
+type:"switch"
+
+});
+
+
+createNode(id,"switch");
+
+
+updateJSON();
+
+
+}
+
+
+
+
+function createNode(id,type){
+
+    let canvas=document.getElementById("canvas");
+
+    let node=document.createElement("div");
+
+    node.id=id;
+
+    node.className="device "+type;
+
+    node.innerHTML=id;
+
+    /*
+     * Position nodes according to their type.
+     * Hosts are placed along the bottom.
+     * Switches are placed above the hosts.
+     */
+    if(type==="host"){
+
+        let index =
+            topologyState.nodes.filter(
+                n=>n.type==="host"
+            ).length - 1;
+
+        node.style.left =
+            (50 + index*120)+"px";
+
+        node.style.top =
+            "100px";
+
+    }
+    else if(type==="switch"){
+
+        let index =
+            topologyState.nodes.filter(
+                n=>n.type==="switch"
+            ).length - 1;
+
+        node.style.left =
+            (200 + index*150)+"px";
+
+        node.style.top =
+            "300px";
+
+    }
+
+    canvas.appendChild(node);
+
+    /*
+     * Make the node draggable.
+     */
+    jsPlumb.draggable(node);
+
+    /*
+     * Connect the first switch to the controller.
+     * This replaces the duplicated controller connection
+     * blocks that existed in the previous function.
+     */
+    if(type==="switch"){
+
+        let switches =
+            topologyState.nodes.filter(
+                n=>n.type==="switch"
+            );
+
+        if(switches.length===1){
+
+            jsPlumb.connect({
+
+                source:"controllerNode",
+
+                target:id,
+
+                connector:[
+                    "Straight"
+                ],
+
+                paintStyle:{
+
+                    stroke:"#ef4444",
+
+                    strokeWidth:3,
+
+                    dashstyle:"5 5"
+
+                }
+
+            });
+
+        }
+
+    }
+
+    /*
+     * Node click handling for link creation.
+     */
+    node.addEventListener(
+        "click",
+        function(e){
+
+            if(!linkMode){
+
+                return;
+
+            }
+
+            e.stopPropagation();
+
+            console.log(
+                "Selected node:",
+                id
+            );
+
+            /*
+             * First node:
+             * highlight it and wait for the second node.
+             */
+            if(selectedNode === null){
+
+                selectedNode = id;
+
+                node.style.border =
+                    "3px solid #facc15";
+
+                node.style.boxShadow =
+                    "0 0 12px rgba(250,204,21,0.8)";
+
+                return;
+
+            }
+
+            /*
+             * Clicking the same node again cancels
+             * the current selection.
+             */
+            if(selectedNode === id){
+
+                node.style.border = "";
+
+                node.style.boxShadow = "";
+
+                selectedNode = null;
+
+                return;
+
+            }
+
+            /*
+             * Second node:
+             * create the link.
+             */
+            console.log(
+                "Creating link:",
+                selectedNode,
+                id
+            );
+
+            createLink(
+                selectedNode,
+                id
+            );
+
+            /*
+             * Clear first-node highlight.
+             * Keep linkMode ACTIVE so another link
+             * can be created immediately.
+             */
+            let first =
+                document.getElementById(
+                    selectedNode
+                );
+
+            if(first){
+
+                first.style.border = "";
+
+                first.style.boxShadow = "";
+
+            }
+
+            selectedNode = null;
+
+        }
+    );
+
+    /*
+     * Delete-mode handling.
+     */
+    node.onclick=function(e){
+
+        if(deleteMode){
+
+            deleteNode(id);
+
+            e.stopPropagation();
+
+        }
+
+    };
+
+}
+
+function clearModeButtons(){
+
+    let buttons = [
+        "connectLinkBtn",
+        "deleteNodeBtn",
+        "deleteLinkBtn"
+    ];
+
+    buttons.forEach(function(id){
+
+        let button =
+            document.getElementById(id);
+
+        if(button){
+
+            button.classList.remove("active");
+
+            button.style.background = "";
+
+            button.style.color = "";
+
+            button.style.borderColor = "";
+
+        }
+
+    });
+
+}
+
+
+function clearNodeSelection(){
+
+    document
+        .querySelectorAll(".device")
+        .forEach(function(node){
+
+            node.style.border = "";
+
+            node.style.boxShadow = "";
+
+        });
+
+    selectedNode = null;
+
+}
+
+
+function setMode(mode){
+
+    /*
+     * Only ONE editing mode can be active.
+     */
+    linkMode = false;
+
+    deleteMode = false;
+
+    deleteLinkMode = false;
+
+    clearNodeSelection();
+
+    clearModeButtons();
+
+    /*
+     * Activate requested mode.
+     */
+    if(mode === "link"){
+
+        linkMode = true;
+
+        let button =
+            document.getElementById(
+                "connectLinkBtn"
+            );
+
+        if(button){
+
+            button.classList.add("active");
+
+            button.style.background =
+                "#2563eb";
+
+            button.style.color =
+                "#ffffff";
+
+            button.style.borderColor =
+                "#2563eb";
+
+        }
+
+    }
+
+    else if(mode === "deleteNode"){
+
+        deleteMode = true;
+
+        let button =
+            document.getElementById(
+                "deleteNodeBtn"
+            );
+
+        if(button){
+
+            button.classList.add("active");
+
+            button.style.background =
+                "#dc2626";
+
+            button.style.color =
+                "#ffffff";
+
+            button.style.borderColor =
+                "#dc2626";
+
+        }
+
+    }
+
+    else if(mode === "deleteLink"){
+
+        deleteLinkMode = true;
+
+        let button =
+            document.getElementById(
+                "deleteLinkBtn"
+            );
+
+        if(button){
+
+            button.classList.add("active");
+
+            button.style.background =
+                "#dc2626";
+
+            button.style.color =
+                "#ffffff";
+
+            button.style.borderColor =
+                "#dc2626";
+
+        }
+
+    }
+
+}
+
+
+function enableLinkMode(){
+
+    if(linkMode){
+
+        setMode(null);
+
+    }
+    else{
+
+        setMode("link");
+
+    }
+
+}
+
+
+function enableDeleteMode(){
+
+    if(deleteMode){
+
+        setMode(null);
+
+    }
+    else{
+
+        setMode("deleteNode");
+
+    }
+
+}
+
+
+function enableDeleteLinkMode(){
+
+    if(deleteLinkMode){
+
+        setMode(null);
+
+    }
+    else{
+
+        setMode("deleteLink");
+
+    }
+
+}
+
+
+function deleteLink(source,target){
+
+    console.log(
+        "DELETE LINK:",
+        source,
+        target
+    );
+
+    /*
+     * Remove the link from topology JSON.
+     */
+    topologyState.links =
+        topologyState.links.filter(
+            l =>
+            !(
+                (l.source===source &&
+                 l.target===target)
+                ||
+                (l.source===target &&
+                 l.target===source)
+            )
+        );
+
+    /*
+     * Remove the visual jsPlumb connection.
+     */
+    jsPlumb.getAllConnections().forEach(
+        function(connection){
+
+            let sourceId =
+                typeof connection.source === "string"
+                    ? connection.source
+                    : connection.source.id;
+
+            let targetId =
+                typeof connection.target === "string"
+                    ? connection.target
+                    : connection.target.id;
+
+            if(
+                (sourceId===source &&
+                 targetId===target)
+                ||
+                (sourceId===target &&
+                 targetId===source)
+            ){
+
+                jsPlumb.deleteConnection(
+                    connection
+                );
+
+            }
+
+        }
+    );
+
+    updateJSON();
+
+}
+
+
+function deleteNode(id){
+
+
+    topologyState.nodes =
+    topologyState.nodes.filter(
+        n=>n.id!==id
+    );
+
+
+    topologyState.links =
+    topologyState.links.filter(
+        l=>
+        l.source!==id &&
+        l.target!==id
+    );
+
+
+    let node=
+    document.getElementById(id);
+
+
+    if(node){
+
+        node.remove();
+
+    }
+
+
+    deleteMode=false;
+
+    updateJSON();
+
+}
+
+
+
+
+function clearTopology(){
+
+    topologyState={
+
+        nodes:[],
+
+        links:[],
+
+        controller:
+        document.getElementById("controller").value
+
+    };
+
+
+    document.getElementById(
+        "canvas"
+    ).innerHTML="";
+
+
+    updateJSON();
+
+}
+
+
+
+
+function enableLinkMode(){
+
+    linkMode = !linkMode;
+
+    selectedNode = null;
+
+    /*
+     * Clear any previous node selection highlight.
+     */
+    document
+        .querySelectorAll(".device")
+        .forEach(function(node){
+
+            node.style.border = "";
+
+        });
+
+    /*
+     * Update the Connect Link button state.
+     */
+    let button =
+        document.getElementById("connectLinkBtn");
+
+    if(button){
+
+        if(linkMode){
+
+            button.classList.add("active");
+
+            button.style.background =
+                "#2563eb";
+
+            button.style.color =
+                "#ffffff";
+
+            button.style.borderColor =
+                "#2563eb";
+
+        }
+        else{
+
+            button.classList.remove("active");
+
+            button.style.background = "";
+
+            button.style.color = "";
+
+            button.style.borderColor = "";
+
+        }
+
+    }
+
+}
+
+function getNextSwitchPort(switchId){
+
+    let usedPorts = [];
+
+    topologyState.links.forEach(function(link){
+
+        if(
+            link.source === switchId &&
+            link.source_port !== null &&
+            link.source_port !== undefined
+        ){
+
+            usedPorts.push(link.source_port);
+
+        }
+
+        if(
+            link.target === switchId &&
+            link.destination_port !== null &&
+            link.destination_port !== undefined
+        ){
+
+            usedPorts.push(link.destination_port);
+
+        }
+
+    });
+
+    let port = 1;
+
+    while(usedPorts.includes(port)){
+
+        port++;
+
+    }
+
+    return port;
+}
+
+
+function createLink(source,target){
+
+    console.log(
+        "LINK REQUEST:",
+        source,
+        target
+    );
+
+    let sourceNode =
+        document.getElementById(source);
+
+    let targetNode =
+        document.getElementById(target);
+
+    if(!sourceNode || !targetNode){
+
+        console.warn("Invalid nodes");
+        return;
+
+    }
+
+    let sourceIsHost =
+        sourceNode.classList.contains("host");
+
+    let targetIsHost =
+        targetNode.classList.contains("host");
+
+    let sourceIsSwitch =
+        sourceNode.classList.contains("switch");
+
+    let targetIsSwitch =
+        targetNode.classList.contains("switch");
+
+    /*
+     * Only these connections are allowed:
+     *
+     * HOST   <-> SWITCH
+     * SWITCH <-> SWITCH
+     *
+     * HOST <-> HOST is NOT allowed.
+     */
+    if(
+        (sourceIsHost && targetIsHost) ||
+        (!sourceIsHost && !sourceIsSwitch) ||
+        (!targetIsHost && !targetIsSwitch)
+    ){
+
+        console.warn(
+            "Invalid topology link:",
+            source,
+            target
+        );
+
+        return;
+
+    }
+
+    /*
+     * Prevent duplicate links.
+     */
+    let exists =
+        topologyState.links.some(
+            l =>
+            (l.source===source &&
+             l.target===target)
+            ||
+            (l.source===target &&
+             l.target===source)
+        );
+
+    if(exists){
+
+        console.warn(
+            "Link already exists:",
+            source,
+            target
+        );
+
+        return;
+
+    }
+
+    /*
+     * Allocate switch ports.
+     */
+    let sourcePort =
+        sourceIsSwitch
+            ? getNextSwitchPort(source)
+            : null;
+
+    let destinationPort =
+        targetIsSwitch
+            ? getNextSwitchPort(target)
+            : null;
+
+    /*
+     * Store link in topology JSON.
+     */
+    topologyState.links.push({
+
+        source:source,
+
+        target:target,
+
+        source_port:sourcePort,
+
+        destination_port:destinationPort
+
+    });
+
+    console.log(
+        "LINK CREATED:",
+        source,
+        sourcePort,
+        target,
+        destinationPort
+    );
+
+    /*
+     * Create visual jsPlumb connection.
+     */
+    let connection =
+        jsPlumb.connect({
+
+            source:source,
+
+            target:target,
+
+            anchors:[
+
+                sourceIsHost
+                    ? "Top"
+                    : "AutoDefault",
+
+                targetIsHost
+                    ? "Top"
+                    : "AutoDefault"
+
+            ],
+
+            endpoint:[
+                "Dot",
+                {
+                    radius:3
+                }
+            ],
+
+            endpointStyle:{
+                fill:"#000000"
+            },
+
+            connector:[
+                "Straight"
+            ],
+
+            paintStyle:{
+                stroke:"#ffffff",
+                strokeWidth:3
+            }
+
+        });
+
+    /*
+     * Delete Link Mode:
+     * clicking the actual connection deletes it.
+     */
+    if(connection){
+
+        connection.bind(
+            "click",
+            function(){
+
+                if(!deleteLinkMode){
+
+                    return;
+
+                }
+
+                deleteLink(
+                    source,
+                    target,
+                    connection
+                );
+
+            }
+        );
+
+    }
+
+    updateJSON();
+
+}
+
+
+function deleteLink(source,target,connection){
+
+    console.log(
+        "DELETE LINK:",
+        source,
+        target
+    );
+
+    /*
+     * Remove from JSON.
+     */
+    topologyState.links =
+        topologyState.links.filter(
+            function(link){
+
+                return !(
+                    (link.source===source &&
+                     link.target===target)
+                    ||
+                    (link.source===target &&
+                     link.target===source)
+                );
+
+            }
+        );
+
+    /*
+     * Remove visual connection.
+     */
+    if(connection){
+
+        jsPlumb.deleteConnection(
+            connection
+        );
+
+    }
+
+    /*
+     * Keep Delete Link Mode active so
+     * multiple links can be deleted.
+     */
+    updateJSON();
+
+}
+
+function saveTopology(){
+
+
+    topologyState.controller =
+    document.getElementById("controller").value;
+
+
+
+    if(topologyState.nodes.length < 2){
+
+        alert(
+            "Topology must contain at least one host and one switch."
+        );
+
+        return;
+
+    }
+
+
+
+    if(topologyState.links.length < 1){
+
+        alert(
+            "Topology must contain at least one link."
+        );
+
+        return;
+
+    }
+
+
+
+    localStorage.setItem(
+
+        "opensdnlab_topology",
+
+        JSON.stringify(topologyState)
+
+    );
+
+
+
+    updateJSON();
+
+
+
+    alert(
+        "Topology saved successfully"
+    );
+
+
+}
+
+
+
+
+
+function updateJSON(){
+
+
+document.getElementById("output").innerHTML=
+
+JSON.stringify(
+
+topologyState,
+
+null,
+
+4
+
+);
+
+
+}
+
+
+
+</script>
+
+
+</body>
+
+
+</html>

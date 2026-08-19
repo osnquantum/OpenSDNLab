@@ -88,13 +88,31 @@ class MininetBackend:
             if dst is None:
                 dst = switches[link.destination]
 
+            link_kwargs = {
+                "bw": link.bandwidth,
+                "delay": link.delay,
+                "loss": link.loss,
+                "max_queue_size": 1000
+            }
+
+            # Use explicit Mininet interface ports when provided.
+            # None preserves Mininet's automatic port allocation.
+            if link.source_port is not None:
+                link_kwargs["port1"] = link.source_port
+
+            if link.destination_port is not None:
+                link_kwargs["port2"] = link.destination_port
+
+            logger.info(
+                f"Creating link {link.source} -> {link.destination} "
+                f"(port1={link.source_port}, "
+                f"port2={link.destination_port})"
+            )
+
             self.net.addLink(
                 src,
                 dst,
-                bw=link.bandwidth,
-                delay=link.delay,
-                loss=link.loss,
-                max_queue_size=1000
+                **link_kwargs
             )
 
         ########################################################

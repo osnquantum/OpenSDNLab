@@ -18,38 +18,81 @@ topology_api = Blueprint(
 )
 def generate():
 
-
     data = request.json
+
+    topology_type = data.get("type", "linear")
+    hosts = int(data.get("hosts", 2))
+    switches = int(data.get("switches", 1))
+    controller = data.get("controller", "os-ken")
+
+
+    nodes = []
+    links = []
+
+
+    # Create hosts
+    for i in range(1, hosts + 1):
+        nodes.append({
+            "id": f"h{i}",
+            "type": "host"
+        })
+
+
+    # Create switches
+    for i in range(1, switches + 1):
+        nodes.append({
+            "id": f"s{i}",
+            "type": "switch"
+        })
+
+
+    # Linear host-switch mapping
+    for i in range(1, hosts + 1):
+
+        switch_id = min(
+            ((i - 1) // max(1, hosts // switches)) + 1,
+            switches
+        )
+
+        links.append({
+            "source": f"h{i}",
+            "target": f"s{switch_id}"
+        })
+
+
+    # Switch-to-switch links
+    for i in range(1, switches):
+
+        links.append({
+            "source": f"s{i}",
+            "target": f"s{i+1}"
+        })
 
 
     topology = {
 
-        "type":
-        data.get("type","linear"),
+        "type": topology_type,
 
+        "hosts": hosts,
 
-        "hosts":
-        int(data.get("hosts",2)),
+        "switches": switches,
 
+        "controller": controller,
 
-        "switches":
-        int(data.get("switches",1)),
+        "nodes": nodes,
 
-
-        "controller":
-        data.get("controller","ryu")
+        "links": links
 
     }
 
 
     return jsonify({
 
-        "success":True,
+        "success": True,
 
         "message":
-        "Topology generated successfully.",
+        "Topology graph generated successfully.",
 
-        "topology":
-        topology
+        "topology": topology
 
     })

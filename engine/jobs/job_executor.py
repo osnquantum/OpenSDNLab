@@ -5,6 +5,7 @@ Runs experiments in background.
 
 from datetime import datetime
 from threading import Thread, Lock
+import traceback
 
 from engine.jobs.job_manager import JobManager
 from engine.jobs.job_status import JobStatus
@@ -80,6 +81,7 @@ class JobExecutor:
 
             except Exception as error:
 
+                traceback.print_exc()
 
                 self.job_manager.fail(
                     job,

@@ -59,6 +59,13 @@ class JobManager:
 
         job.add_log(message)
 
+        print()
+        print("=" * 70)
+        print(f"JOB FAILED: {job.id}")
+        print(f"ERROR: {message}")
+        print("=" * 70)
+        print()
+
     ############################################################
 
     def stop(self, job):

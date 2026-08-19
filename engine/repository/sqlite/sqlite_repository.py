@@ -3,6 +3,7 @@ SQLite Experiment Repository
 """
 
 import sqlite3
+import json
 from dataclasses import asdict
 from pathlib import Path
 
@@ -36,6 +37,8 @@ class SQLiteRepository:
                 experiment_id TEXT,
 
                 topology TEXT,
+
+                topology_data TEXT,
 
                 hosts INTEGER,
 
@@ -75,6 +78,16 @@ class SQLiteRepository:
 
             )
             """)
+
+        # Lightweight migration for existing databases.
+        try:
+            self.connection.execute(
+                "ALTER TABLE experiments ADD COLUMN topology_data TEXT"
+            )
+            self.connection.commit()
+        except Exception:
+            # Column already exists.
+            pass
 
         self.connection.execute("""
             CREATE TABLE IF NOT EXISTS batch_jobs
@@ -186,6 +199,13 @@ class SQLiteRepository:
 
         data["created_at"] = str(result.created_at)
 
+        # SQLite cannot bind Python dictionaries directly.
+        # Store the complete custom topology as JSON text.
+        if data.get("topology_data") is not None:
+            data["topology_data"] = json.dumps(
+                data["topology_data"]
+            )
+
         cursor = self.connection.cursor()
 
         cursor.execute(
@@ -195,6 +215,7 @@ class SQLiteRepository:
                 experiment_name,
                 experiment_id,
                 topology,
+                topology_data,
                 hosts,
                 switches,
                 links,
@@ -222,6 +243,7 @@ class SQLiteRepository:
                 :experiment_name,
                 :experiment_id,
                 :topology,
+                :topology_data,
                 :hosts,
                 :switches,
                 :links,
@@ -309,14 +331,13 @@ class SQLiteRepository:
     # Save repeated experiment measurement run
     ############################################################
 
-    def save_run(self, experiment_id, run_number, metrics):
+    def save_run(self, experiment_id, run_number, metrics, job_id=None):
 
         cursor = self.connection.cursor()
 
         cursor.execute(
             """
             INSERT INTO experiment_runs (
-
                 experiment_id,
                 run_number,
                 minimum_rtt,
@@ -326,13 +347,11 @@ class SQLiteRepository:
                 packet_loss,
                 throughput,
                 estimated_one_way_delay,
-                  mos,
-                created_at
-
+                mos,
+                created_at,
+                job_id
             )
-
             VALUES (
-
                 ?,
                 ?,
                 ?,
@@ -342,9 +361,9 @@ class SQLiteRepository:
                 ?,
                 ?,
                 ?,
-                  ?,
-                datetime('now')
-
+                ?,
+                datetime('now'),
+                ?
             )
             """,
             (
@@ -358,33 +377,9 @@ class SQLiteRepository:
                 metrics["throughput"],
                 metrics["one_way_delay"],
                 metrics["mos"],
+                job_id,
             ),
         )
-
-        self.connection.execute("""
-            CREATE TABLE IF NOT EXISTS batch_jobs
-            (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-                job_id TEXT UNIQUE,
-
-                experiment_id TEXT,
-
-                total_runs INTEGER,
-
-                current_run INTEGER DEFAULT 0,
-
-                successful INTEGER DEFAULT 0,
-
-                failed INTEGER DEFAULT 0,
-
-                status TEXT,
-
-                created_at REAL,
-
-                started_at REAL
-            )
-            """)
 
         self.connection.commit()
 

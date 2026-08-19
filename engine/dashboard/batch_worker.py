@@ -66,19 +66,15 @@ class BatchWorker:
             experiment_id
         )
 
-
         if not experiment:
-
+            self.batch_executor.batch_manager.update_progress(
+                job_id,
+                False
+            )
             return
 
-
-
         self.batch_executor.run_batch(
-
             job_id,
-
             experiment,
-
             runs
-
         )

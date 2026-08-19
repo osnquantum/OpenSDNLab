@@ -82,5 +82,8 @@ class Logger:
     def critical(self, message):
         self.logger.critical(message)
 
+    def exception(self, message):
+        self.logger.exception(message)
+
 
 logger = Logger()

@@ -1,3 +1,4 @@
+from engine.core.logger import logger
 from engine.dashboard.batch_manager import BatchManager
 from engine.execution.experiment_executor import ExperimentExecutor
 from engine.repository.sqlite.sqlite_repository import SQLiteRepository
@@ -10,9 +11,7 @@ class BatchExecutor:
 
         self.database = SQLiteRepository()
 
-        self.batch_manager = BatchManager(
-            self.database
-        )
+        self.batch_manager = BatchManager()
 
         self.executor = ExperimentExecutor()
 
@@ -30,6 +29,11 @@ class BatchExecutor:
             job_id
         )
 
+        self.database.connection.execute(
+            "UPDATE batch_jobs SET status=? WHERE job_id=?",
+            ("RUNNING", job_id)
+        )
+        self.database.connection.commit()
 
         results = []
 
@@ -39,15 +43,32 @@ class BatchExecutor:
             try:
 
                 result = self.executor.execute(
-                    experiment
+                    experiment,
+                    job=job_id
                 )
 
 
-                self.batch_manager.update_progress(
+                progress = self.batch_manager.update_progress(
                     job_id,
                     True
                 )
 
+                self.database.connection.execute(
+                    """UPDATE batch_jobs
+                       SET current_run=?,
+                           successful=?,
+                           failed=?,
+                           status=?
+                       WHERE job_id=?""",
+                    (
+                        progress["current_run"],
+                        progress["successful"],
+                        progress["failed"],
+                        progress["status"],
+                        job_id
+                    )
+                )
+                self.database.connection.commit()
 
                 results.append({
 
@@ -62,12 +83,40 @@ class BatchExecutor:
 
             except Exception as e:
 
+                import traceback
 
-                self.batch_manager.update_progress(
+                logger.exception(
+                    f"BATCH RUN {i + 1} FAILED: {e}"
+                )
+
+                print(
+                    f"===== BATCH RUN {i + 1} FAILED =====",
+                    flush=True
+                )
+
+                traceback.print_exc()
+
+                progress = self.batch_manager.update_progress(
                     job_id,
                     False
                 )
 
+                self.database.connection.execute(
+                    """UPDATE batch_jobs
+                       SET current_run=?,
+                           successful=?,
+                           failed=?,
+                           status=?
+                       WHERE job_id=?""",
+                    (
+                        progress["current_run"],
+                        progress["successful"],
+                        progress["failed"],
+                        progress["status"],
+                        job_id
+                    )
+                )
+                self.database.connection.commit()
 
                 results.append({
 

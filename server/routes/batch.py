@@ -1,4 +1,5 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template
+import time
 
 from engine.dashboard.experiment_manager import ExperimentManager
 from engine.dashboard.batch_executor import BatchExecutor
@@ -50,34 +51,65 @@ def get_worker():
 )
 def create_batch():
 
-
-    data = request.json
-
+    data = request.get_json(
+        silent=True
+    ) or {}
 
     experiment_id = data.get(
         "experiment_id"
     )
 
-
-    runs = data.get(
-        "runs",
-        1
+    runs = int(
+        data.get(
+            "runs",
+            1
+        )
     )
 
+    if not experiment_id:
+
+        return jsonify({
+            "success": False,
+            "message":
+                "experiment_id is required"
+        }), 400
+
+    if runs < 2:
+
+        return jsonify({
+            "success": False,
+            "message":
+                "Batch requires at least 2 runs"
+        }), 400
 
     job = experiment_manager.create_job(
         experiment_id,
         runs
     )
 
+    worker = get_worker()
+
+    worker.batch_executor.batch_manager.create_batch(
+        job["job_id"],
+        runs
+    )
+
+    # Persist batch job so the status API can read it.
+    batch_repository.create(
+        job["job_id"],
+        experiment_id,
+        runs
+    )
+
     batch_jobs_cache[job["job_id"]] = {
 
-        "experiment_id": experiment_id,
+        "experiment_id":
+            experiment_id,
 
-        "runs": runs
+        "runs":
+            runs
 
     }
-
 
     return jsonify({
 
@@ -86,7 +118,6 @@ def create_batch():
         "job": job
 
     })
-
 
 
 @batch_api.route(
@@ -134,6 +165,14 @@ def start_batch(job_id):
         }),404
 
 
+
+    # Mark the batch as running before starting
+    # the background worker.
+    batch_repository.update(
+        job_id,
+        status="RUNNING",
+        started_at=time.time()
+    )
 
     worker.start(
 
@@ -222,3 +261,55 @@ def latest_batch():
         }
 
     })
+
+@batch_api.route(
+    "/api/batch/results/<job_id>",
+    methods=["GET"]
+)
+def batch_results(job_id):
+
+    results = batch_repository.get_results(
+        job_id
+    )
+
+    if not results:
+
+        return jsonify({
+            "success": False,
+            "message": "Batch job not found"
+        }), 404
+
+    return jsonify({
+
+        "success": True,
+
+        "job":
+            results["job"],
+
+        "runs":
+            results["runs"],
+
+        "statistics":
+            results["statistics"]
+
+    })
+
+
+@batch_api.route(
+    "/batch/results/<job_id>",
+    methods=["GET"]
+)
+def batch_results_page(job_id):
+
+    results = batch_repository.get_results(
+        job_id
+    )
+
+    if not results:
+        return "Batch job not found", 404
+
+    return render_template(
+        "batch_results.html",
+        results=results
+    )
+

@@ -60,3 +60,7 @@ class ExperimentResult:
     status: str = "SUCCESS"
 
     notes: str = ""
+
+    # Complete topology designer configuration.
+    # Used to reproduce custom topologies during batch execution.
+    topology_data: dict | None = None

@@ -1,0 +1,44 @@
+{
+  "topology_id": "topology-8dd68f13-6a23-4356-adfa-d4966ff9e5b0",
+  "name": "custom_topology",
+  "type": "custom",
+  "controller": "OS-Ken",
+  "nodes": [
+    {
+      "id": "h1",
+      "type": "host"
+    },
+    {
+      "id": "s1",
+      "type": "switch"
+    },
+    {
+      "id": "s2",
+      "type": "switch"
+    },
+    {
+      "id": "h2",
+      "type": "host"
+    }
+  ],
+  "links": [
+    {
+      "source": "s1",
+      "target": "s2",
+      "source_port": 1,
+      "destination_port": 1
+    },
+    {
+      "source": "s1",
+      "target": "h1",
+      "source_port": 2,
+      "destination_port": null
+    },
+    {
+      "source": "s2",
+      "target": "h2",
+      "source_port": 2,
+      "destination_port": null
+    }
+  ]
+}

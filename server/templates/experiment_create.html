@@ -2,96 +2,756 @@
 
 {% block content %}
 
-<h2>🧪 Create Experiment</h2>
+<style>
 
-<form>
+.experiment-tabs{
+    display:flex;
+    gap:10px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+}
+
+.experiment-tab{
+    padding:10px 18px;
+    border:1px solid #334155;
+    background:#0f172a;
+    color:#cbd5e1;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.experiment-tab.active{
+    background:#2563eb;
+    color:white;
+    border-color:#2563eb;
+}
+
+.experiment-panel{
+    display:none;
+}
+
+.experiment-panel.active{
+    display:block;
+}
+
+.experiment-card{
+    padding:20px;
+    margin-bottom:20px;
+    border:1px solid #334155;
+    border-radius:12px;
+}
+
+.experiment-card label{
+    display:block;
+    margin-top:12px;
+    margin-bottom:5px;
+}
+
+.experiment-card input,
+.experiment-card select{
+    width:100%;
+    max-width:500px;
+    padding:9px;
+    box-sizing:border-box;
+}
+
+.experiment-btn{
+    margin-top:18px;
+    padding:10px 20px;
+    border:0;
+    border-radius:7px;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+}
+
+.experiment-btn.danger{
+    background:#dc2626;
+}
+
+.status-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:10px;
+    margin-top:20px;
+}
+
+.status-box{
+    padding:15px;
+    border:1px solid #334155;
+    border-radius:8px;
+}
+
+.status-box span{
+    display:block;
+    color:#64748b;
+    font-size:13px;
+}
+
+.status-box strong{
+    display:block;
+    margin-top:5px;
+}
+
+#batch_result,
+#experiment_result{
+    white-space:pre-wrap;
+    margin-top:15px;
+}
+
+</style>
+
+
+<h2>🧪 Experiment Console</h2>
+
+
+<div class="experiment-tabs">
+
+    <button
+        class="experiment-tab active"
+        onclick="showExperimentPanel('standard', this)">
+        Standard
+    </button>
+
+    <button
+        class="experiment-tab"
+        onclick="showExperimentPanel('batch', this)">
+        Batch
+    </button>
+
+    <button
+        class="experiment-tab"
+        onclick="showExperimentPanel('custom', this)">
+        Custom Topology
+    </button>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- STANDARD -->
+<!-- ========================================================= -->
+
+<div id="standard" class="experiment-panel active">
+
+<div class="experiment-card">
+
+<h3>Standard Experiment</h3>
 
 <label>Name</label>
-<input id="name" value="Web Experiment"><br>
+<input id="name" value="Web Experiment">
 
 <label>Topology</label>
 <select id="topology">
-<option>linear</option>
-<option>tree</option>
-<option>single</option>
-</select><br>
+    <option value="linear">linear</option>
+    <option value="tree">tree</option>
+    <option value="single">single</option>
+</select>
 
 <label>Hosts</label>
-<input id="hosts" value="2"><br>
+<input id="hosts" type="number" value="2" min="1">
 
 <label>Switches</label>
-<input id="switches" value="2"><br>
+<input id="switches" type="number" value="2" min="1">
 
 <label>Controller</label>
 <select id="controller">
-<option>osken</option>
-<option>ryu</option>
-</select><br>
+    <option value="osken">osken</option>
+    <option value="ryu">ryu</option>
+</select>
 
 <label>Protocol</label>
 <select id="protocol">
-<option>tcp</option>
-<option>udp</option>
-</select><br>
+    <option value="tcp">tcp</option>
+    <option value="udp">udp</option>
+</select>
 
 <label>Runs</label>
-<input id="runs" value="10"><br><br>
+<input id="runs" type="number" value="10" min="1">
 
 
-<button type="button" onclick="startExperiment()">
-▶ Start Experiment
+<br>
+
+<button
+    type="button"
+    class="experiment-btn"
+    onclick="startExperiment()">
+    ▶ Start Experiment
 </button>
 
-</form>
+<pre id="experiment_result"></pre>
+
+</div>
+
+</div>
 
 
-<pre id="result"></pre>
+<!-- ========================================================= -->
+<!-- BATCH -->
+<!-- ========================================================= -->
 
+<div id="batch" class="experiment-panel">
+
+<div class="experiment-card">
+
+<h3>📦 Batch Experiment</h3>
+
+<label>Experiment ID</label>
+
+<input
+    id="batch_exp"
+    placeholder="Existing experiment ID">
+
+
+<label>Total Runs</label>
+
+<input
+    id="batch_runs"
+    type="number"
+    value="10"
+    min="1">
+
+
+<br>
+
+<button
+    type="button"
+    class="experiment-btn"
+    onclick="createBatch()">
+    ➕ Create Batch
+</button>
+
+<button
+    type="button"
+    class="experiment-btn"
+    onclick="startBatch()">
+    ▶ Start Batch
+</button>
+
+
+<div class="status-grid">
+
+    <div class="status-box">
+        <span>Job</span>
+        <strong id="batch_job">-</strong>
+    </div>
+
+    <div class="status-box">
+        <span>Status</span>
+        <strong id="batch_status">-</strong>
+    </div>
+
+    <div class="status-box">
+        <span>Progress</span>
+        <strong id="batch_progress">0/0</strong>
+    </div>
+
+    <div class="status-box">
+        <span>Successful</span>
+        <strong id="batch_success">0</strong>
+    </div>
+
+    <div class="status-box">
+        <span>Failed</span>
+        <strong id="batch_failed">0</strong>
+    </div>
+
+</div>
+
+<pre id="batch_result"></pre>
+
+</div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- CUSTOM TOPOLOGY -->
+<!-- ========================================================= -->
+
+<div id="custom" class="experiment-panel">
+
+<div class="experiment-card">
+
+<h3>🌐 Custom Topology</h3>
+
+<p>
+Use the topology designer to create hosts, switches and
+links with explicit switch port numbers.
+</p>
+
+<button
+    type="button"
+    class="experiment-btn"
+    onclick="window.location.href='/topology'">
+    Open Topology Designer
+</button>
+
+</div>
+
+</div>
 
 
 <script>
 
-function startExperiment(){
+let currentBatchJob = null;
 
-fetch("/api/experiments/run",
-{
-method:"POST",
 
-headers:{
-"Content-Type":"application/json"
-},
+/* ========================================================= */
+/* PANEL SWITCHING */
+/* ========================================================= */
 
-body:JSON.stringify({
+function showExperimentPanel(panel, button){
 
-name:name.value,
+    document
+        .querySelectorAll(".experiment-panel")
+        .forEach(function(element){
 
-topology:topology.value,
+            element.classList.remove("active");
 
-hosts:Number(hosts.value),
+        });
 
-switches:Number(switches.value),
 
-controller:controller.value,
+    document
+        .querySelectorAll(".experiment-tab")
+        .forEach(function(element){
 
-protocol:protocol.value,
+            element.classList.remove("active");
 
-runs:Number(runs.value)
+        });
 
-})
 
-})
+    document
+        .getElementById(panel)
+        .classList.add("active");
 
-.then(r=>r.json())
 
-.then(data=>{
-
-let job=data.data.job_id;
-
-window.location.href="/running/"+job;
-
-});
+    button.classList.add("active");
 
 }
+
+
+/* ========================================================= */
+/* STANDARD EXPERIMENT */
+/* ========================================================= */
+
+async function startExperiment(){
+
+    const payload = {
+
+        name:
+            document.getElementById("name").value,
+
+        topology:
+            document.getElementById("topology").value,
+
+        hosts:
+            Number(
+                document.getElementById("hosts").value
+            ),
+
+        switches:
+            Number(
+                document.getElementById("switches").value
+            ),
+
+        controller:
+            document.getElementById("controller").value,
+
+        protocol:
+            document.getElementById("protocol").value,
+
+        runs:
+            Number(
+                document.getElementById("runs").value
+            )
+
+    };
+
+
+    const result =
+        document.getElementById(
+            "experiment_result"
+        );
+
+
+    result.textContent =
+        "Starting experiment...";
+
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/experiments/run",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(payload)
+                }
+            );
+
+
+        const text =
+            await response.text();
+
+
+        let data;
+
+        try{
+
+            data = JSON.parse(text);
+
+        }
+        catch(error){
+
+            throw new Error(
+                "Server returned non-JSON response: " +
+                text.substring(0,200)
+            );
+
+        }
+
+
+        if(
+            !response.ok ||
+            !data.success
+        ){
+
+            throw new Error(
+                data.message ||
+                "Failed to start experiment"
+            );
+
+        }
+
+
+        const job =
+            data.data &&
+            data.data.job_id;
+
+
+        result.textContent =
+            "Experiment started successfully.\n" +
+            "Job ID: " +
+            job;
+
+
+        if(job){
+
+            window.location.href =
+                "/running/" + job;
+
+        }
+
+    }
+    catch(error){
+
+        result.textContent =
+            "Failed to start experiment: " +
+            error.message;
+
+    }
+
+}
+
+
+/* ========================================================= */
+/* BATCH CREATE */
+/* ========================================================= */
+
+async function createBatch(){
+
+    const experimentId =
+        document.getElementById(
+            "batch_exp"
+        ).value.trim();
+
+
+    const runs =
+        parseInt(
+            document.getElementById(
+                "batch_runs"
+            ).value
+        );
+
+
+    if(!experimentId){
+
+        alert(
+            "Enter an experiment ID first."
+        );
+
+        return;
+
+    }
+
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/batch/create",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            experiment_id:
+                                experimentId,
+
+                            runs:
+                                runs
+
+                        })
+                }
+            );
+
+
+        const text =
+            await response.text();
+
+
+        let data;
+
+        try{
+
+            data = JSON.parse(text);
+
+        }
+        catch(error){
+
+            throw new Error(
+                "Server returned non-JSON response: " +
+                text.substring(0,200)
+            );
+
+        }
+
+
+        if(
+            !response.ok ||
+            !data.success
+        ){
+
+            throw new Error(
+                data.message ||
+                "Batch creation failed"
+            );
+
+        }
+
+
+        if(data.job){
+
+            currentBatchJob =
+                data.job.job_id;
+
+            document.getElementById(
+                "batch_job"
+            ).textContent =
+                currentBatchJob;
+
+        }
+
+
+        document.getElementById(
+            "batch_result"
+        ).textContent =
+            "Batch created successfully.";
+
+        updateBatch();
+
+    }
+    catch(error){
+
+        document.getElementById(
+            "batch_result"
+        ).textContent =
+            "Failed to create batch: " +
+            error.message;
+
+    }
+
+}
+
+
+/* ========================================================= */
+/* BATCH START */
+/* ========================================================= */
+
+async function startBatch(){
+
+    if(!currentBatchJob){
+
+        alert(
+            "Create a batch first."
+        );
+
+        return;
+
+    }
+
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/batch/start/" +
+                currentBatchJob,
+                {
+                    method:"POST"
+                }
+            );
+
+
+        const text =
+            await response.text();
+
+
+        let data;
+
+        try{
+
+            data = JSON.parse(text);
+
+        }
+        catch(error){
+
+            throw new Error(
+                "Server returned non-JSON response: " +
+                text.substring(0,200)
+            );
+
+        }
+
+
+        if(!response.ok){
+
+            throw new Error(
+                data.message ||
+                "Failed to start batch"
+            );
+
+        }
+
+
+        document.getElementById(
+            "batch_result"
+        ).textContent =
+            "Batch started successfully.";
+
+        updateBatch();
+
+    }
+    catch(error){
+
+        document.getElementById(
+            "batch_result"
+        ).textContent =
+            "Failed to start batch: " +
+            error.message;
+
+    }
+
+}
+
+
+/* ========================================================= */
+/* BATCH STATUS */
+/* ========================================================= */
+
+async function updateBatch(){
+
+    if(!currentBatchJob){
+
+        return;
+
+    }
+
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/batch/status/" +
+                currentBatchJob
+            );
+
+
+        const text =
+            await response.text();
+
+
+        const data =
+            JSON.parse(text);
+
+
+        const job =
+            data.job;
+
+
+        if(!job){
+
+            return;
+
+        }
+
+
+        document.getElementById(
+            "batch_status"
+        ).textContent =
+            job.status || "-";
+
+
+        document.getElementById(
+            "batch_progress"
+        ).textContent =
+            (job.current_run || 0) +
+            "/" +
+            (job.total_runs || 0);
+
+
+        document.getElementById(
+            "batch_success"
+        ).textContent =
+            job.successful || 0;
+
+
+        document.getElementById(
+            "batch_failed"
+        ).textContent =
+            job.failed || 0;
+
+    }
+    catch(error){
+
+        console.warn(
+            "Batch status update failed:",
+            error
+        );
+
+    }
+
+}
+
+
+setInterval(
+    updateBatch,
+    3000
+);
 
 </script>
 

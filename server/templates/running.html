@@ -2,92 +2,143 @@
 
 {% block content %}
 
+<style>
+
+.execution-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    margin-bottom:20px;
+}
+
+.execution-card{
+    background:#0f172a;
+    border:1px solid #334155;
+    border-radius:12px;
+    padding:20px;
+}
+
+.execution-card h2{
+    margin-top:0;
+}
+
+.status-value{
+    font-size:24px;
+    font-weight:bold;
+}
+
+.progress{
+    width:100%;
+    height:24px;
+}
+
+.terminal{
+    background:#000;
+    color:#22c55e;
+    min-height:350px;
+    max-height:550px;
+    overflow-y:auto;
+    padding:18px;
+    border-radius:10px;
+    font-family:Consolas,Monaco,monospace;
+    white-space:pre-wrap;
+    line-height:1.5;
+}
+
+.stage-list{
+    list-style:none;
+    padding:0;
+}
+
+.stage-list li{
+    padding:10px;
+    margin:6px 0;
+    background:#111827;
+    border-radius:6px;
+}
+
+@media(max-width:800px){
+    .execution-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+</style>
 
 
-
-<h1>
-OpenSDN Experiment Running
-</h1>
+<h1>🧪 Experiment Execution</h1>
 
 
-<div class="card">
+<div class="execution-grid">
 
-<h2>
-Job ID
-</h2>
+    <div class="execution-card">
 
-<p>
-{{job.id}}
-</p>
+        <h2>Job</h2>
 
+        <p>
+            <strong>Job ID:</strong>
+            {{ job.id }}
+        </p>
 
-<h3>
-Progress
-</h3>
+        <p>
+            <strong>Status:</strong>
+            <span id="job_status">
+                {{ job.status if job.status else "UNKNOWN" }}
+            </span>
+        </p>
 
-
-<progress id="progress"
-class="progress"
-value="{{job.progress}}"
-max="100">
-</progress>
+    </div>
 
 
-<p id="progress_text">
-Progress: {{job.progress}}%
-</p>
+    <div class="execution-card">
 
+        <h2>Progress</h2>
+
+        <progress
+            id="progress"
+            class="progress"
+            value="{{ job.progress }}"
+            max="100">
+        </progress>
+
+        <p id="progress_text">
+            Progress: {{ job.progress }}%
+        </p>
+
+    </div>
 
 </div>
 
 
+<div class="execution-card">
 
-<div class="card">
+    <h2>⚙️ Execution Stages</h2>
 
-<h2>
-Execution Status
-</h2>
+    <ul
+        id="status"
+        class="stage-list">
 
+        <li>System Preparation ⏳</li>
+        <li>Topology Creation ⏳</li>
+        <li>Controller Deployment ⏳</li>
+        <li>Metric Collection ⏳</li>
+        <li>Experiment Completion ⏳</li>
 
-<ul id="status">
-
-<li>System Preparation ⏳</li>
-
-<li>Topology Creation ⏳</li>
-
-<li>Controller Deployment ⏳</li>
-
-<li>Metric Collection ⏳</li>
-
-<li>Experiment Completion ⏳</li>
-
-</ul>
-
+    </ul>
 
 </div>
 
 
+<div class="execution-card">
 
-<div class="card">
+    <h2>🖥 Terminal / Execution Log</h2>
 
-
-<h2>
-Live Logs
-</h2>
-
-
-<div class="log" id="logs">
-
-{% for item in job.logs %}
-{{item}}<br>
-{% endfor %}
+    <div
+        class="terminal"
+        id="logs">{% for item in (job.logs or []) %}{{ item }}
+{% endfor %}</div>
 
 </div>
-
-
-</div>
-
-
 
 
 <script>
@@ -95,7 +146,7 @@ Live Logs
 function updateJob(){
 
     fetch(
-        '/api/live/job/{{job.id}}'
+        '/api/batch/status/{{ job.id }}'
     )
 
     .then(
@@ -105,61 +156,133 @@ function updateJob(){
     .then(
         data => {
 
-            let job = data.data;
-let status="";
+            const job = data.job;
 
-status += job.progress >= 10 ?
-"<li>System Preparation ✅</li>" :
-"<li>System Preparation ⏳</li>";
-
-status += job.progress >= 25 ?
-"<li>Topology Creation ✅</li>" :
-"<li>Topology Creation ⏳</li>";
-
-status += job.progress >= 40 ?
-"<li>Controller Deployment ✅</li>" :
-"<li>Controller Deployment ⏳</li>";
-
-status += job.progress >= 75 ?
-"<li>Metric Collection ✅</li>" :
-"<li>Metric Collection ⏳</li>";
-
-status += job.status=="COMPLETED" ?
-"<li>Experiment Completion ✅</li>" :
-"<li>Experiment Completion ⏳</li>";
-
-document.getElementById("status").innerHTML=status;
+            if(!job){
+                return;
+            }
 
 
+            /*
+             * Status
+             */
+
+            document.getElementById(
+                "job_status"
+            ).innerText =
+                job.status;
+
+
+            /*
+             * Progress
+             */
+
+            let progress = 0;
+
+            if (
+                job.total_runs &&
+                job.total_runs > 0
+            ) {
+                progress = Math.round(
+                    (
+                        job.current_run /
+                        job.total_runs
+                    ) * 100
+                );
+            }
 
             document.getElementById(
                 "progress"
-            ).value = job.progress;
+            ).value = progress;
 
 
             document.getElementById(
                 "progress_text"
-            ).innerHTML =
-            "Progress: "
-            + job.progress
-            + "%";
+            ).innerText =
+                "Progress: " +
+                progress +
+                "%";
 
 
-            console.log("LOG DATA:", job.logs); let logs = "";
+            /*
+             * Stages
+             */
 
+            let status = "";
 
-            job.logs.forEach(
-                function(item){
+            status +=
+                (progress >= 10)
+                ? "<li>System Preparation ✅</li>"
+                : "<li>System Preparation ⏳</li>";
 
-                    logs += item + "<br>";
+            status +=
+                (progress >= 25)
+                ? "<li>Topology Creation ✅</li>"
+                : "<li>Topology Creation ⏳</li>";
 
-                }
-            );
+            status +=
+                (progress >= 40)
+                ? "<li>Controller Deployment ✅</li>"
+                : "<li>Controller Deployment ⏳</li>";
 
+            status +=
+                (progress >= 75)
+                ? "<li>Metric Collection ✅</li>"
+                : "<li>Metric Collection ⏳</li>";
+
+            status +=
+                job.status === "COMPLETED"
+                ? "<li>Experiment Completion ✅</li>"
+                : job.status === "FAILED"
+                ? "<li>Experiment Completion ❌</li>"
+                : "<li>Experiment Completion ⏳</li>";
 
             document.getElementById(
-                "logs"
-            ).innerHTML = logs;
+                "status"
+            ).innerHTML = status;
+
+
+            /*
+             * Terminal
+             */
+
+            let logs = "";
+
+            if(Array.isArray(job.logs)){
+
+                job.logs.forEach(
+                    function(item){
+
+                        logs +=
+                            item +
+                            "\n";
+
+                    }
+                );
+
+            }
+
+            const terminal =
+                document.getElementById(
+                    "logs"
+                );
+
+            terminal.innerText = logs;
+
+            terminal.scrollTop =
+                terminal.scrollHeight;
+
+        }
+
+    )
+
+    .catch(
+        error => {
+
+            console.error(
+                "Job status error:",
+                error
+            );
 
         }
     );
@@ -172,13 +295,8 @@ setInterval(
     2000
 );
 
-
 updateJob();
 
-
 </script>
-
-
-
 
 {% endblock %}

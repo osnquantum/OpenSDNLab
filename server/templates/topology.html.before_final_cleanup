@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>OpenSDN Topology Builder</title>
+
+
+<style>
+
+body{
+background:#111827;
+color:white;
+font-family:Arial;
+}
+
+
+.card{
+
+background:#1f2937;
+padding:20px;
+margin:20px;
+border-radius:10px;
+
+}
+
+
+input,select{
+
+padding:8px;
+margin:5px;
+
+}
+
+
+.node{
+
+background:#2563eb;
+padding:15px;
+border-radius:50%;
+display:inline-block;
+margin:20px;
+min-width:40px;
+text-align:center;
+
+}
+
+
+.link{
+
+height:3px;
+background:white;
+width:100px;
+display:inline-block;
+
+}
+
+
+
+#canvas{
+
+height:500px;
+background:#0f172a;
+position:relative;
+border:1px solid white;
+
+}
+
+
+.device{
+
+position:absolute;
+padding:15px;
+border-radius:8px;
+cursor:move;
+background:#2563eb;
+
+}
+
+
+.device.switch{
+
+background:#16a34a;
+
+}
+
+
+</style>
+
+
+
+<script src="/static/js/jsplumb.min.js"></script>
+
+</head>
+
+
+
+<body>
+
+
+<h1>
+OpenSDN Topology Builder
+</h1>
+
+
+
+<div class="card">
+
+
+<h2>
+Network Configuration
+</h2>
+
+
+<label>
+Topology
+</label>
+
+<select id="topologyType">
+
+<option>
+Linear
+</option>
+
+<option>
+Tree
+</option>
+
+<option>
+Star
+</option>
+
+</select>
+
+
+<br>
+
+
+<label>
+Controller
+</label>
+
+
+<select id="controllerType">
+
+<option>
+Ryu
+</option>
+
+<option>
+OS-Ken
+</option>
+
+<option>
+ONOS
+</option>
+
+<option>
+OpenDaylight
+</option>
+
+
+</select>
+
+
+<br>
+
+
+<label>
+Bandwidth Mbps
+</label>
+
+<input value="100">
+
+
+<br>
+
+
+<label>
+Delay ms
+</label>
+
+<input value="10">
+
+
+<br>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<div id="canvas">
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<script>
+
+let topologyState = {
+
+    nodes: [],
+
+    links: []
+
+};
+
+
+
+function generateTopology(){
+
+
+fetch(
+'/api/topology/generate',
+{
+
+method:'POST',
+
+headers:{
+'Content-Type':'application/json'
+},
+
+body:JSON.stringify({
+
+type:
+document.getElementById("topologyType").value,
+
+hosts:
+parseInt(document.getElementById("hostCount").value),
+
+switches:
+parseInt(document.getElementById("switchCount").value),
+
+controller:
+document.getElementById("controllerType").value
+
+})
+
+}
+
+)
+
+.then(
+response=>response.json()
+)
+
+.then(
+data=>{
+
+drawGeneratedTopology(
+    data.topology
+)
+
+}
+
+)
+
+
+}
+
+</script>
+
+
+
+<script>
+
+
+
+
+
+
+<script>
+
+let hostCounter=0;
+let switchCounter=0;
+
+
+function addHost(){
+
+    hostCounter++;
+
+    let id="h"+hostCounter;
+
+
+    topologyState.nodes.push({
+
+        id:id,
+
+        type:"host"
+
+    });
+
+
+    createNode(
+
+        id,
+
+        "host"
+
+    );
+
+
+    console.log(topologyState);
+
+}
+
+
+
+function addSwitch(){
+
+    switchCounter++;
+
+    let id="s"+switchCounter;
+
+
+    topologyState.nodes.push({
+
+        id:id,
+
+        type:"switch"
+
+    });
+
+
+    createNode(
+
+        id,
+
+        "switch"
+
+    );
+
+
+    console.log(topologyState);
+
+}
+
+
+
+function createNode(id,type){
+
+    let canvas=document.getElementById("canvas");
+
+
+    let node=document.createElement("div");
+
+    node.id=id;
+
+    node.className="device "+type;
+
+    node.innerHTML=id;
+
+
+    node.style.left=
+    (50+Math.random()*400)+"px";
+
+
+    node.style.top=
+    (50+Math.random()*300)+"px";
+
+
+    canvas.appendChild(node);
+
+
+    jsPlumb.draggable(node);
+
+}
+
+
+</script>
+
+</body>
+
+</html>
+
+
+<script>
+
+async function drawTopology(){
+
+    const response = await fetch(
+        "/api/topology/generate",
+        {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+
+                type:"linear",
+                hosts:5,
+                switches:2,
+                controller:"os-ken"
+
+            })
+        }
+    );
+
+
+    const data = await response.json();
+
+
+    let canvas =
+    document.getElementById("canvas");
+
+
+    canvas.innerHTML="";
+
+
+    let topology=data.topology;
+
+
+    topology.nodes.forEach(
+        node=>{
+
+            let div=document.createElement("div");
+
+            div.className="node";
+
+
+            if(node.type==="switch"){
+                div.style.background="#16a34a";
+            }
+
+
+            div.innerHTML=node.id;
+
+
+            canvas.appendChild(div);
+
+        }
+    );
+
+
+    canvas.innerHTML += "<br><br>";
+
+
+    topology.links.forEach(
+        link=>{
+
+            canvas.innerHTML +=
+            "<div>" +
+            link.source +
+            " -------- " +
+            link.target +
+            "</div>";
+
+        }
+    );
+
+
+}
+
+
+drawTopology();
+
+
+</script>
+
+
+
+
+<style>
+
+#editor{
+
+height:500px;
+background:#0f172a;
+position:relative;
+
+}
+
+
+.device{
+
+position:absolute;
+
+padding:15px;
+
+background:#2563eb;
+
+border-radius:8px;
+
+cursor:pointer;
+
+}
+
+
+.switch{
+
+background:#16a34a;
+
+}
+
+
+.controller{
+
+background:#dc2626;
+
+}
+
+</style>
+
+
+
+<div class="card">
+
+<h2>
+Interactive Topology
+</h2>
+
+
+<div id="editor">
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+

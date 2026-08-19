@@ -1,63 +1,10 @@
-# Python
-__pycache__/
-*.pyc
-
-# Virtual environments
-venv/
-.env
-
-# Editor files
-*.swp
-*.swo
-*~
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# SQLite
-*.db
-
-# Logs
-*.log
-
-# ==========================
-# OpenSDNLab Ignore Rules
-# ==========================
-
-# Python
 __pycache__/
 *.py[cod]
-*.pyo
-
-# Virtual Environments
-venv/
+*.db
+*.sqlite
 .env
 .venv/
-
-# Editor Files
-*.swp
-*.swo
-*~
-.vscode/
-.idea/
-
-# OS Files
-.DS_Store
-Thumbs.db
-
-# Logs
+venv/
 *.log
-logs/
-
-# Database
-*.db
-*.sqlite3
-
-# Experiment Results (optional)
-# Uncomment if you don't want to track generated results
-# results/*.csv
-# results/*.json
-# results/*.png
-# results/*.pdf
-
+*.key
+*.pem

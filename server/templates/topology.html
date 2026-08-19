@@ -4,7 +4,9 @@
 
 <head>
 
-<title>OpenSDN Topology Builder</title>
+<title>OpenSDNLab Topology Designer</title>
+
+<script src="/static/js/jsplumb.min.js"></script>
 
 
 <style>
@@ -17,349 +19,27 @@ font-family:Arial;
 
 
 .card{
-
 background:#1f2937;
 padding:20px;
 margin:20px;
 border-radius:10px;
-
 }
 
 
-input,select{
+button{
 
-padding:8px;
+padding:10px;
 margin:5px;
+cursor:pointer;
 
 }
 
 
-.node{
+#canvas{
 
-background:#2563eb;
-padding:15px;
-border-radius:50%;
-display:inline-block;
-margin:20px;
-min-width:40px;
-text-align:center;
-
-}
-
-
-.link{
-
-height:3px;
-background:white;
-width:100px;
-display:inline-block;
-
-}
-
-</style>
-
-
-
-<script src="/static/js/jsplumb.min.js"></script>
-
-</head>
-
-
-
-<body>
-
-
-<h1>
-OpenSDN Topology Builder
-</h1>
-
-
-
-<div class="card">
-
-
-<h2>
-Network Configuration
-</h2>
-
-
-<label>
-Topology
-</label>
-
-<select>
-
-<option>
-Linear
-</option>
-
-<option>
-Tree
-</option>
-
-<option>
-Star
-</option>
-
-</select>
-
-
-<br>
-
-
-<label>
-Hosts
-</label>
-
-<input value="2">
-
-
-<br>
-
-
-<label>
-Switches
-</label>
-
-<input value="1">
-
-
-<br>
-
-
-<label>
-Controller
-</label>
-
-
-<select>
-
-<option>
-Ryu
-</option>
-
-<option>
-OS-Ken
-</option>
-
-<option>
-ONOS
-</option>
-
-<option>
-OpenDaylight
-</option>
-
-
-</select>
-
-
-<br>
-
-
-<label>
-Bandwidth Mbps
-</label>
-
-<input value="100">
-
-
-<br>
-
-
-<label>
-Delay ms
-</label>
-
-<input value="10">
-
-
-</div>
-
-
-
-
-<div class="card">
-
-
-<h2>
-Topology Preview
-</h2>
-
-
-<div class="node">
-h1
-</div>
-
-
-<div class="link"></div>
-
-
-<div class="node">
-s1
-</div>
-
-
-<div class="link"></div>
-
-
-<div class="node">
-h2
-</div>
-
-
-</div>
-
-
-
-
-<div class="card">
-
-<h2>
-Topology Preview
-</h2>
-
-
-<div id="canvas">
-
-</div>
-
-
-</div>
-
-
-
-
-
-<script>
-
-function generateTopology(){
-
-
-fetch(
-'/api/topology/generate',
-{
-
-method:'POST',
-
-headers:{
-'Content-Type':'application/json'
-},
-
-body:JSON.stringify({
-
-type:'linear',
-
-hosts:2,
-
-switches:1,
-
-controller:'ryu'
-
-})
-
-}
-
-)
-
-.then(
-response=>response.json()
-)
-
-.then(
-data=>{
-
-alert(
-JSON.stringify(data)
-)
-
-}
-
-)
-
-
-}
-
-</script>
-
-</body>
-
-</html>
-
-<script>
-
-
-function drawTopology(){
-
-
-let hosts = 2;
-
-let switches = 1;
-
-
-let canvas =
-document.getElementById(
-"canvas"
-);
-
-
-canvas.innerHTML="";
-
-
-
-for(
-let i=1;
-i<=hosts;
-i++
-){
-
-
-canvas.innerHTML +=
-
-"<div class='node'>h"
-+i+
-"</div>";
-
-}
-
-
-
-canvas.innerHTML += "<br>";
-
-
-
-for(
-let i=1;
-i<=switches;
-i++
-){
-
-
-canvas.innerHTML +=
-
-"<div class='node' style='background:#16a34a'>s"
-+i+
-"</div>";
-
-}
-
-
-}
-
-
-drawTopology();
-
-
-</script>
-
-
-
-<style>
-
-#editor{
-
-height:500px;
+height:600px;
 background:#0f172a;
+border:1px solid white;
 position:relative;
 
 }
@@ -371,70 +51,209 @@ position:absolute;
 
 padding:15px;
 
-background:#2563eb;
-
 border-radius:8px;
 
-cursor:pointer;
+cursor:move;
+
+background:#2563eb;
 
 }
 
 
-.switch{
+
+.device.controller{
+
+background:#dc2626;
+
+}
+
+.device.switch{
 
 background:#16a34a;
 
 }
 
 
-.controller{
+.device.controller{
 
 background:#dc2626;
 
 }
 
+
+pre{
+
+background:#020617;
+padding:15px;
+
+}
+
 </style>
+
+</head>
+
+
+<body>
+
+
+<h1>
+OpenSDNLab Topology Designer
+</h1>
+
+
+<div class="card">
+
+
+<h2>
+Controller Configuration
+</h2>
+
+
+<select id="controller">
+
+
+<option>
+OS-Ken
+</option>
+
+
+<option>
+Ryu
+</option>
+
+
+<option>
+ONOS
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+<div class="card">
+
+
+<h2>
+Topology Controls
+</h2>
+
+
+<button onclick="addHost()">
++ Add Host
+</button>
+
+
+<button onclick="addSwitch()">
++ Add Switch
+</button>
+
+
+<button id="connectLinkBtn" onclick="enableLinkMode()">
++ Connect Link
+</button>
+
+
+<button id="deleteNodeBtn" onclick="enableDeleteMode()">
+Delete Node
+</button>
+
+<button id="deleteLinkBtn" onclick="enableDeleteLinkMode()">
+Delete Link
+</button>
+
+
+<button onclick="clearTopology()">
+Clear All
+</button>
+
+
+<button onclick="saveTopology()">
+Save Topology
+</button>
+
+<button onclick="runCustomExperiment()">
+▶ Run Experiment
+</button>
+
+<div style="margin-top:15px;">
+
+    <label for="batchRuns">
+        Batch Runs
+    </label>
+
+    <input
+        id="batchRuns"
+        type="number"
+        min="2"
+        value="10"
+        style="width:80px; margin-left:10px;"
+    >
+
+    <button
+        type="button"
+        onclick="runBatchExperiment()"
+        style="margin-left:10px;"
+    >
+        ▶ Run Batch
+    </button>
+
+</div>
+
+
+
+</div>
+
+
+
+<div class="card">
+
+
+<h2>
+Topology Canvas
+</h2>
+
+
+
+
+
+<div id="canvas">
+
+
+<div id="controllerNode"
+class="device controller"
+style="left:450px;top:40px">
+
+OS-Ken Controller
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+</div>
 
 
 
 <div class="card">
 
 <h2>
-Interactive Topology
+Topology JSON
 </h2>
 
 
-<div id="editor">
-
-
-<div id="h1"
-class="device"
-style="left:100px;top:100px">
-
-h1
-
-</div>
-
-
-<div id="s1"
-class="device switch"
-style="left:300px;top:100px">
-
-s1
-
-</div>
-
-
-<div id="c1"
-class="device controller"
-style="left:500px;top:100px">
-
-Controller
-
-</div>
-
-
-</div>
+<pre id="output">
+{}
+</pre>
 
 
 </div>
@@ -444,48 +263,1726 @@ Controller
 <script>
 
 
-jsPlumb.ready(function(){
+let topologyState={
+
+nodes:[],
+
+links:[],
+
+controller:"OS-Ken"
+
+};
 
 
-jsPlumb.draggable(
-[
-"h1",
-"s1",
-"c1"
-]
+
+let hostCounter=0;
+
+let switchCounter=0;
+
+let linkMode=false;
+
+let selectedNode=null;
+
+
+let deleteMode=false;
+
+let deleteLinkMode=false;
+
+
+
+
+
+function getNextId(prefix){
+
+
+    let i=1;
+
+
+    while(
+        document.getElementById(prefix+i)
+    ){
+
+        i++;
+
+    }
+
+
+    return i;
+
+}
+
+
+
+function addHost(){
+
+
+hostCounter++;
+
+
+let id="h"+hostCounter;
+
+
+topologyState.nodes.push({
+
+id:id,
+
+type:"host"
+
+});
+
+
+createNode(id,"host");
+
+
+updateJSON();
+
+
+}
+
+
+
+
+function addSwitch(){
+
+
+switchCounter++;
+
+
+let id="s"+switchCounter;
+
+
+topologyState.nodes.push({
+
+id:id,
+
+type:"switch"
+
+});
+
+
+createNode(id,"switch");
+
+
+updateJSON();
+
+
+}
+
+
+
+
+function createNode(id,type){
+
+    let canvas=document.getElementById("canvas");
+
+    let node=document.createElement("div");
+
+    node.id=id;
+
+    node.className="device "+type;
+
+    node.innerHTML=id;
+
+    /*
+     * Position nodes according to their type.
+     * Hosts are placed along the bottom.
+     * Switches are placed above the hosts.
+     */
+    if(type==="host"){
+
+        let index =
+            topologyState.nodes.filter(
+                n=>n.type==="host"
+            ).length - 1;
+
+        node.style.left =
+            (50 + index*120)+"px";
+
+        node.style.top =
+            "100px";
+
+    }
+    else if(type==="switch"){
+
+        let index =
+            topologyState.nodes.filter(
+                n=>n.type==="switch"
+            ).length - 1;
+
+        node.style.left =
+            (200 + index*150)+"px";
+
+        node.style.top =
+            "300px";
+
+    }
+
+    canvas.appendChild(node);
+
+    /*
+     * Make the node draggable.
+     */
+    jsPlumb.draggable(node);
+
+    /*
+     * Connect the first switch to the controller.
+     * This replaces the duplicated controller connection
+     * blocks that existed in the previous function.
+     */
+    if(type==="switch"){
+
+        let switches =
+            topologyState.nodes.filter(
+                n=>n.type==="switch"
+            );
+
+        if(switches.length===1){
+
+            jsPlumb.connect({
+
+                source:"controllerNode",
+
+                target:id,
+
+                connector:[
+                    "Straight"
+                ],
+
+                paintStyle:{
+
+                    stroke:"#ef4444",
+
+                    strokeWidth:3,
+
+                    dashstyle:"5 5"
+
+                }
+
+            });
+
+        }
+
+    }
+
+    /*
+     * Node click handling for link creation.
+     */
+    node.addEventListener(
+        "click",
+        function(e){
+
+            if(!linkMode){
+
+                return;
+
+            }
+
+            e.stopPropagation();
+
+            console.log(
+                "Selected node:",
+                id
+            );
+
+            /*
+             * First node:
+             * highlight it and wait for the second node.
+             */
+            if(selectedNode === null){
+
+                selectedNode = id;
+
+                node.style.border =
+                    "3px solid #facc15";
+
+                node.style.boxShadow =
+                    "0 0 12px rgba(250,204,21,0.8)";
+
+                return;
+
+            }
+
+            /*
+             * Clicking the same node again cancels
+             * the current selection.
+             */
+            if(selectedNode === id){
+
+                node.style.border = "";
+
+                node.style.boxShadow = "";
+
+                selectedNode = null;
+
+                return;
+
+            }
+
+            /*
+             * Second node:
+             * create the link.
+             */
+            console.log(
+                "Creating link:",
+                selectedNode,
+                id
+            );
+
+            createLink(
+                selectedNode,
+                id
+            );
+
+            /*
+             * Clear first-node highlight.
+             * Keep linkMode ACTIVE so another link
+             * can be created immediately.
+             */
+            let first =
+                document.getElementById(
+                    selectedNode
+                );
+
+            if(first){
+
+                first.style.border = "";
+
+                first.style.boxShadow = "";
+
+            }
+
+            selectedNode = null;
+
+        }
+    );
+
+    /*
+     * Delete-mode handling.
+     */
+    node.onclick=function(e){
+
+        if(deleteMode){
+
+            deleteNode(id);
+
+            e.stopPropagation();
+
+        }
+
+    };
+
+}
+
+function clearModeButtons(){
+
+    let buttons = [
+        "connectLinkBtn",
+        "deleteNodeBtn",
+        "deleteLinkBtn"
+    ];
+
+    buttons.forEach(function(id){
+
+        let button =
+            document.getElementById(id);
+
+        if(button){
+
+            button.classList.remove("active");
+
+            button.style.background = "";
+
+            button.style.color = "";
+
+            button.style.borderColor = "";
+
+        }
+
+    });
+
+}
+
+
+function clearNodeSelection(){
+
+    document
+        .querySelectorAll(".device")
+        .forEach(function(node){
+
+            node.style.border = "";
+
+            node.style.boxShadow = "";
+
+        });
+
+    selectedNode = null;
+
+}
+
+
+function setMode(mode){
+
+    /*
+     * Only ONE editing mode can be active.
+     */
+    linkMode = false;
+
+    deleteMode = false;
+
+    deleteLinkMode = false;
+
+    clearNodeSelection();
+
+    clearModeButtons();
+
+    /*
+     * Activate requested mode.
+     */
+    if(mode === "link"){
+
+        linkMode = true;
+
+        let button =
+            document.getElementById(
+                "connectLinkBtn"
+            );
+
+        if(button){
+
+            button.classList.add("active");
+
+            button.style.background =
+                "#2563eb";
+
+            button.style.color =
+                "#ffffff";
+
+            button.style.borderColor =
+                "#2563eb";
+
+        }
+
+    }
+
+    else if(mode === "deleteNode"){
+
+        deleteMode = true;
+
+        let button =
+            document.getElementById(
+                "deleteNodeBtn"
+            );
+
+        if(button){
+
+            button.classList.add("active");
+
+            button.style.background =
+                "#dc2626";
+
+            button.style.color =
+                "#ffffff";
+
+            button.style.borderColor =
+                "#dc2626";
+
+        }
+
+    }
+
+    else if(mode === "deleteLink"){
+
+        deleteLinkMode = true;
+
+        let button =
+            document.getElementById(
+                "deleteLinkBtn"
+            );
+
+        if(button){
+
+            button.classList.add("active");
+
+            button.style.background =
+                "#dc2626";
+
+            button.style.color =
+                "#ffffff";
+
+            button.style.borderColor =
+                "#dc2626";
+
+        }
+
+    }
+
+}
+
+
+function enableLinkMode(){
+
+    if(linkMode){
+
+        setMode(null);
+
+    }
+    else{
+
+        setMode("link");
+
+    }
+
+}
+
+
+function enableDeleteMode(){
+
+    if(deleteMode){
+
+        setMode(null);
+
+    }
+    else{
+
+        setMode("deleteNode");
+
+    }
+
+}
+
+
+function enableDeleteLinkMode(){
+
+    if(deleteLinkMode){
+
+        setMode(null);
+
+    }
+    else{
+
+        setMode("deleteLink");
+
+    }
+
+}
+
+
+function deleteNode(id){
+
+    console.log(
+        "DELETE NODE:",
+        id
+    );
+
+    /*
+     * Remove every visual jsPlumb connection
+     * attached to this node.
+     */
+    /*
+     * Take a snapshot first.
+     *
+     * Do NOT delete while iterating directly over
+     * jsPlumb.getAllConnections(), because deleting a
+     * connection changes that collection.
+     */
+    let connections =
+        jsPlumb.getAllConnections().slice();
+
+    connections.forEach(
+        function(connection){
+
+            let sourceId =
+                typeof connection.source === "string"
+                    ? connection.source
+                    : connection.source.id;
+
+            let targetId =
+                typeof connection.target === "string"
+                    ? connection.target
+                    : connection.target.id;
+
+            if(
+                sourceId === id ||
+                targetId === id
+            ){
+
+                console.log(
+                    "Removing connection:",
+                    sourceId,
+                    "->",
+                    targetId
+                );
+
+                jsPlumb.deleteConnection(
+                    connection
+                );
+
+            }
+
+        }
+    );
+
+    /*
+     * Remove node from topology JSON.
+     */
+    topologyState.nodes =
+        topologyState.nodes.filter(
+            function(node){
+
+                return node.id !== id;
+
+            }
+        );
+
+    /*
+     * Remove all links attached to this node.
+     */
+    topologyState.links =
+        topologyState.links.filter(
+            function(link){
+
+                return (
+                    link.source !== id &&
+                    link.target !== id
+                );
+
+            }
+        );
+
+    /*
+     * Remove node from canvas.
+     */
+    let node =
+        document.getElementById(id);
+
+    if(node){
+
+        node.remove();
+
+    }
+
+    /*
+     * Exit node-delete mode.
+     */
+    deleteMode = false;
+
+    updateJSON();
+
+    console.log(
+        "NODE DELETED:",
+        id
+    );
+
+}
+
+function clearTopology(){
+
+    topologyState={
+
+        nodes:[],
+
+        links:[],
+
+        controller:
+        document.getElementById("controller").value
+
+    };
+
+
+    document.getElementById(
+        "canvas"
+    ).innerHTML="";
+
+
+    updateJSON();
+
+}
+
+
+
+
+function enableLinkMode(){
+
+    linkMode = !linkMode;
+
+    selectedNode = null;
+
+    /*
+     * Clear any previous node selection highlight.
+     */
+    document
+        .querySelectorAll(".device")
+        .forEach(function(node){
+
+            node.style.border = "";
+
+        });
+
+    /*
+     * Update the Connect Link button state.
+     */
+    let button =
+        document.getElementById("connectLinkBtn");
+
+    if(button){
+
+        if(linkMode){
+
+            button.classList.add("active");
+
+            button.style.background =
+                "#2563eb";
+
+            button.style.color =
+                "#ffffff";
+
+            button.style.borderColor =
+                "#2563eb";
+
+        }
+        else{
+
+            button.classList.remove("active");
+
+            button.style.background = "";
+
+            button.style.color = "";
+
+            button.style.borderColor = "";
+
+        }
+
+    }
+
+}
+
+function getNextSwitchPort(switchId){
+
+    let usedPorts = [];
+
+    topologyState.links.forEach(function(link){
+
+        if(
+            link.source === switchId &&
+            link.source_port !== null &&
+            link.source_port !== undefined
+        ){
+
+            usedPorts.push(link.source_port);
+
+        }
+
+        if(
+            link.target === switchId &&
+            link.destination_port !== null &&
+            link.destination_port !== undefined
+        ){
+
+            usedPorts.push(link.destination_port);
+
+        }
+
+    });
+
+    let port = 1;
+
+    while(usedPorts.includes(port)){
+
+        port++;
+
+    }
+
+    return port;
+}
+
+
+function createLink(source,target){
+
+    console.log(
+        "LINK REQUEST:",
+        source,
+        target
+    );
+
+    let sourceNode =
+        document.getElementById(source);
+
+    let targetNode =
+        document.getElementById(target);
+
+    if(!sourceNode || !targetNode){
+
+        console.warn("Invalid nodes");
+        return;
+
+    }
+
+    let sourceIsHost =
+        sourceNode.classList.contains("host");
+
+    let targetIsHost =
+        targetNode.classList.contains("host");
+
+    let sourceIsSwitch =
+        sourceNode.classList.contains("switch");
+
+    let targetIsSwitch =
+        targetNode.classList.contains("switch");
+
+    /*
+     * Only these connections are allowed:
+     *
+     * HOST   <-> SWITCH
+     * SWITCH <-> SWITCH
+     *
+     * HOST <-> HOST is NOT allowed.
+     */
+    if(
+        (sourceIsHost && targetIsHost) ||
+        (!sourceIsHost && !sourceIsSwitch) ||
+        (!targetIsHost && !targetIsSwitch)
+    ){
+
+        console.warn(
+            "Invalid topology link:",
+            source,
+            target
+        );
+
+        return;
+
+    }
+
+    /*
+     * A host can have only ONE link.
+     *
+     * This prevents:
+     *
+     * h1 -> s1   OK
+     * h1 -> s2   NOT ALLOWED
+     *
+     * Switches may have multiple links.
+     */
+    if(sourceIsHost || targetIsHost){
+
+        let hostId =
+            sourceIsHost
+                ? source
+                : target;
+
+        let hostAlreadyConnected =
+            topologyState.links.some(
+                function(link){
+
+                    return (
+                        link.source === hostId ||
+                        link.target === hostId
+                    );
+
+                }
+            );
+
+        if(hostAlreadyConnected){
+
+            console.warn(
+                "Host already has a connection:",
+                hostId
+            );
+
+            return;
+
+        }
+
+    }
+
+    /*
+     * Prevent duplicate links.
+     */
+    let exists =
+        topologyState.links.some(
+            l =>
+            (l.source===source &&
+             l.target===target)
+            ||
+            (l.source===target &&
+             l.target===source)
+        );
+
+    if(exists){
+
+        console.warn(
+            "Link already exists:",
+            source,
+            target
+        );
+
+        return;
+
+    }
+
+    /*
+     * Allocate switch ports.
+     */
+    let sourcePort =
+        sourceIsSwitch
+            ? getNextSwitchPort(source)
+            : null;
+
+    let destinationPort =
+        targetIsSwitch
+            ? getNextSwitchPort(target)
+            : null;
+
+    /*
+     * Store link in topology JSON.
+     */
+    topologyState.links.push({
+
+        source:source,
+
+        target:target,
+
+        source_port:sourcePort,
+
+        destination_port:destinationPort
+
+    });
+
+    console.log(
+        "LINK CREATED:",
+        source,
+        sourcePort,
+        target,
+        destinationPort
+    );
+
+    /*
+     * Create visual jsPlumb connection.
+     */
+    let connection =
+        jsPlumb.connect({
+
+            source:source,
+
+            target:target,
+
+            anchors:[
+
+                sourceIsHost
+                    ? "Top"
+                    : "AutoDefault",
+
+                targetIsHost
+                    ? "Top"
+                    : "AutoDefault"
+
+            ],
+
+            endpoint:[
+                "Dot",
+                {
+                    radius:3
+                }
+            ],
+
+            endpointStyle:{
+                fill:"#000000"
+            },
+
+            connector:[
+                "Straight"
+            ],
+
+            paintStyle:{
+                stroke:"#ffffff",
+                strokeWidth:3
+            }
+
+        });
+
+    /*
+     * Delete Link Mode:
+     * clicking the actual connection deletes it.
+     */
+    if(connection){
+
+        connection.bind(
+            "click",
+            function(){
+
+                if(!deleteLinkMode){
+
+                    return;
+
+                }
+
+                deleteLink(
+                    source,
+                    target,
+                    connection
+                );
+
+            }
+        );
+
+    }
+
+    updateJSON();
+
+}
+
+
+function deleteLink(source,target,connection){
+
+    console.log(
+        "DELETE LINK:",
+        source,
+        target
+    );
+
+    /*
+     * Remove link from topology JSON FIRST.
+     *
+     * This immediately releases its switch ports
+     * because getNextSwitchPort() calculates ports
+     * from topologyState.links.
+     */
+    topologyState.links =
+        topologyState.links.filter(
+            function(link){
+
+                return !(
+                    (link.source === source &&
+                     link.target === target)
+                    ||
+                    (link.source === target &&
+                     link.target === source)
+                );
+
+            }
+        );
+
+    /*
+     * Remove visual jsPlumb connection.
+     *
+     * Take a snapshot because deleting connections
+     * modifies jsPlumb's connection collection.
+     */
+    let connections =
+        jsPlumb.getAllConnections().slice();
+
+    connections.forEach(
+        function(conn){
+
+            let sourceId =
+                typeof conn.source === "string"
+                    ? conn.source
+                    : conn.source.id;
+
+            let targetId =
+                typeof conn.target === "string"
+                    ? conn.target
+                    : conn.target.id;
+
+            if(
+                (sourceId === source &&
+                 targetId === target)
+                ||
+                (sourceId === target &&
+                 targetId === source)
+            ){
+
+                jsPlumb.deleteConnection(
+                    conn
+                );
+
+            }
+
+        }
+    );
+
+    updateJSON();
+
+    console.log(
+        "LINK DELETED AND PORTS RELEASED:",
+        source,
+        target
+    );
+
+}
+
+async function saveTopology(){
+
+    topologyState.controller =
+        document.getElementById("controller").value;
+
+    // Engine controller name is "osken"
+    if(
+        topologyState.controller.toLowerCase() === "os-ken"
+    ){
+        topologyState.controller = "osken";
+    }
+
+    /*
+     * Basic topology validation.
+     */
+    if(topologyState.nodes.length < 2){
+
+        alert(
+            "Topology must contain at least one host and one switch."
+        );
+
+        return;
+
+    }
+
+    if(topologyState.links.length < 1){
+
+        alert(
+            "Topology must contain at least one link."
+        );
+
+        return;
+
+    }
+
+    /*
+     * Give the custom topology a stable name.
+     */
+    const payload = {
+
+        name: "custom_topology",
+
+        type: "custom",
+
+        controller:
+            topologyState.controller,
+
+        nodes:
+            topologyState.nodes,
+
+        links:
+            topologyState.links
+
+    };
+
+    console.log(
+        "Saving topology:",
+        payload
+    );
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/topology/save",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(payload)
+                }
+            );
+
+        const result =
+            await response.json();
+
+        if(!response.ok){
+
+            throw new Error(
+                result.message ||
+                "Topology save failed"
+            );
+
+        }
+
+        /*
+         * Keep browser copy as well.
+         */
+        localStorage.setItem(
+            "opensdnlab_topology",
+            JSON.stringify(
+                topologyState
+            )
+        );
+
+        updateJSON();
+
+        console.log(
+            "Topology saved successfully:",
+            result
+        );
+
+        alert(
+            "Topology saved successfully"
+        );
+
+    }
+    catch(error){
+
+        console.error(
+            "Topology save error:",
+            error
+        );
+
+        alert(
+            "Failed to save topology: " +
+            error.message
+        );
+
+    }
+
+}
+
+
+
+async function runCustomExperiment(){
+
+    topologyState.controller =
+        document.getElementById("controller").value;
+
+    // Engine controller name is "osken"
+    if(
+        topologyState.controller.toLowerCase() === "os-ken"
+    ){
+        topologyState.controller = "osken";
+    }
+
+    if(topologyState.nodes.length < 2){
+        alert("Add at least one host and one switch.");
+        return;
+    }
+
+    if(topologyState.links.length < 1){
+        alert("Add at least one link.");
+        return;
+    }
+
+    const hostCount =
+        topologyState.nodes.filter(
+            n => n.type === "host"
+        ).length;
+
+    const switchCount =
+        topologyState.nodes.filter(
+            n => n.type === "switch"
+        ).length;
+
+
+    try{
+
+        /*
+         * STEP 1
+         * Save topology and get topology_id.
+         */
+
+        const saveResponse =
+            await fetch(
+                "/api/topology/save",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:JSON.stringify({
+
+                        name:
+                            "custom_topology",
+
+                        type:
+                            "custom",
+
+                        controller:
+                            topologyState.controller,
+
+                        nodes:
+                            topologyState.nodes,
+
+                        links:
+                            topologyState.links
+                    })
+                }
+            );
+
+
+        const saveData =
+            await saveResponse.json();
+
+
+        if(!saveResponse.ok){
+
+            throw new Error(
+                saveData.message ||
+                "Topology save failed"
+            );
+        }
+
+
+        const topologyId =
+            saveData.topology_id;
+
+
+        if(!topologyId){
+
+            throw new Error(
+                "Topology ID was not returned"
+            );
+        }
+
+
+        /*
+         * Keep the ID in browser memory.
+         */
+
+        localStorage.setItem(
+            "opensdnlab_topology_id",
+            topologyId
+        );
+
+
+        /*
+         * STEP 2
+         * Run the saved topology.
+         */
+
+        const payload = {
+
+            name:
+                "Custom Topology Experiment",
+
+            topology:
+                "custom",
+
+            topology_id:
+                topologyId,
+
+            topology_data:{
+
+                type:
+                    "custom",
+
+                nodes:
+                    topologyState.nodes,
+
+                links:
+                    topologyState.links,
+
+                controller:
+                    topologyState.controller
+            },
+
+            hosts:
+                hostCount,
+
+            switches:
+                switchCount,
+
+            controller:
+                topologyState.controller,
+
+            protocol:
+                "ipv4",
+
+            runs:
+                1
+        };
+
+
+        const response =
+            await fetch(
+                "/api/experiments/run",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(payload)
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if(!response.ok){
+
+            throw new Error(
+                data.message ||
+                "Experiment failed to start"
+            );
+        }
+
+
+        const jobId =
+            data?.data?.job_id;
+
+
+        if(!jobId){
+
+            throw new Error(
+                "No job ID returned by server"
+            );
+        }
+
+
+        /*
+         * Show execution information
+         * on the same topology page.
+         */
+
+        const jobBox =
+            document.getElementById(
+                "executionJobId"
+            );
+
+        if(jobBox){
+
+            jobBox.innerText =
+                jobId;
+        }
+
+
+        const typeBox =
+            document.getElementById(
+                "executionType"
+            );
+
+        if(typeBox){
+
+            typeBox.innerText =
+                "SINGLE";
+        }
+
+
+        const terminal =
+            document.getElementById(
+                "executionTerminal"
+            );
+
+        if(terminal){
+
+            terminal.innerText =
+                "Topology saved: " +
+                topologyId +
+                "\n" +
+                "Experiment started.\n" +
+                "Job ID: " +
+                jobId +
+                "\n";
+        }
+
+
+        /*
+         * Start live status polling if the
+         * execution panel exists.
+         */
+
+        if(
+            typeof startJobPolling ===
+            "function"
+        ){
+
+            startJobPolling(
+                jobId
+            );
+        }
+
+
+        console.log(
+            "Topology ID:",
+            topologyId
+        );
+
+        console.log(
+            "Job ID:",
+            jobId
+        );
+
+    }
+    catch(error){
+
+        console.error(
+            "Experiment start error:",
+            error
+        );
+
+
+        const terminal =
+            document.getElementById(
+                "executionTerminal"
+            );
+
+        if(terminal){
+
+            terminal.innerText =
+                "ERROR: " +
+                error.message;
+        }
+
+
+        alert(
+            "Failed to start experiment: " +
+            error.message
+        );
+    }
+}
+
+
+function updateJSON(){
+
+
+document.getElementById("output").innerHTML=
+
+JSON.stringify(
+
+topologyState,
+
+null,
+
+4
+
 );
 
 
-
-jsPlumb.connect({
-
-source:"h1",
-
-target:"s1",
-
-connector:[
-"Straight"
-]
-
-});
+}
 
 
-jsPlumb.connect({
-
-source:"s1",
-
-target:"c1",
-
-connector:[
-"Straight"
-]
-
-});
 
 
-});
 
+async function runBatchExperiment(){
+
+    topologyState.controller =
+        document.getElementById("controller").value;
+
+    const runs = Number(
+        document.getElementById("batchRuns").value
+    );
+
+    if(topologyState.nodes.length < 2){
+        alert("Add at least one host and one switch.");
+        return;
+    }
+
+    if(topologyState.links.length < 1){
+        alert("Add at least one link.");
+        return;
+    }
+
+    if(!runs || runs < 2){
+        alert("Batch runs must be at least 2.");
+        return;
+    }
+
+    const hosts =
+        topologyState.nodes.filter(
+            n => n.type === "host"
+        ).length;
+
+    const switches =
+        topologyState.nodes.filter(
+            n => n.type === "switch"
+        ).length;
+
+    try{
+
+        /*
+         * 1. Save topology.
+         */
+        const saveResponse = await fetch(
+            "/api/topology/save",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: "custom_topology",
+                    type: "custom",
+                    controller: topologyState.controller,
+                    nodes: topologyState.nodes,
+                    links: topologyState.links
+                })
+            }
+        );
+
+        const saveData =
+            await saveResponse.json();
+
+        if(!saveResponse.ok || !saveData.success){
+            throw new Error(
+                saveData.message ||
+                "Topology save failed"
+            );
+        }
+
+        localStorage.setItem(
+            "opensdnlab_topology_id",
+            saveData.topology_id
+        );
+
+
+        /*
+         * 2. Prepare experiment metadata.
+         *    This DOES NOT start Mininet.
+         */
+        const prepareResponse = await fetch(
+            "/api/experiments/prepare",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+
+                    name: "Custom Batch Experiment",
+
+                    topology: "custom",
+
+                    topology_data: {
+                        type: "custom",
+                        nodes: topologyState.nodes,
+                        links: topologyState.links,
+                        controller: topologyState.controller,
+                        hosts: hosts,
+                        switches: switches
+                    },
+
+                    hosts: hosts,
+                    switches: switches,
+
+                    controller:
+                        topologyState.controller,
+
+                    protocol: "ipv4",
+
+                    runs: runs
+                })
+            }
+        );
+
+        const prepareData =
+            await prepareResponse.json();
+
+        if(!prepareResponse.ok ||
+           !prepareData.success){
+
+            throw new Error(
+                prepareData.message ||
+                "Experiment preparation failed"
+            );
+        }
+
+        const experimentId =
+            prepareData.data?.experiment_id;
+
+        if(!experimentId){
+            throw new Error(
+                "Experiment ID not returned"
+            );
+        }
+
+
+        /*
+         * 3. Create batch.
+         */
+        const batchResponse = await fetch(
+            "/api/batch/create",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    experiment_id: experimentId,
+                    runs: runs
+                })
+            }
+        );
+
+        const batchData =
+            await batchResponse.json();
+
+        if(!batchResponse.ok ||
+           !batchData.success){
+
+            throw new Error(
+                batchData.message ||
+                "Batch creation failed"
+            );
+        }
+
+        const batchJobId =
+            batchData.job?.job_id;
+
+        if(!batchJobId){
+            throw new Error(
+                "Batch Job ID not returned"
+            );
+        }
+
+
+        /*
+         * 4. Start batch.
+         */
+        const startResponse = await fetch(
+            "/api/batch/start/" + batchJobId,
+            {
+                method: "POST"
+            }
+        );
+
+        const startData =
+            await startResponse.json();
+
+        if(!startResponse.ok ||
+           !startData.success){
+
+            throw new Error(
+                startData.message ||
+                "Batch failed to start"
+            );
+        }
+
+
+        /*
+         * 5. Same execution page.
+         */
+        window.location.href =
+            "/running/" + batchJobId;
+
+    }
+    catch(error){
+
+        console.error(
+            "Batch start error:",
+            error
+        );
+
+        alert(
+            "Failed to start batch: " +
+            error.message
+        );
+    }
+}
 
 </script>
 
 
+</body>
+
+
+</html>

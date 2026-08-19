@@ -30,3 +30,23 @@ def run_experiment():
         result,
         "Experiment completed successfully."
     )
+
+
+@experiment.route(
+    "/experiments/prepare",
+    methods=["POST"]
+)
+def prepare_experiment():
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    result = experiment_service.prepare_experiment(
+        data
+    )
+
+    return success(
+        result,
+        "Experiment prepared successfully."
+    )

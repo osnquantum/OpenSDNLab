@@ -347,6 +347,100 @@ class ExperimentManager:
     ############################################################
 
 
+    def prepare(self, config, job=None):
+
+        experiment_id = str(uuid4())
+
+        topology_data = config.topology
+
+        if isinstance(topology_data, dict):
+
+            topology_type = topology_data.get(
+                "type",
+                "custom"
+            )
+
+            hosts = topology_data.get(
+                "hosts",
+                len([
+                    n for n in topology_data.get("nodes", [])
+                    if n.get("type") == "host"
+                ])
+            )
+
+            switches = topology_data.get(
+                "switches",
+                len([
+                    n for n in topology_data.get("nodes", [])
+                    if n.get("type") == "switch"
+                ])
+            )
+
+        else:
+
+            topology_type = topology_data
+            hosts = 0
+            switches = 0
+
+        result = ExperimentResult(
+
+            experiment_name=config.name,
+
+            experiment_id=experiment_id,
+
+            topology=topology_type,
+
+            hosts=hosts,
+
+            switches=switches,
+
+            links=0,
+
+            protocol=config.network["protocol"],
+
+            controller=config.controller["name"],
+
+            bandwidth=config.deployment["bandwidth"],
+
+            delay=config.deployment["delay"],
+
+            loss=config.deployment["loss"],
+
+            minimum_rtt=0,
+
+            average_rtt=0,
+
+            maximum_rtt=0,
+
+            jitter=0,
+
+            packet_loss=0,
+
+            throughput=0,
+
+            one_way_delay=0,
+
+            status="PREPARED",
+
+            notes="Prepared for batch execution"
+
+        )
+
+        # Preserve complete custom topology.
+        result.topology_data = topology_data
+
+        self.sqlite_repository.save(result)
+
+        if job is not None:
+            job.experiment_id = experiment_id
+
+        logger.info(
+            f"Experiment prepared {experiment_id}"
+        )
+
+        return experiment_id
+
+
     def run(
         self,
         config,
@@ -364,11 +458,50 @@ class ExperimentManager:
         experiment.experiment_name = config.name
 
 
-        experiment.topology = config.topology["type"]
+        # Preserve the complete topology configuration.
+        # Custom experiments need nodes, links and explicit ports.
+        # Keep the complete topology for execution.
+        # The database/result model still expects topology as TEXT.
+        experiment.topology_data = config.topology
 
-        experiment.hosts = config.topology["hosts"]
+        if isinstance(config.topology, dict):
 
-        experiment.switches = config.topology["switches"]
+            experiment.topology = config.topology.get(
+                "type",
+                "custom"
+            )
+
+            experiment.hosts = config.topology.get(
+                "hosts",
+                len([
+                    n for n in config.topology.get("nodes", [])
+                    if n.get("type") == "host"
+                ])
+            )
+
+            experiment.switches = config.topology.get(
+                "switches",
+                len([
+                    n for n in config.topology.get("nodes", [])
+                    if n.get("type") == "switch"
+                ])
+            )
+
+        else:
+
+            experiment.topology = config.topology
+
+            experiment.hosts = getattr(
+                config,
+                "hosts",
+                0
+            )
+
+            experiment.switches = getattr(
+                config,
+                "switches",
+                0
+            )
 
 
         experiment.protocol = config.network["protocol"]
@@ -387,7 +520,11 @@ class ExperimentManager:
 
             experiment_id=experiment.experiment_id,
 
-            topology=experiment.topology,
+            topology=(
+                experiment.topology.get("type", "custom")
+                if isinstance(experiment.topology, dict)
+                else experiment.topology
+            ),
 
             hosts=experiment.hosts,
 
@@ -430,6 +567,14 @@ class ExperimentManager:
             initial_result
         )
 
+        # Expose generated experiment ID to the background job.
+        if job is not None:
+            job.experiment_id = experiment.experiment_id
+
+
+        # Make the generated experiment ID available to the caller/job.
+        if job is not None:
+            job.experiment_id = experiment.experiment_id
 
         logger.info(
             f"Experiment registered {experiment.experiment_id}"

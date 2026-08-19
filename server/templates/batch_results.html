@@ -1,0 +1,570 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+<style>
+
+.page-header{
+    margin-bottom:25px;
+}
+
+.page-header h1{
+    margin-bottom:8px;
+}
+
+.subtitle{
+    color:#94a3b8;
+}
+
+.card-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+    margin-bottom:25px;
+}
+
+.card{
+    background:#0f172a;
+    border:1px solid #334155;
+    border-radius:12px;
+    padding:20px;
+}
+
+.card h3{
+    margin-top:0;
+    color:#94a3b8;
+    font-size:14px;
+}
+
+.metric-value{
+    font-size:28px;
+    font-weight:bold;
+}
+
+.status{
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:6px;
+    font-weight:bold;
+}
+
+.status.completed{
+    background:#14532d;
+    color:#bbf7d0;
+}
+
+.status.running{
+    background:#713f12;
+    color:#fef08a;
+}
+
+.status.failed{
+    background:#7f1d1d;
+    color:#fecaca;
+}
+
+.section{
+    margin-bottom:25px;
+}
+
+.section h2{
+    margin-bottom:15px;
+}
+
+.table-wrapper{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:#0f172a;
+    border:1px solid #334155;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+th,
+td{
+    padding:12px;
+    border-bottom:1px solid #334155;
+    text-align:left;
+    white-space:nowrap;
+}
+
+th{
+    background:#111827;
+    color:#38bdf8;
+}
+
+tr:hover{
+    background:#172033;
+}
+
+.statistics-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:16px;
+}
+
+.statistics-card{
+    background:#0f172a;
+    border:1px solid #334155;
+    border-radius:12px;
+    padding:18px;
+}
+
+.statistics-card h3{
+    margin-top:0;
+    color:#38bdf8;
+}
+
+.statistics-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.statistics-table td{
+    padding:8px;
+    border-bottom:1px solid #334155;
+}
+
+.statistics-table td:first-child{
+    color:#94a3b8;
+}
+
+.back-link{
+    display:inline-block;
+    margin-top:10px;
+    padding:10px 15px;
+    background:#1d4ed8;
+    color:white;
+    text-decoration:none;
+    border-radius:7px;
+}
+
+.back-link:hover{
+    background:#2563eb;
+}
+
+.empty{
+    padding:30px;
+    text-align:center;
+    color:#94a3b8;
+    background:#0f172a;
+    border:1px solid #334155;
+    border-radius:12px;
+}
+
+@media(max-width:1000px){
+
+    .card-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .statistics-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media(max-width:600px){
+
+    .card-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+
+
+<div class="page-header">
+
+    <h1>📊 Batch Experiment Results</h1>
+
+    <div class="subtitle">
+        OpenSDNLab batch execution analysis
+    </div>
+
+</div>
+
+
+<div class="card-grid">
+
+    <div class="card">
+
+        <h3>Job ID</h3>
+
+        <div class="metric-value">
+            {{ results.job.job_id }}
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Status</h3>
+
+        <div>
+
+            {% if results.job.status == "COMPLETED" %}
+
+                <span class="status completed">
+                    COMPLETED
+                </span>
+
+            {% elif results.job.status == "FAILED" %}
+
+                <span class="status failed">
+                    FAILED
+                </span>
+
+            {% else %}
+
+                <span class="status running">
+                    {{ results.job.status }}
+                </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Runs</h3>
+
+        <div class="metric-value">
+            {{ results.job.total_runs }}
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Successful / Failed</h3>
+
+        <div class="metric-value">
+            {{ results.job.successful }}
+            /
+            {{ results.job.failed }}
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="section">
+
+    <h2>🧪 Run-by-Run Measurements</h2>
+
+    {% if results.runs %}
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Run</th>
+                    <th>Min RTT (ms)</th>
+                    <th>Avg RTT (ms)</th>
+                    <th>Max RTT (ms)</th>
+                    <th>Jitter (ms)</th>
+                    <th>Packet Loss (%)</th>
+                    <th>Throughput (Mbps)</th>
+                    <th>One-Way Delay (ms)</th>
+                    <th>MOS</th>
+                    <th>Created</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for run in results.runs %}
+
+                <tr>
+
+                    <td>
+                        {{ loop.index }}
+                    </td>
+
+                    <td>
+                        {{ "%.3f"|format(run.minimum_rtt) }}
+                    </td>
+
+                    <td>
+                        {{ "%.3f"|format(run.average_rtt) }}
+                    </td>
+
+                    <td>
+                        {{ "%.3f"|format(run.maximum_rtt) }}
+                    </td>
+
+                    <td>
+                        {{ "%.3f"|format(run.jitter) }}
+                    </td>
+
+                    <td>
+                        {{ "%.2f"|format(run.packet_loss) }}
+                    </td>
+
+                    <td>
+                        {{ "%.2f"|format(run.throughput) }}
+                    </td>
+
+                    <td>
+                        {{ "%.3f"|format(run.one_way_delay) }}
+                    </td>
+
+                    <td>
+                        {{ "%.2f"|format(run.mos) }}
+                    </td>
+
+                    <td>
+                        {{ run.created_at }}
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty">
+        No completed experiment runs are available yet.
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<div class="section">
+
+    <h2>🎯 QoS / QoE Decisions</h2>
+
+    {% if results.decisions %}
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Run</th>
+                    <th>Action</th>
+                    <th>Reason</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for decision in results.decisions %}
+
+                <tr>
+
+                    <td>
+                        {{ loop.index }}
+                    </td>
+
+                    <td>
+                        <strong>
+                            {{ decision.action }}
+                        </strong>
+                    </td>
+
+                    <td>
+                        {{ decision.reason }}
+                    </td>
+
+                    <td>
+                        {{ decision.created_at }}
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty">
+        No QoS/QoE decisions are available.
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<div class="section">
+
+    <h2>🎛 Controller Monitoring</h2>
+
+    {% if results.controller_summary %}
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>Run</th>
+                    <th>Controller</th>
+                    <th>CPU (%)</th>
+                    <th>Memory (MB)</th>
+                    <th>Threads</th>
+                    <th>Switches</th>
+                    <th>Packet-In</th>
+                    <th>Flow Installs</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for metric in results.controller_summary %}
+
+                <tr>
+
+                    <td>
+                        {{ metric.run_number }}
+                    </td>
+
+                    <td>
+                        {{ metric.controller_id }}
+                    </td>
+
+                    <td>
+                        {{ metric.cpu_usage|default("—") }}
+                    </td>
+
+                    <td>
+                        {{ metric.memory_mb|default("—") }}
+                    </td>
+
+                    <td>
+                        {{ metric.threads|default("—") }}
+                    </td>
+
+                    <td>
+                        {{ metric.switch_count|default("—") }}
+                    </td>
+
+                    <td>
+                        {{ metric.packet_in_count|default("—") }}
+                    </td>
+
+                    <td>
+                        {{ metric.flow_install_count|default("—") }}
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty">
+        No controller monitoring metrics are available.
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<div class="section">
+
+    <h2>📈 Statistical Summary</h2>
+
+    {% if results.statistics %}
+
+    <div class="statistics-grid">
+
+        {% for metric, values in results.statistics.items() %}
+
+        <div class="statistics-card">
+
+            <h3>
+                {{ metric.replace("_", " ")|title }}
+            </h3>
+
+            <table class="statistics-table">
+
+                <tr>
+                    <td>Mean</td>
+                    <td>{{ values.mean }}</td>
+                </tr>
+
+                <tr>
+                    <td>Minimum</td>
+                    <td>{{ values.minimum }}</td>
+                </tr>
+
+                <tr>
+                    <td>Maximum</td>
+                    <td>{{ values.maximum }}</td>
+                </tr>
+
+                <tr>
+                    <td>Standard Deviation</td>
+                    <td>{{ values.stddev }}</td>
+                </tr>
+
+            </table>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="empty">
+        Statistical data will appear after experiment runs are completed.
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<a
+    class="back-link"
+    href="/running/{{ results.job.job_id }}"
+>
+    ← Back to Experiment Execution
+</a>
+
+
+{% endblock %}

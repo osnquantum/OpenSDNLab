@@ -27,12 +27,23 @@ class TrafficManager:
         )
 
 
-        result = source.cmd(
-            f"ping -c 5 {destination.IP()}"
-        )
+        try:
+            result = source.cmd(
+                f"timeout 15 ping -c 5 {destination.IP()}"
+            )
 
+            logger.info(
+                "Ping completed successfully"
+            )
 
-        return result
+            return result
+
+        except Exception as e:
+            logger.exception(
+                "Ping failed: %s",
+                str(e)
+            )
+            raise
 
 
 
@@ -50,17 +61,31 @@ class TrafficManager:
         )
 
 
-        destination.cmd(
-            "iperf -s -D"
-        )
+        try:
+            destination.cmd(
+                "iperf -s -D"
+            )
 
+            logger.info(
+                "iperf server started"
+            )
 
-        result = source.cmd(
-            f"iperf -c {destination.IP()} -t {duration}"
-        )
+            result = source.cmd(
+                f"timeout 20 iperf -c {destination.IP()} -t {duration}"
+            )
 
+            logger.info(
+                "iperf completed successfully"
+            )
 
-        return result
+            return result
+
+        except Exception as e:
+            logger.exception(
+                "Throughput test failed: %s",
+                str(e)
+            )
+            raise
 
 
 

@@ -69,7 +69,11 @@ class BlueprintAdapter:
 
                 "delay": link.delay,
 
-                "loss": link.loss
+                "loss": link.loss,
+
+                "source_port": link.source_port,
+
+                "destination_port": link.destination_port
 
             })
 
