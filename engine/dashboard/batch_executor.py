@@ -37,6 +37,15 @@ class BatchExecutor:
 
         results = []
 
+        logger.info(
+            f"BATCH DEBUG: job_id={job_id}, total_runs={total_runs}, "
+            f"loop_expected={list(range(total_runs))}"
+        )
+
+        print(
+            f"===== BATCH DEBUG: job={job_id} total_runs={total_runs} =====",
+            flush=True
+        )
 
         for i in range(total_runs):
 

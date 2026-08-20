@@ -2,7 +2,7 @@
 Dynamic Research Analytics Data API
 """
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
 from engine.repository.sqlite.sqlite_repository import SQLiteRepository
 
@@ -17,29 +17,58 @@ def analytics_dataset(experiment_id):
 
     cursor = db.connection.cursor()
 
-    cursor.execute(
-        """
-        SELECT
+    job_id = request.args.get("job_id")
 
-        run_number,
-        minimum_rtt,
-        average_rtt,
-        maximum_rtt,
-        jitter,
-        packet_loss,
-        throughput,
-        estimated_one_way_delay,
-        mos
+    if job_id:
 
-        FROM experiment_runs
+        cursor.execute(
+            """
+            SELECT
+                run_number,
+                minimum_rtt,
+                average_rtt,
+                maximum_rtt,
+                jitter,
+                packet_loss,
+                throughput,
+                estimated_one_way_delay,
+                mos
 
-        WHERE experiment_id=?
+            FROM experiment_runs
 
-        ORDER BY run_number
+            WHERE experiment_id=?
+              AND job_id=?
 
-        """,
-        (experiment_id,),
-    )
+            ORDER BY run_number
+
+            """,
+            (experiment_id, job_id),
+        )
+
+    else:
+
+        cursor.execute(
+            """
+            SELECT
+                run_number,
+                minimum_rtt,
+                average_rtt,
+                maximum_rtt,
+                jitter,
+                packet_loss,
+                throughput,
+                estimated_one_way_delay,
+                mos
+
+            FROM experiment_runs
+
+            WHERE experiment_id=?
+
+            ORDER BY run_number
+
+            """,
+            (experiment_id,),
+        )
 
     rows = cursor.fetchall()
 

@@ -149,6 +149,47 @@ def start_batch(job_id):
     worker = get_worker()
 
 
+    # Check persisted batch status first.
+    existing = batch_repository.get(job_id)
+
+    if not existing:
+        return jsonify({
+
+            "success": False,
+
+            "message": "Batch job not found"
+
+        }), 404
+
+
+    existing_status = existing.get("status")
+
+    if existing_status == "RUNNING":
+
+        return jsonify({
+
+            "success": False,
+
+            "message": "Batch is already running",
+
+            "job_id": job_id
+
+        }), 409
+
+
+    if existing_status == "COMPLETED":
+
+        return jsonify({
+
+            "success": False,
+
+            "message": "Batch has already completed",
+
+            "job_id": job_id
+
+        }), 409
+
+
     job = batch_jobs_cache.get(
         job_id
     )
@@ -290,7 +331,16 @@ def batch_results(job_id):
             results["runs"],
 
         "statistics":
-            results["statistics"]
+            results["statistics"],
+
+        "decisions":
+            results.get("decisions", []),
+
+        "controller_metrics":
+            results.get("controller_metrics", []),
+
+        "controller_summary":
+            results.get("controller_summary", [])
 
     })
 

@@ -37,17 +37,51 @@ const metricInfo = {
 
 
 
-async function loadAnalytics(exp){
+async function loadAnalytics(exp, jobId=null){
 
 
-    let response =
-    await fetch(
-        "/api/analytics/data/" + exp
+    let url =
+        "/api/analytics/data/" +
+        encodeURIComponent(exp);
+
+
+    if(jobId){
+
+        url +=
+            "?job_id=" +
+            encodeURIComponent(jobId);
+
+    }
+
+
+    console.log(
+        "Loading analytics:",
+        {
+            experiment_id: exp,
+            job_id: jobId,
+            url: url
+        }
     );
 
 
+    let response =
+        await fetch(url);
+
+
     dataset =
-    await response.json();
+        await response.json();
+
+
+    if(!dataset.success){
+
+        console.error(
+            "Analytics loading failed:",
+            dataset
+        );
+
+        return;
+
+    }
 
 
     createChart();
