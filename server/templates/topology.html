@@ -131,6 +131,20 @@
     border-color:#38bdf8;
 }
 
+.node-button-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-bottom:8px;
+}
+
+.node-button-grid .tool-button{
+    width:100%;
+    margin:0;
+    text-align:center;
+}
+
+
 .tool-button.primary{
     background:#2563eb;
     border-color:#2563eb;
@@ -201,16 +215,31 @@
 }
 
 .device{
+    position:absolute;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    width:auto !important;
+    min-width:90px;
+    max-width:180px;
+
     padding:13px 16px;
+    box-sizing:border-box;
+
     border-radius:10px;
     cursor:move;
+
     background:#2563eb;
     border:1px solid rgba(255,255,255,.15);
+
     box-shadow:0 8px 20px rgba(0,0,0,.25);
+
     color:white;
     font-size:13px;
-    min-width:90px;
     text-align:center;
+
+    user-select:none;
 }
 
 .device.controller{
@@ -387,19 +416,23 @@
                             Devices
                         </span>
 
-                        <button
-                            class="tool-button"
-                            onclick="addHost()"
-                        >
-                            🖥 + Add Host
-                        </button>
+                        <div class="node-button-grid">
 
-                        <button
-                            class="tool-button"
-                            onclick="addSwitch()"
-                        >
-                            🔀 + Add Switch
-                        </button>
+                            <button
+                                class="tool-button"
+                                onclick="addHost()"
+                            >
+                                🖥 + Add Host
+                            </button>
+
+                            <button
+                                class="tool-button"
+                                onclick="addSwitch()"
+                            >
+                                🔀 + Add Switch
+                            </button>
+
+                        </div>
 
                     </div>
 
@@ -592,6 +625,31 @@
 
 <script>
 
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const controllerNode =
+            document.getElementById(
+                "controllerNode"
+            );
+
+        if(
+            controllerNode &&
+            typeof makeNodeDraggable === "function"
+        ){
+
+            makeNodeDraggable(
+                controllerNode
+            );
+
+        }
+
+    }
+);
+
+
+
 
 let topologyState={
 
@@ -693,6 +751,40 @@ type:"switch"
 createNode(id,"switch");
 
 
+/*
+ * Restore the original OpenSDNLab behavior:
+ * automatically connect the first switch
+ * to the controller.
+ */
+if(switchCounter === 1){
+
+    setTimeout(
+        function(){
+
+            try{
+
+                createLink(
+                    "controllerNode",
+                    id
+                );
+
+            }
+            catch(error){
+
+                console.warn(
+                    "Automatic controller link failed:",
+                    error
+                );
+
+            }
+
+        },
+        100
+    );
+
+}
+
+
 updateJSON();
 
 
@@ -701,6 +793,182 @@ updateJSON();
 
 
 
+
+function makeNodeDraggable(node){
+
+    if(!node){
+        return;
+    }
+
+
+    node.style.position = "absolute";
+    node.style.width = "auto";
+    node.style.cursor = "move";
+
+
+    /*
+     * Use jsPlumb dragging when available.
+     * If it fails, the native drag implementation below
+     * remains active as a reliable fallback.
+     */
+    if(typeof jsPlumb !== "undefined"){
+
+        try{
+
+            jsPlumb.draggable(
+                node,
+                {
+                    containment:"parent"
+                }
+            );
+
+        }
+        catch(error){
+
+            console.warn(
+                "jsPlumb drag initialization failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+
+    node.addEventListener(
+        "mousedown",
+        function(event){
+
+            if(
+                currentMode === "link" ||
+                currentMode === "delete" ||
+                currentMode === "deleteLink"
+            ){
+                return;
+            }
+
+
+            dragging = true;
+
+
+            const rect =
+                node.getBoundingClientRect();
+
+
+            offsetX =
+                event.clientX -
+                rect.left;
+
+
+            offsetY =
+                event.clientY -
+                rect.top;
+
+
+            event.preventDefault();
+
+        }
+    );
+
+
+    document.addEventListener(
+        "mousemove",
+        function(event){
+
+            if(!dragging){
+                return;
+            }
+
+
+            const parent =
+                node.parentElement;
+
+
+            const parentRect =
+                parent.getBoundingClientRect();
+
+
+            let x =
+                event.clientX -
+                parentRect.left -
+                offsetX;
+
+
+            let y =
+                event.clientY -
+                parentRect.top -
+                offsetY;
+
+
+            x = Math.max(
+                0,
+                Math.min(
+                    x,
+                    parent.clientWidth -
+                    node.offsetWidth
+                )
+            );
+
+
+            y = Math.max(
+                0,
+                Math.min(
+                    y,
+                    parent.clientHeight -
+                    node.offsetHeight
+                )
+            );
+
+
+            node.style.left =
+                x + "px";
+
+
+            node.style.top =
+                y + "px";
+
+
+            if(typeof jsPlumb !== "undefined"){
+
+                try{
+                    jsPlumb.repaintEverything();
+                }
+                catch(error){
+                    console.warn(
+                        "Topology repaint failed:",
+                        error
+                    );
+                }
+
+            }
+
+        }
+    );
+
+
+    document.addEventListener(
+        "mouseup",
+        function(){
+
+            if(!dragging){
+                return;
+            }
+
+
+            dragging = false;
+
+
+            updateJSON();
+
+        }
+    );
+
+}
 function createNode(id,type){
 
     let canvas=document.getElementById("canvas");
@@ -748,6 +1016,8 @@ function createNode(id,type){
     }
 
     canvas.appendChild(node);
+
+makeNodeDraggable(node);
 
     /*
      * Make the node draggable.
