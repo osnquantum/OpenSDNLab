@@ -1,34 +1,92 @@
-<div class="sidebar">
+<aside class="sidebar">
 
-    <h2>⚡ OpenSDNLab</h2>
+    <div class="brand">
 
-    <a href="/dashboard">
-        🏠 Dashboard
-    </a>
+        <div class="brand-icon">
+            ⚡
+        </div>
+
+        <div>
+
+            <div class="brand-title">
+                OpenSDNLab
+            </div>
+
+            <div class="brand-subtitle">
+                Adaptive SDN Framework
+            </div>
+
+        </div>
+
+    </div>
 
 
-    <!-- =========================
-         EXPERIMENT WORKFLOW
-    ========================== -->
+    <div class="nav-section">
 
-    <div class="dropdown">
+        <div class="nav-label">
+            OVERVIEW
+        </div>
 
-        <a href="javascript:void(0)" onclick="toggleMenu('experiment-menu')">
-            🧪 Experiments ▾
+
+        <a
+            class="nav-link"
+            href="/dashboard"
+        >
+            <span class="nav-icon">
+                ◈
+            </span>
+
+            Dashboard
         </a>
 
-        <div class="dropdown-content" id="experiment-menu">
+    </div>
+
+
+    <div class="nav-section">
+
+        <div class="nav-label">
+            EXPERIMENT WORKFLOW
+        </div>
+
+
+        <button
+            class="nav-link nav-toggle"
+            type="button"
+            onclick="toggleMenu('experiment-menu', this)"
+        >
+
+            <span>
+
+                <span class="nav-icon">
+                    ◇
+                </span>
+
+                Experiments
+
+            </span>
+
+            <span class="chevron">
+                ▾
+            </span>
+
+        </button>
+
+
+        <div
+            class="dropdown-content"
+            id="experiment-menu"
+        >
 
             <a href="/experiments">
-                ▶ Experiment Control
+                Experiment Control
             </a>
 
             <a href="/topology">
-                🌐 Topology Designer
+                Topology Designer
             </a>
 
             <a href="/research">
-                📚 Research Dashboard
+                Research Dashboard
             </a>
 
         </div>
@@ -36,65 +94,90 @@
     </div>
 
 
-    <!-- =========================
-         EXECUTION
-    ========================== -->
+    <div class="nav-section">
 
-    <div class="dropdown">
-
-        <a href="javascript:void(0)" onclick="toggleMenu('execution-menu')">
-            ▶ Execution ▾
-        </a>
-
-        <div class="dropdown-content" id="execution-menu">
-
-            <a href="/experiments">
-                🧪 Run / Batch Experiment
-            </a>
-
+        <div class="nav-label">
+            EXECUTION
         </div>
+
+
+        <a
+            class="nav-link"
+            href="/experiments"
+        >
+
+            <span class="nav-icon">
+                ▶
+            </span>
+
+            Run Experiment
+
+        </a>
 
     </div>
 
 
-    <!-- =========================
-         RESULTS & ANALYSIS
-    ========================== -->
+    <div class="nav-section">
 
-    <div class="dropdown">
+        <div class="nav-label">
+            RESULTS & ANALYSIS
+        </div>
 
-        <a href="javascript:void(0)" onclick="toggleMenu('analysis-menu')">
-            📊 Results & Analysis ▾
-        </a>
 
-        <div class="dropdown-content" id="analysis-menu">
+        <button
+            class="nav-link nav-toggle"
+            type="button"
+            onclick="toggleMenu('analysis-menu', this)"
+        >
+
+            <span>
+
+                <span class="nav-icon">
+                    ▦
+                </span>
+
+                Analytics
+
+            </span>
+
+            <span class="chevron">
+                ▾
+            </span>
+
+        </button>
+
+
+        <div
+            class="dropdown-content"
+            id="analysis-menu"
+        >
 
             <a href="/research">
-                📋 Batch Results
+                Batch Results
             </a>
 
             <a href="/correlation">
-                🔗 Correlation
+                Correlation
             </a>
 
             <a href="/matrix">
-                🔢 Matrix
+                Matrix
             </a>
 
             <a href="/scatter">
-                📍 Scatter
+                Scatter
             </a>
 
             <a href="/cdf">
-                📈 CDF
+                CDF Analysis
             </a>
 
             <a href="/percentile">
-                📊 Percentile
+                Percentile
             </a>
 
             <a href="/compare">
-                ⚖ Compare
+                Compare
             </a>
 
         </div>
@@ -102,59 +185,460 @@
     </div>
 
 
-    <!-- =========================
-         CONTROLLER & SYSTEM
-    ========================== -->
+    <div class="nav-section">
 
-    <a href="/system-control">
-        🎛 Controller
-    </a>
-
-    <a href="/admin">
-        ⚙ Administration
-    </a>
-
-</div>
+        <div class="nav-label">
+            SYSTEM
+        </div>
 
 
-<script>
+        <a
+            class="nav-link"
+            href="/system-control"
+        >
 
-function toggleMenu(menuId){
+            <span class="nav-icon">
+                ◉
+            </span>
 
-    const menu = document.getElementById(menuId);
+            Controller
 
-    if(menu.style.display === "block"){
+        </a>
 
-        menu.style.display = "none";
 
-    }else{
+        <a
+            class="nav-link"
+            href="/admin"
+        >
 
-        document.querySelectorAll(".dropdown-content")
-        .forEach(function(item){
+            <span class="nav-icon">
+                ⚙
+            </span>
 
-            item.style.display = "none";
+            Administration
 
-        });
+        </a>
 
-        menu.style.display = "block";
+    </div>
+
+
+    <div class="sidebar-footer">
+
+        <div class="connection-status">
+
+            <span class="connection-dot">
+            </span>
+
+            <span>
+                Framework Online
+            </span>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
+<style>
+
+.sidebar {
+
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+    bottom: 0;
+
+    width: 260px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    overflow-y: auto;
+
+    background:
+        linear-gradient(
+            180deg,
+            #0d192a,
+            #091321
+        );
+
+    border-right:
+        1px solid #22324a;
+
+    padding: 20px 14px;
+
+    z-index: 1000;
+
+    transition:
+        transform 0.25s ease;
+
+}
+
+
+.brand {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 8px 10px 26px;
+
+    border-bottom:
+        1px solid #22324a;
+
+    margin-bottom: 18px;
+
+}
+
+
+.brand-icon {
+
+    width: 42px;
+
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0284c7,
+            #38bdf8
+        );
+
+    font-size: 20px;
+
+    box-shadow:
+        0 8px 22px
+        rgba(56, 189, 248, 0.22);
+
+}
+
+
+.brand-title {
+
+    color: #f1f5f9;
+
+    font-size: 18px;
+
+    font-weight: 700;
+
+}
+
+
+.brand-subtitle {
+
+    margin-top: 3px;
+
+    color: #7890ad;
+
+    font-size: 10px;
+
+    letter-spacing: 0.5px;
+
+    text-transform: uppercase;
+
+}
+
+
+.nav-section {
+
+    margin-bottom: 18px;
+
+}
+
+
+.nav-label {
+
+    padding:
+        0 10px 8px;
+
+    color: #627793;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+}
+
+
+.nav-link {
+
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding: 11px 12px;
+
+    margin: 3px 0;
+
+    border: none;
+
+    border-radius: 9px;
+
+    background: transparent;
+
+    color: #b8c7da;
+
+    font-size: 14px;
+
+    text-align: left;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease;
+
+}
+
+
+.nav-link:hover {
+
+    background: #15263d;
+
+    color: #f1f5f9;
+
+}
+
+
+.nav-icon {
+
+    display: inline-flex;
+
+    width: 24px;
+
+    justify-content: center;
+
+    margin-right: 8px;
+
+    color: #38bdf8;
+
+}
+
+
+.nav-toggle span:first-child {
+
+    display: flex;
+
+    align-items: center;
+
+}
+
+
+.chevron {
+
+    color: #627793;
+
+    transition:
+        transform 0.2s ease;
+
+}
+
+
+.nav-toggle.open .chevron {
+
+    transform:
+        rotate(180deg);
+
+}
+
+
+.dropdown-content {
+
+    display: none;
+
+    margin:
+        4px 0 6px 24px;
+
+    padding-left: 12px;
+
+    border-left:
+        1px solid #24364f;
+
+}
+
+
+.dropdown-content a {
+
+    display: block;
+
+    padding: 8px 10px;
+
+    border-radius: 7px;
+
+    color: #8195b0;
+
+    font-size: 13px;
+
+    text-decoration: none;
+
+}
+
+
+.dropdown-content a:hover {
+
+    background: #132239;
+
+    color: #e5edf7;
+
+}
+
+
+.sidebar-footer {
+
+    margin-top: auto;
+
+    padding:
+        18px 10px 6px;
+
+    border-top:
+        1px solid #22324a;
+
+}
+
+
+.connection-status {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    color: #7f94af;
+
+    font-size: 12px;
+
+}
+
+
+.connection-dot {
+
+    width: 8px;
+
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+
+    box-shadow:
+        0 0 10px
+        rgba(34, 197, 94, 0.7);
+
+}
+
+
+@media (
+    max-width: 900px
+) {
+
+    .sidebar {
+
+        transform:
+            translateX(-100%);
+
+        box-shadow:
+            12px 0 30px
+            rgba(0, 0, 0, 0.35);
+
+    }
+
+
+    .sidebar.sidebar-open {
+
+        transform:
+            translateX(0);
 
     }
 
 }
 
+</style>
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function(){
 
-        document.querySelectorAll(".dropdown-content")
-        .forEach(function(menu){
+<script>
 
-            menu.style.display = "none";
+function toggleMenu(
+    menuId,
+    button
+) {
 
-        });
+    const menu =
+        document.getElementById(
+            menuId
+        );
+
+
+    const isOpen =
+        menu.style.display ===
+        "block";
+
+
+    document
+        .querySelectorAll(
+            ".dropdown-content"
+        )
+        .forEach(
+            function(item) {
+
+                item.style.display =
+                    "none";
+
+            }
+        );
+
+
+    document
+        .querySelectorAll(
+            ".nav-toggle"
+        )
+        .forEach(
+            function(item) {
+
+                item.classList.remove(
+                    "open"
+                );
+
+            }
+        );
+
+
+    if (!isOpen) {
+
+        menu.style.display =
+            "block";
+
+        button.classList.add(
+            "open"
+        );
 
     }
-);
+
+}
 
 </script>
