@@ -14,30 +14,54 @@ class AnalyticsService:
 
         self.db = SQLiteRepository()
 
-    def experiment_analysis(self, name):
+    def experiment_analysis(self, name, job_id=None):
 
         cursor = self.db.connection.cursor()
 
-        cursor.execute(
-            """
-            SELECT
+        if job_id:
 
-            average_rtt,
-            jitter,
-            throughput,
-            packet_loss,
-            estimated_one_way_delay,
-              mos
+            cursor.execute(
+                """
+                SELECT
+                    average_rtt,
+                    jitter,
+                    throughput,
+                    packet_loss,
+                    estimated_one_way_delay,
+                    mos
 
-            FROM experiment_runs
+                FROM experiment_runs
 
-            WHERE experiment_id=?
+                WHERE experiment_id=?
+                  AND job_id=?
 
-            ORDER BY run_number
+                ORDER BY run_number
 
-            """,
-            (name,),
-        )
+                """,
+                (name, job_id),
+            )
+
+        else:
+
+            cursor.execute(
+                """
+                SELECT
+                    average_rtt,
+                    jitter,
+                    throughput,
+                    packet_loss,
+                    estimated_one_way_delay,
+                    mos
+
+                FROM experiment_runs
+
+                WHERE experiment_id=?
+
+                ORDER BY run_number
+
+                """,
+                (name,),
+            )
 
         rows = cursor.fetchall()
 

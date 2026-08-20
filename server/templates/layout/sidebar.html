@@ -1,152 +1,160 @@
 <div class="sidebar">
 
-<h2>
-⚡ OpenSDNLab
-</h2>
+    <h2>⚡ OpenSDNLab</h2>
+
+    <a href="/dashboard">
+        🏠 Dashboard
+    </a>
 
 
-<a href="/dashboard">
-🏠 Dashboard
-</a>
+    <!-- =========================
+         EXPERIMENT WORKFLOW
+    ========================== -->
+
+    <div class="dropdown">
+
+        <a href="javascript:void(0)" onclick="toggleMenu('experiment-menu')">
+            🧪 Experiments ▾
+        </a>
+
+        <div class="dropdown-content" id="experiment-menu">
+
+            <a href="/experiments">
+                ▶ Experiment Control
+            </a>
+
+            <a href="/topology">
+                🌐 Topology Designer
+            </a>
+
+            <a href="/research">
+                📚 Research Dashboard
+            </a>
+
+        </div>
+
+    </div>
 
 
-<div class="dropdown">
+    <!-- =========================
+         EXECUTION
+    ========================== -->
 
-<a href="javascript:void(0)" onclick="toggleExperiments()">
-🧪 Experiments ▾
-</a>
+    <div class="dropdown">
 
-<div class="dropdown-content" id="experiment-menu">
+        <a href="javascript:void(0)" onclick="toggleMenu('execution-menu')">
+            ▶ Execution ▾
+        </a>
 
-<a href="/experiments">
-▶ Experiment Control
-</a>
+        <div class="dropdown-content" id="execution-menu">
 
-<a href="/research">
-📚 Research Dashboard
-</a>
+            <a href="/experiments">
+                🧪 Run / Batch Experiment
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         RESULTS & ANALYSIS
+    ========================== -->
+
+    <div class="dropdown">
+
+        <a href="javascript:void(0)" onclick="toggleMenu('analysis-menu')">
+            📊 Results & Analysis ▾
+        </a>
+
+        <div class="dropdown-content" id="analysis-menu">
+
+            <a href="/research">
+                📋 Batch Results
+            </a>
+
+            <a href="/correlation">
+                🔗 Correlation
+            </a>
+
+            <a href="/matrix">
+                🔢 Matrix
+            </a>
+
+            <a href="/scatter">
+                📍 Scatter
+            </a>
+
+            <a href="/cdf">
+                📈 CDF
+            </a>
+
+            <a href="/percentile">
+                📊 Percentile
+            </a>
+
+            <a href="/compare">
+                ⚖ Compare
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         CONTROLLER & SYSTEM
+    ========================== -->
+
+    <a href="/system-control">
+        🎛 Controller
+    </a>
+
+    <a href="/admin">
+        ⚙ Administration
+    </a>
 
 </div>
-
-</div>
-
-
-<a href="/system-control">
-🎛 Controller
-</a>
-
-
-<a href="/topology">
-🌐 Topology
-</a>
-
-<a href="/admin">
-⚙ Administration
-</a>
-
-
-
-<div class="dropdown">
-
-<a href="javascript:void(0)" onclick="toggleAnalytics()">
-📊 Analytics ▾
-</a>
-
-<div class="dropdown-content" id="analytics-menu">
-
-<a href="/analytics/{{experiment_name}}">
-Analytics
-</a>
-
-<a href="/correlation">
-Correlation
-</a>
-
-<a href="/matrix">
-Matrix
-</a>
-
-<a href="/scatter">
-Scatter
-</a>
-
-<a href="/cdf">
-CDF
-</a>
-
-<a href="/percentile">
-Percentile
-</a>
-
-<a href="/compare">
-Compare
-</a>
-
-</div>
-
-</div>
-
-
-<a href="/running/demo">
-▶ Running Jobs
-</a>
-
-
-
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-
-    document.querySelectorAll(".dropdown-content")
-    .forEach(function(menu){
-        menu.style.display="none";
-    });
-
-});
-</script>
-
-
-
-<script>
-function toggleAnalytics(){
-
-let menu=document.getElementById("analytics-menu");
-
-if(menu.style.display==="block"){
-    menu.style.display="none";
-}
-else{
-    menu.style.display="block";
-}
-
-}
-
-
-document.addEventListener("DOMContentLoaded",function(){
-
-let menu=document.querySelector(".dropdown-content");
-
-if(menu){
-    menu.style.display="none";
-}
-
-});
-</script>
 
 
 <script>
-function toggleExperiments(){
 
-let menu=document.getElementById("experiment-menu");
+function toggleMenu(menuId){
 
-if(menu.style.display==="block"){
-    menu.style.display="none";
-}
-else{
-    menu.style.display="block";
-}
+    const menu = document.getElementById(menuId);
+
+    if(menu.style.display === "block"){
+
+        menu.style.display = "none";
+
+    }else{
+
+        document.querySelectorAll(".dropdown-content")
+        .forEach(function(item){
+
+            item.style.display = "none";
+
+        });
+
+        menu.style.display = "block";
+
+    }
 
 }
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        document.querySelectorAll(".dropdown-content")
+        .forEach(function(menu){
+
+            menu.style.display = "none";
+
+        });
+
+    }
+);
+
 </script>
-

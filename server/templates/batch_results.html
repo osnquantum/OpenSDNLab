@@ -176,6 +176,28 @@ tr:hover{
 
 }
 
+
+.results-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    align-items: center;
+}
+
+.analytics-link {
+    display: inline-block;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    background: #2563eb;
+    color: white;
+}
+
+.analytics-link:hover {
+    opacity: 0.9;
+}
+
 </style>
 
 
@@ -436,9 +458,11 @@ tr:hover{
                     <th>CPU (%)</th>
                     <th>Memory (MB)</th>
                     <th>Threads</th>
+                    <th>Status</th>
                     <th>Switches</th>
                     <th>Packet-In</th>
                     <th>Flow Installs</th>
+                    <th>Created</th>
                 </tr>
 
             </thead>
@@ -458,27 +482,35 @@ tr:hover{
                     </td>
 
                     <td>
-                        {{ metric.cpu_usage|default("—") }}
+                        {{ metric.cpu_usage }}
                     </td>
 
                     <td>
-                        {{ metric.memory_mb|default("—") }}
+                        {{ metric.memory_mb }}
                     </td>
 
                     <td>
-                        {{ metric.threads|default("—") }}
+                        {{ metric.threads }}
                     </td>
 
                     <td>
-                        {{ metric.switch_count|default("—") }}
+                        {{ metric.process_status }}
                     </td>
 
                     <td>
-                        {{ metric.packet_in_count|default("—") }}
+                        {{ metric.switch_count }}
                     </td>
 
                     <td>
-                        {{ metric.flow_install_count|default("—") }}
+                        {{ metric.packet_in_count }}
+                    </td>
+
+                    <td>
+                        {{ metric.flow_install_count }}
+                    </td>
+
+                    <td>
+                        {{ metric.created_at }}
                     </td>
 
                 </tr>
@@ -559,12 +591,23 @@ tr:hover{
 </div>
 
 
-<a
-    class="back-link"
-    href="/running/{{ results.job.job_id }}"
->
-    ← Back to Experiment Execution
-</a>
+<div class="results-actions">
+
+    <a
+        class="analytics-link"
+        href="/analytics/{{ results.job.experiment_id }}?job_id={{ results.job.job_id }}"
+    >
+        📊 View Analytics for This Batch
+    </a>
+
+    <a
+        class="back-link"
+        href="/running/{{ results.job.job_id }}"
+    >
+        ← Back to Experiment Execution
+    </a>
+
+</div>
 
 
 {% endblock %}

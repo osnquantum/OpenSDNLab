@@ -119,7 +119,9 @@ class ControllerManager:
 
     def get(self, name):
 
-        name = name.lower()
+        # Normalize controller names so database values such as
+        # "OS-Ken", "os-ken", and "osken" resolve consistently.
+        name = name.lower().replace("-", "").replace("_", "")
 
         if name not in self.controllers:
 

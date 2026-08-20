@@ -2,7 +2,7 @@
 Research Analytics Routes
 """
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 
 from server.services.analytics_service import AnalyticsService
 
@@ -22,13 +22,17 @@ service = AnalyticsService()
 )
 def analytics_page(experiment_name):
 
+    job_id = request.args.get("job_id")
+
     data = service.experiment_analysis(
-        experiment_name
+        experiment_name,
+        job_id=job_id
     )
 
 
     return render_template(
         "analytics.html",
         data=data,
-        experiment_name=experiment_name
+        experiment_name=experiment_name,
+        job_id=job_id
     )
