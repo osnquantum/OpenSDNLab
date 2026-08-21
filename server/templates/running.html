@@ -66,7 +66,7 @@
 </style>
 
 
-<h1>🧪 Experiment Execution</h1>
+<h1>⚙️ Experiment Execution</h1>
 
 
 <div class="execution-grid">
@@ -143,10 +143,12 @@
 
 <script>
 
+let completionRedirectScheduled = false;
+
 function updateJob(){
 
     fetch(
-        '/api/batch/status/{{ job.id }}'
+        '/api/running/{{ job.id }}'
     )
 
     .then(
@@ -156,7 +158,9 @@ function updateJob(){
     .then(
         data => {
 
-            const job = data.job;
+            
+const job = data.job || data.data || data;
+
 
             if(!job){
                 return;
@@ -180,15 +184,26 @@ function updateJob(){
             let progress = 0;
 
             if (
+                typeof job.progress === "number"
+            ) {
+
+                progress = Math.round(
+                    job.progress
+                );
+
+            }
+            else if (
                 job.total_runs &&
                 job.total_runs > 0
             ) {
+
                 progress = Math.round(
                     (
                         job.current_run /
                         job.total_runs
                     ) * 100
                 );
+
             }
 
             document.getElementById(
@@ -205,37 +220,153 @@ function updateJob(){
 
 
             /*
-             * Stages
+             * OpenSDNLab Execution Stages
              */
 
             let status = "";
 
-            status +=
-                (progress >= 10)
-                ? "<li>System Preparation ✅</li>"
-                : "<li>System Preparation ⏳</li>";
+            /*
+             * Topology Configuration
+             */
 
             status +=
-                (progress >= 25)
-                ? "<li>Topology Creation ✅</li>"
-                : "<li>Topology Creation ⏳</li>";
+                "<li>" +
+                "Topology Configuration " +
+                (job.status === "UNKNOWN"
+                    ? "⏳"
+                    : "✅") +
+                "<br>" +
+                "<small>Nodes and links loaded for the experiment</small>" +
+                "</li>";
+
+
+            /*
+             * SDN Controller Setup
+             */
 
             status +=
-                (progress >= 40)
-                ? "<li>Controller Deployment ✅</li>"
-                : "<li>Controller Deployment ⏳</li>";
+                "<li>" +
+                "SDN Controller Setup " +
+                (job.status === "UNKNOWN"
+                    ? "⏳"
+                    : "✅") +
+                "<br>" +
+                "<small>Controller selected and experiment environment initialized</small>" +
+                "</li>";
 
-            status +=
-                (progress >= 75)
-                ? "<li>Metric Collection ✅</li>"
-                : "<li>Metric Collection ⏳</li>";
 
-            status +=
-                job.status === "COMPLETED"
-                ? "<li>Experiment Completion ✅</li>"
-                : job.status === "FAILED"
-                ? "<li>Experiment Completion ❌</li>"
-                : "<li>Experiment Completion ⏳</li>";
+            /*
+             * Batch Experiment Execution
+             */
+
+            if(job.status === "RUNNING"){
+
+                status +=
+                    "<li>" +
+                    "Batch Experiment Execution 🔄" +
+                    "<br>" +
+                    "<small>" +
+                    "Running experiment " +
+                    (job.current_run || 0) +
+                    " / " +
+                    (job.total_runs || 0) +
+                    "<br>" +
+                    "Successful: " +
+                    (job.successful || 0) +
+                    " &nbsp; | &nbsp; " +
+                    "Failed: " +
+                    (job.failed || 0) +
+                    "</small>" +
+                    "</li>";
+
+            }
+            else if(job.status === "COMPLETED"){
+
+                status +=
+                    "<li>" +
+                    "Batch Experiment Execution ✅" +
+                    "<br>" +
+                    "<small>" +
+                    "Completed " +
+                    (job.total_runs || 0) +
+                    " experiment runs" +
+                    "</small>" +
+                    "</li>";
+
+            }
+            else if(job.status === "FAILED"){
+
+                status +=
+                    "<li>" +
+                    "Batch Experiment Execution ❌" +
+                    "<br>" +
+                    "<small>Experiment execution failed</small>" +
+                    "</li>";
+
+            }
+            else{
+
+                status +=
+                    "<li>" +
+                    "Batch Experiment Execution ⏳" +
+                    "<br>" +
+                    "<small>Waiting for experiment execution</small>" +
+                    "</li>";
+
+            }
+
+
+            /*
+             * Network Metrics Collection
+             */
+
+            if(job.status === "COMPLETED"){
+
+                status +=
+                    "<li>" +
+                    "Network Metrics Collection 🔄" +
+                    "<br>" +
+                    "<small>Collecting and processing experiment metrics</small>" +
+                    "</li>";
+
+            }
+            else{
+
+                status +=
+                    "<li>" +
+                    "Network Metrics Collection ⏳" +
+                    "<br>" +
+                    "<small>Metrics will be collected after experiment execution</small>" +
+                    "</li>";
+
+            }
+
+
+            /*
+             * Results Aggregation
+             */
+
+            if(job.status === "COMPLETED"){
+
+                status +=
+                    "<li>" +
+                    "Results Aggregation ✅" +
+                    "<br>" +
+                    "<small>Batch results are ready</small>" +
+                    "</li>";
+
+            }
+            else{
+
+                status +=
+                    "<li>" +
+                    "Results Aggregation ⏳" +
+                    "<br>" +
+                    "<small>Preparing final batch statistics</small>" +
+                    "</li>";
+
+            }
+
 
             document.getElementById(
                 "status"
@@ -243,22 +374,134 @@ function updateJob(){
 
 
             /*
-             * Terminal
+             * Redirect completed batch jobs to results
+             *
+             * IMPORTANT:
+             * Results pages require a batch JOB ID:
+             *     JOB-xxxxxxxx
+             *
+             * Never redirect using an experiment UUID.
+             */
+
+            if (
+                job.status === "COMPLETED" &&
+                !completionRedirectScheduled
+            ) {
+
+                const resultJobId =
+                    (
+                        typeof job.job_id === "string" &&
+                        job.job_id.startsWith("JOB-")
+                    )
+                    ? job.job_id
+                    : (
+                        typeof job.id === "string" &&
+                        job.id.startsWith("JOB-")
+                    )
+                    ? job.id
+                    : null;
+
+                if (!resultJobId) {
+
+                    console.error(
+                        "Completed job has no valid batch Job ID:",
+                        job
+                    );
+
+                    return;
+
+                }
+
+                completionRedirectScheduled = true;
+
+                window.location.assign(
+                    "/batch/results/" +
+                    resultJobId
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * Terminal / execution status
              */
 
             let logs = "";
 
-            if(Array.isArray(job.logs)){
+            if(Array.isArray(job.logs) && job.logs.length){
 
                 job.logs.forEach(
                     function(item){
 
-                        logs +=
-                            item +
-                            "\n";
+                        logs += item + "\n";
 
                     }
                 );
+
+            }
+            else {
+
+                logs +=
+                    "[OpenSDNLab Batch Executor]\n";
+
+                logs +=
+                    "Job ID: " +
+                    (job.job_id || job.id || "Unknown") +
+                    "\n";
+
+                logs +=
+                    "Status: " +
+                    (job.status || "UNKNOWN") +
+                    "\n";
+
+                logs +=
+                    "Run: " +
+                    (job.current_run || 0) +
+                    " / " +
+                    (job.total_runs || 0) +
+                    "\n";
+
+                logs +=
+                    "Successful: " +
+                    (job.successful || 0) +
+                    "\n";
+
+                logs +=
+                    "Failed: " +
+                    (job.failed || 0) +
+                    "\n";
+
+                logs +=
+                    "Progress: " +
+                    progress +
+                    "%\n\n";
+
+                if(job.status === "RUNNING"){
+
+                    logs +=
+                        "Batch experiment is running...\n";
+
+                }
+                else if(job.status === "COMPLETED"){
+
+                    logs +=
+                        "All batch runs completed successfully.\n";
+
+                }
+                else if(job.status === "FAILED"){
+
+                    logs +=
+                        "Batch experiment failed.\n";
+
+                }
+                else {
+
+                    logs +=
+                        "Waiting for batch executor...\n";
+
+                }
 
             }
 

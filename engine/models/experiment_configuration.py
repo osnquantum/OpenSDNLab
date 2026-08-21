@@ -74,6 +74,17 @@ class ExperimentConfiguration:
     variables: dict = field(default_factory=dict)
 
     ############################################################
+    # Adaptive Control
+    ############################################################
+
+    # Enable/disable QoS degradation prediction.
+    prediction_enabled: bool = False
+
+    # Enable/disable adaptive recovery actions.
+    recovery_enabled: bool = False
+
+
+    ############################################################
     # Metadata
     ############################################################
 

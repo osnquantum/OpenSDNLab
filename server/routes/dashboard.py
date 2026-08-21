@@ -49,6 +49,49 @@ def status():
     return jsonify(current_status)
 
 
+@dashboard.route(
+    "/api/dashboard/executions",
+    methods=["GET"]
+)
+def execution_history():
+
+    cursor = db.connection.cursor()
+
+    rows = cursor.execute(
+        """
+        SELECT
+            job_id,
+            experiment_id,
+            total_runs,
+            current_run,
+            successful,
+            failed,
+            status
+        FROM batch_jobs
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    jobs = []
+
+    for row in rows:
+
+        jobs.append({
+            "job_id": row[0],
+            "experiment_id": row[1],
+            "total_runs": row[2] or 0,
+            "current_run": row[3] or 0,
+            "successful": row[4] or 0,
+            "failed": row[5] or 0,
+            "status": row[6] or "CREATED"
+        })
+
+    return jsonify({
+        "success": True,
+        "data": jobs
+    })
+
+
 
 
 def execute_background(exp):

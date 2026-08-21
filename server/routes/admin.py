@@ -147,3 +147,17 @@ def mininet_status():
 
     })
 
+
+
+@admin.route("/api/admin/logs")
+def get_service_logs():
+
+    result = run_cmd(
+        "journalctl -u opensdnlab.service "
+        "-n 100 --no-pager"
+    )
+
+    return jsonify({
+        "success": True,
+        "output": result
+    })

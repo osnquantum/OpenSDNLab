@@ -298,6 +298,23 @@
 
 }
 
+
+/* Completed experiment results */
+.results-link {
+    display: inline-block;
+    padding: 8px 14px;
+    margin-left: 8px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    background: #2563eb;
+    color: white;
+}
+
+.results-link:hover {
+    opacity: 0.85;
+}
+
 </style>
 
 
@@ -426,7 +443,7 @@
 
             <div class="panel">
 
-                <h2>🧪 Experiment Workflow</h2>
+                <h2>⚙️ Experiment Workflow</h2>
 
                 <div class="workflow-list">
 
@@ -609,6 +626,50 @@
 
     </section>
 
+
+    <section class="dashboard-section">
+
+        <div class="panel">
+
+            <div class="section-heading">
+                <h2>📋 Experiment Execution History</h2>
+                <span>All experiment jobs and execution status</span>
+            </div>
+
+            <div class="history-wrapper">
+
+                <table class="history-table">
+
+                    <thead>
+                        <tr>
+                            <th>Experiment ID</th>
+                            <th>Job ID</th>
+                            <th>Runs</th>
+                            <th>Success</th>
+                            <th>Failed</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="execution_history">
+
+                        <tr>
+                            <td colspan="7">
+                                Loading execution history...
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
 </div>
 
 
@@ -690,6 +751,132 @@ function updateSystem(){
     .catch(() => {});
 
 }
+
+
+function loadExecutionHistory(){
+
+    fetch("/api/dashboard/executions")
+
+    .then(r => r.json())
+
+    .then(data => {
+
+        const tbody =
+            document.getElementById(
+                "execution_history"
+            );
+
+        if(!tbody){
+            return;
+        }
+
+        const jobs =
+            data.data || [];
+
+        if(!jobs.length){
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7">
+                        No experiment executions found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+        tbody.innerHTML =
+            jobs.map(job => {
+
+                const runs =
+                    `${job.current_run}/${job.total_runs}`;
+
+                let action = "";
+
+                if(
+                    job.status === "COMPLETED"
+                ){
+
+                    action = `
+                        <a href="/batch/results/${job.job_id}">
+                            View Results
+                        </a>
+                    `;
+
+                }
+                else if(
+                    job.status === "RUNNING"
+                ){
+
+                    action = `
+                        <a href="/running/${job.job_id}">
+                            View Progress
+                        </a>
+                    `;
+
+                }
+                else{
+
+                    action = `
+                        <a href="/running/${job.job_id}">
+                            View Job
+                        </a>
+                    `;
+
+                }
+
+                return `
+                    <tr>
+
+                        <td>
+                            <a href="/analytics/${job.experiment_id}?job_id=${job.job_id}">
+                                ${job.experiment_id}
+                            </a>
+                        </td>
+
+                        <td>
+                            ${job.job_id}
+                        </td>
+
+                        <td>
+                            ${runs}
+                        </td>
+
+                        <td>
+                            ${job.successful}
+                        </td>
+
+                        <td>
+                            ${job.failed}
+                        </td>
+
+                        <td>
+                            ${job.status}
+                        </td>
+
+                        <td>
+                            ${action}
+                        </td>
+
+                    </tr>
+                `;
+
+            }).join("");
+
+    })
+
+    .catch(error => {
+
+        console.error(
+            "Execution history error:",
+            error
+        );
+
+    });
+
+}
+
 
 
 let currentJob = null;
@@ -861,6 +1048,92 @@ setInterval(updateSystem, 3000);
 setInterval(updateBatch, 3000);
 setInterval(checkReadiness, 5000);
 setInterval(loadHistory, 5000);
+
+
+/*
+ * Add result buttons for completed batch jobs.
+ * The API returns the real batch Job ID, e.g. JOB-xxxxxxxx.
+ */
+async function addCompletedBatchResultButton() {
+
+    try {
+
+        const response = await fetch(
+            "/api/batch/latest"
+        );
+
+        const data = await response.json();
+
+        if (
+            !data.success ||
+            !data.job
+        ) {
+            return;
+        }
+
+        const job = data.job;
+
+        if (
+            job.status !== "COMPLETED" ||
+            !job.job_id ||
+            !job.job_id.startsWith("JOB-")
+        ) {
+            return;
+        }
+
+        if (
+            document.getElementById(
+                "latest-batch-results"
+            )
+        ) {
+            return;
+        }
+
+        const link =
+            document.createElement("a");
+
+        link.id =
+            "latest-batch-results";
+
+        link.className =
+            "results-link";
+
+        link.href =
+            "/batch/results/" +
+            job.job_id;
+
+        link.textContent =
+            "View Latest Results";
+
+        const target =
+            document.querySelector(
+                ".dashboard-header, header, main"
+            );
+
+        if (target) {
+            target.appendChild(link);
+        }
+
+    }
+    catch (error) {
+
+        console.error(
+            "Could not load batch results:",
+            error
+        );
+
+    }
+
+}
+
+addCompletedBatchResultButton();
+
+loadExecutionHistory();
+
+setInterval(
+    loadExecutionHistory,
+    5000
+);
 
 </script>
 

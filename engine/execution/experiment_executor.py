@@ -21,6 +21,9 @@ from engine.system.runtime_state import RuntimeState
 from engine.core.logger import logger
 from engine.system.cleanup_manager import CleanupManager
 from engine.control.qos_qoe_engine import QoSQoEEngine
+from engine.adaptive.adaptive_manager import AdaptiveManager
+from engine.adaptive.adaptive_trigger import AdaptiveTrigger
+from engine.adaptive.recovery import recovery_manager
 from engine.controllers.monitoring.controller_monitor import ControllerMonitor
 
 class ExperimentExecutor:
@@ -47,7 +50,17 @@ class ExperimentExecutor:
 
         self.qos_qoe_engine = QoSQoEEngine()
 
+        # Adaptive QoS / prediction manager.
+        self.adaptive_manager = AdaptiveManager()
+
+        # Historical QoS observations for prediction.
+        # This history is reset for each experiment.
+        self.metrics_history = []
+
     def execute(self, experiment, job=None):
+
+        # Reset prediction history for a new experiment.
+        self.metrics_history = []
 
         CleanupManager.cleanup()
 
@@ -103,11 +116,32 @@ class ExperimentExecutor:
             switches=experiment.switches,
         )
 
-        controller = self.controller_manager.get(experiment.controller)
+        controller = self.controller_manager.get(
+            experiment.controller
+        )
 
         controller_metrics = {}
 
-        controller_info = controller.start()
+        # Reuse an already-running controller.
+        controller_status = controller.status()
+
+        if controller_status.get("running"):
+
+            logger.info(
+                f"Controller {experiment.controller} "
+                "is already running. Reusing it."
+            )
+
+            controller_info = controller_status
+
+        else:
+
+            logger.info(
+                f"Starting controller: "
+                f"{experiment.controller}"
+            )
+
+            controller_info = controller.start()
 
         RuntimeState.update(
             stage="Controller Running",
@@ -162,17 +196,161 @@ class ExperimentExecutor:
             f"Batch DEBUG: metrics parsed: {metrics}"
         )
 
+
+        # Store current QoS observation for prediction.
+        self.metrics_history.append({
+
+            "average_rtt":
+                metrics["average_rtt"],
+
+            "jitter":
+                metrics["jitter"],
+
+            "packet_loss":
+                metrics["packet_loss"],
+
+            "throughput":
+                metrics["throughput"],
+
+            "mos":
+                metrics["mos"]
+
+        })
+
+
+        # Evaluate prediction / adaptive mode.
+        adaptive_result = self.adaptive_manager.evaluate(
+
+            metrics=metrics,
+
+            metrics_history=
+                self.metrics_history,
+
+            prediction_enabled=
+                getattr(
+                    experiment,
+                    "prediction_enabled",
+                    False
+                ),
+
+            recovery_enabled=
+                getattr(
+                    experiment,
+                    "recovery_enabled",
+                    False
+                )
+
+        )
+
+
+        logger.info(
+            f"Adaptive result: {adaptive_result}"
+        )
+
+
         decision = self.qos_qoe_engine.evaluate(
             mos=metrics["mos"],
             rtt=metrics["average_rtt"],
             packet_loss=metrics["packet_loss"],
             throughput=metrics["throughput"],
+            jitter=metrics.get("jitter"),
         )
 
         logger.info(f"QoS-QoE Decision: {decision}")
 
+        # Use the adaptive result calculated for THIS experiment.
+        # This preserves per-experiment Prediction/Recovery settings.
+
+        adaptive_status = adaptive_result
+
+
+        logger.info(
+            f"Adaptive Mode: "
+            f"{adaptive_status['mode']}"
+        )
+
+
+        adaptive_trigger = (
+            AdaptiveTrigger.evaluate(
+
+                metrics=metrics,
+
+                qos_decision=decision,
+
+                adaptive_status=adaptive_status,
+
+                prediction=
+                    adaptive_result.get(
+                        "prediction"
+                    )
+
+            )
+        )
+
+        logger.info(
+            f"Adaptive Trigger: "
+            f"{adaptive_trigger}"
+        )
+
+
+        ############################################################
+        # Adaptive Recovery Execution
+        ############################################################
+
+        recovery_result = {
+
+            "executed": False,
+
+            "success": False,
+
+            "reason":
+                "Recovery not triggered"
+
+        }
+
+
+        if adaptive_trigger.get(
+            "triggered",
+            False
+        ):
+
+            recovery_result = (
+                recovery_manager.execute(
+
+                    strategy_name=
+                        "PATH_RECOVERY",
+
+                    network=
+                        net,
+
+                    controller=
+                        controller,
+
+                    metrics=
+                        metrics,
+
+                    trigger=
+                        adaptive_trigger,
+
+                    inventory=
+                        inventory
+
+                )
+            )
+
+
+        logger.info(
+            f"Recovery result: "
+            f"{recovery_result}"
+        )
+
         RuntimeState.update(
-            stage="Metrics Collected", metrics=metrics, decision=decision
+            stage="Metrics Collected",
+            metrics=metrics,
+            decision=decision,
+            adaptive=adaptive_status,
+            adaptive_trigger=adaptive_trigger,
+            recovery=recovery_result
         )
 
         previous = self.database.connection.execute(
@@ -181,6 +359,40 @@ class ExperimentExecutor:
         ).fetchone()[0]
 
         run_number = (previous or 0) + 1
+
+
+        # Save adaptive prediction / control state
+        # separately from the reactive QoS-QoE decision.
+
+        self.database.save_adaptive_decision(
+
+            experiment_id=
+                experiment.experiment_id,
+
+            run_number=
+                run_number,
+
+            adaptive_result=
+                adaptive_result,
+
+            adaptive_trigger=
+                adaptive_trigger
+
+        )
+
+
+        logger.info(
+
+            "Adaptive decision saved: "
+
+            f"experiment={experiment.experiment_id}, "
+
+            f"run={run_number}, "
+
+            f"mode={adaptive_result.get('mode')}"
+
+        )
+
 
         logger.info("Batch DEBUG: collecting controller metrics")
 
@@ -199,7 +411,13 @@ class ExperimentExecutor:
             experiment.experiment_id,
             run_number,
             metrics,
-            job_id=job
+            job_id=(
+                job.id
+                if hasattr(job, "id")
+                else job
+                if isinstance(job, str)
+                else None
+            )
         )
         self.database.save_qos_qoe_decision(
             experiment.experiment_id, run_number, decision
@@ -214,6 +432,15 @@ class ExperimentExecutor:
             pass
 
         CleanupManager.cleanup()
+
+        self.database.update_experiment_status(
+            experiment.experiment_id,
+            "COMPLETED"
+        )
+
+        logger.info(
+            f"Experiment {experiment.experiment_id} marked as COMPLETED"
+        )
 
         RuntimeState.update(status="COMPLETED", stage="Finished")
 

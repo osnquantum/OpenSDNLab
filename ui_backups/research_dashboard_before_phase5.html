@@ -1,0 +1,569 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+
+
+
+<div class="header">
+
+
+<button class="full"
+onclick="fullscreenDashboard()">
+⛶
+</button>
+
+
+<h1>
+🧠 OpenSDNLab Research Intelligence
+</h1>
+
+
+<p>
+Adaptive SDN / NGN QoS Analytics Platform
+</p>
+
+
+<select id="experimentSelect"
+onchange="loadExperiment(this.value)"
+style="
+padding:10px;
+border-radius:8px;
+background:#0f172a;
+color:white;
+border:1px solid #38bdf8;
+">
+
+<option>
+Loading experiments...
+</option>
+
+</select>
+
+
+</div>
+
+
+
+<div class="container">
+
+
+<div class="grid">
+
+
+<div class="card">
+<div class="title">
+Experiment
+</div>
+
+<div class="value"
+id="experiment">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+<div class="title">
+Controller
+</div>
+
+<div class="value"
+id="controller">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+<div class="title">
+Topology
+</div>
+
+<div class="value"
+id="topology">
+-
+</div>
+
+</div>
+
+
+
+<div class="card">
+<div class="title">
+Runs
+</div>
+
+<div class="value"
+id="runs">
+-
+</div>
+
+</div>
+
+
+
+</div>
+
+
+
+<div class="section grid">
+
+
+<div class="card">
+
+<div class="title">
+Average RTT
+</div>
+
+<div class="value"
+id="rtt">
+-
+</div>
+
+ms
+
+</div>
+
+
+<div class="card">
+
+<div class="title">
+Throughput
+</div>
+
+<div class="value"
+id="throughput">
+-
+</div>
+
+Mbps
+
+</div>
+
+
+<div class="card">
+
+<div class="title">
+Packet Loss
+</div>
+
+<div class="value"
+id="loss">
+-
+</div>
+
+%
+
+</div>
+
+
+<div class="card">
+
+<div class="title">
+Jitter
+</div>
+
+<div class="value"
+id="jitter">
+-
+</div>
+
+ms
+
+</div>
+
+
+</div>
+
+
+
+<div class="section grid">
+
+
+<div class="card chart">
+
+<h3>
+Latency Trend
+</h3>
+
+<canvas id="latencyChart"></canvas>
+
+</div>
+
+
+
+<div class="card chart">
+
+<h3>
+Bandwidth Behaviour
+</h3>
+
+<canvas id="throughputChart"></canvas>
+
+</div>
+
+
+</div>
+
+
+
+
+<div class="section grid">
+
+
+<div class="card">
+
+
+<h3>
+📊 Statistical Intelligence
+</h3>
+
+
+<p>
+Median RTT:
+<span id="median">
+-
+</span>
+</p>
+
+
+<p>
+P95 Latency:
+<span id="p95">
+-
+</span>
+</p>
+
+
+<p>
+P99 Latency:
+<span id="p99">
+-
+</span>
+</p>
+
+
+<p>
+Significance:
+<span id="significance">
+Pending Analysis
+</span>
+</p>
+
+
+</div>
+
+
+
+
+<div class="card">
+
+
+<h3>
+🔗 Network Relationship
+</h3>
+
+
+<p>
+Correlation analysis
+</p>
+
+
+<ul>
+
+<li>
+RTT ↔ Delay
+</li>
+
+<li>
+RTT ↔ Throughput
+</li>
+
+<li>
+Jitter impact
+</li>
+
+</ul>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="section card ai">
+
+
+<h3>
+🤖 AI / DRL Readiness
+</h3>
+
+
+<p>
+State Variables:
+</p>
+
+
+<ul>
+
+<li>✓ RTT</li>
+
+<li>✓ Throughput</li>
+
+<li>✓ Jitter</li>
+
+<li>✓ Packet Loss</li>
+
+<li>✓ CPU / Memory</li>
+
+</ul>
+
+
+<p>
+Future Agent:
+
+Adaptive QoS Optimization
+
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+<script>
+
+
+async function loadExperiment(name){
+
+
+let r =
+await fetch(
+"/api/research/experiment/" + name
+);
+
+
+let d =
+await r.json();
+
+
+
+let e=d.experiment;
+
+
+
+experiment.innerHTML=e.name;
+
+controller.innerHTML=
+e.configuration.controller;
+
+topology.innerHTML=
+e.configuration.topology;
+
+runs.innerHTML=e.runs;
+
+
+rtt.innerHTML=
+e.performance.average_rtt ?? "-";
+
+
+throughput.innerHTML=
+e.performance.throughput ?? "-";
+
+
+loss.innerHTML=
+e.performance.packet_loss ?? "-";
+
+
+jitter.innerHTML=
+e.performance.jitter ?? "-";
+
+
+
+drawCharts(e.timeseries);
+
+
+}
+
+
+
+
+function drawCharts(timeseries){
+
+
+let labels =
+timeseries.map(
+x => "Run " + x.run
+);
+
+
+let rtt =
+timeseries.map(
+x => x.rtt
+);
+
+
+let throughput =
+timeseries.map(
+x => x.throughput
+);
+
+
+
+new Chart(
+document.getElementById("latencyChart"),
+{
+
+type:"line",
+
+data:{
+
+labels:labels,
+
+datasets:[{
+
+label:"RTT (ms)",
+
+data:rtt,
+
+tension:0.3
+
+}]
+
+}
+
+}
+
+);
+
+
+
+new Chart(
+document.getElementById("throughputChart"),
+{
+
+type:"line",
+
+data:{
+
+labels:labels,
+
+datasets:[{
+
+label:"Throughput (Mbps)",
+
+data:throughput,
+
+tension:0.3
+
+}]
+
+}
+
+}
+
+);
+
+
+}
+
+
+
+
+
+
+async function loadExperiments(){
+
+
+let response =
+await fetch(
+"/api/research/experiments"
+);
+
+
+let data =
+await response.json();
+
+
+
+let select =
+document.getElementById(
+"experimentSelect"
+);
+
+
+
+select.innerHTML="";
+
+
+
+data.experiments.forEach(
+exp=>{
+
+
+let option =
+document.createElement("option");
+
+
+option.value =
+exp.name;
+
+
+option.text =
+exp.name;
+
+
+select.appendChild(option);
+
+
+}
+
+);
+
+
+
+if(select.value){
+
+loadExperiment(
+select.value
+);
+
+}
+
+
+}
+
+
+
+function fullscreenDashboard(){
+
+document.documentElement.requestFullscreen();
+
+}
+
+
+
+loadExperiments();
+
+
+</script>
+
+
+
+
+{% endblock %}

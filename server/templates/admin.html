@@ -467,4 +467,126 @@ refreshMininet();
 
 </script>
 
+
+<div class="command-card">
+
+<h2>📟 OpenSDNLab Live Server Logs</h2>
+
+<pre id="opensdn_logs" style="
+height: 400px;
+overflow-y: auto;
+background: #111;
+color: #00ff88;
+padding: 15px;
+border-radius: 8px;
+white-space: pre-wrap;
+">
+Loading logs...
+</pre>
+
+</div>
+
+<script>
+
+function refreshOpenSDNLogs(){
+
+fetch("/api/flask/logs")
+.then(r => r.json())
+.then(data => {
+
+const terminal = document.getElementById(
+"opensdn_logs"
+);
+
+terminal.innerText = data.logs.join("");
+
+terminal.scrollTop = terminal.scrollHeight;
+
+})
+.catch(error => {
+
+document.getElementById(
+"opensdn_logs"
+).innerText =
+"Failed to load logs: " + error;
+
+});
+
+}
+
+setInterval(
+refreshOpenSDNLogs,
+3000
+);
+
+refreshOpenSDNLogs();
+
+</script>
+
+
+<!-- OPENS DNLAB SERVICE LOG -->
+
+<div class="command-card">
+
+<h2>
+📜 OpenSDNLab Service Log
+</h2>
+
+<pre id="service_logs"
+style="
+max-height:500px;
+overflow-y:auto;
+white-space:pre-wrap;
+">
+Loading service logs...
+</pre>
+
+</div>
+
+<script>
+
+async function refreshServiceLogs(){
+
+    try{
+
+        const response =
+            await fetch("/api/admin/logs");
+
+        const data =
+            await response.json();
+
+        const logs =
+            document.getElementById(
+                "service_logs"
+            );
+
+        logs.innerText =
+            data.output ||
+            "No service logs available.";
+
+        logs.scrollTop =
+            logs.scrollHeight;
+
+    }
+    catch(error){
+
+        document.getElementById(
+            "service_logs"
+        ).innerText =
+            "Failed to load service logs.";
+
+    }
+
+}
+
+setInterval(
+    refreshServiceLogs,
+    5000
+);
+
+refreshServiceLogs();
+
+</script>
+
+
 {% endblock %}

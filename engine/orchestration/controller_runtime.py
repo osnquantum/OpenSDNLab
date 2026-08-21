@@ -29,6 +29,7 @@ class ControllerRuntimeManager:
 
             command = [
                 "osken-manager",
+                "--observe-links",
                 "--ofp-tcp-listen-port",
                 "6653",
                 "engine.controllers.apps.simple_switch_13"

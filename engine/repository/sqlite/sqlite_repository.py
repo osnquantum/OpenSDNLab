@@ -189,6 +189,44 @@ class SQLiteRepository:
             )
             """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS qos_qoe_decisions
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                experiment_id TEXT NOT NULL,
+
+                run_number INTEGER NOT NULL,
+
+                decision_json TEXT NOT NULL,
+
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS adaptive_decisions
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                experiment_id TEXT NOT NULL,
+
+                run_number INTEGER NOT NULL,
+
+                prediction_enabled INTEGER NOT NULL,
+
+                recovery_enabled INTEGER NOT NULL,
+
+                mode TEXT NOT NULL,
+
+                degradation_predicted INTEGER,
+
+                prediction_json TEXT,
+
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         self.connection.commit()
 
     ############################################################
@@ -298,7 +336,48 @@ class SQLiteRepository:
 
         return cursor.lastrowid
 
-    def save_qos_qoe_decision(self, experiment_id, run_number, decision):
+    ############################################################
+
+    def update_experiment_status(
+        self,
+        experiment_id,
+        status
+    ):
+
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE experiments
+            SET status = ?
+            WHERE experiment_id = ?
+            """,
+            (
+                status,
+                experiment_id
+            )
+        )
+
+        self.connection.commit()
+
+
+
+
+
+
+    ############################################################
+
+    def save_qos_qoe_decision(
+        self,
+        experiment_id,
+        run_number,
+        decision
+    ):
+
+        decision_json = json.dumps(
+            decision,
+            default=str
+        )
 
         cursor = self.connection.cursor()
 
@@ -308,19 +387,133 @@ class SQLiteRepository:
             (
                 experiment_id,
                 run_number,
-                action,
-                reason
+                decision_json
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                experiment_id,
+                run_number,
+                decision_json
+            )
+        )
+
+        self.connection.commit()
+
+
+    def save_adaptive_decision(
+        self,
+        experiment_id,
+        run_number,
+        adaptive_result,
+        adaptive_trigger=None
+    ):
+
+        prediction = adaptive_result.get(
+            "prediction"
+        )
+
+        degradation_predicted = None
+
+        if isinstance(prediction, dict):
+
+            degradation_predicted = prediction.get(
+                "degradation_predicted"
             )
 
-            VALUES
+
+        # Trigger information is optional for backward compatibility.
+
+        adaptive_trigger = adaptive_trigger or {}
+
+
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO adaptive_decisions
             (
-                ?,
-                ?,
-                ?,
-                ?
+                experiment_id,
+                run_number,
+                prediction_enabled,
+                recovery_enabled,
+                mode,
+                degradation_predicted,
+                prediction_json,
+                triggered,
+                trigger_source,
+                degradation_detected,
+                action
             )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (experiment_id, run_number, decision["action"], decision["reason"]),
+            (
+                experiment_id,
+
+                run_number,
+
+                int(
+                    bool(
+                        adaptive_result.get(
+                            "prediction_enabled",
+                            False
+                        )
+                    )
+                ),
+
+                int(
+                    bool(
+                        adaptive_result.get(
+                            "recovery_enabled",
+                            False
+                        )
+                    )
+                ),
+
+                adaptive_result.get(
+                    "mode",
+                    "NORMAL"
+                ),
+
+                (
+                    int(degradation_predicted)
+                    if degradation_predicted is not None
+                    else None
+                ),
+
+                (
+                    json.dumps(prediction)
+                    if prediction is not None
+                    else None
+                ),
+
+                int(
+                    bool(
+                        adaptive_trigger.get(
+                            "triggered",
+                            False
+                        )
+                    )
+                ),
+
+                adaptive_trigger.get(
+                    "trigger_source"
+                ),
+
+                int(
+                    bool(
+                        adaptive_trigger.get(
+                            "degradation_detected",
+                            False
+                        )
+                    )
+                ),
+
+                adaptive_trigger.get(
+                    "action",
+                    "NORMAL_OPERATION"
+                )
+            )
         )
 
         self.connection.commit()

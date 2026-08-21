@@ -11,16 +11,20 @@ class QoSQoEEngine:
         mos,
         rtt,
         packet_loss,
-        throughput
+        throughput,
+        jitter=None
     ):
 
-        decision = {
-            "action": "NO_CHANGE",
-            "reason": "Network performance acceptable"
-        }
+        """
+        Evaluate network QoS and QoE metrics and
+        select an adaptive action.
+        """
 
-
+        # --------------------------------------------------
         # QoE degradation
+        # Highest priority because it represents
+        # user-perceived service quality.
+        # --------------------------------------------------
 
         if mos is not None and mos < 3.5:
 
@@ -31,26 +35,59 @@ class QoSQoEEngine:
             }
 
 
-        # Packet loss problem
+        # --------------------------------------------------
+        # Packet loss
+        # --------------------------------------------------
 
-        if packet_loss is not None and packet_loss > 5:
+        if (
+            packet_loss is not None
+            and packet_loss > 5
+        ):
 
             return {
                 "action": "REDUCE_CONGESTION",
-                "reason": "High packet loss",
+                "reason": "High packet loss detected",
                 "loss": packet_loss
             }
 
 
-        # Latency problem
+        # --------------------------------------------------
+        # High jitter
+        # --------------------------------------------------
 
-        if rtt is not None and rtt > 200:
+        if (
+            jitter is not None
+            and jitter > 50
+        ):
+
+            return {
+                "action": "STABILIZE_TRAFFIC",
+                "reason": "High jitter detected",
+                "jitter": jitter
+            }
+
+
+        # --------------------------------------------------
+        # High latency
+        # --------------------------------------------------
+
+        if (
+            rtt is not None
+            and rtt > 150
+        ):
 
             return {
                 "action": "LATENCY_OPTIMIZATION",
-                "reason": "High RTT",
+                "reason": "High RTT detected",
                 "rtt": rtt
             }
 
 
-        return decision
+        # --------------------------------------------------
+        # Normal condition
+        # --------------------------------------------------
+
+        return {
+            "action": "NO_CHANGE",
+            "reason": "Network performance acceptable"
+        }

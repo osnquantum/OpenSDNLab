@@ -1,0 +1,94 @@
+{
+  "topology_id": "topology-4ae80541-7a09-4de6-9dd1-e6700fab9492",
+  "name": "TEST_1",
+  "type": "custom",
+  "controller": "osken",
+  "nodes": [
+    {
+      "id": "h1",
+      "type": "host"
+    },
+    {
+      "id": "h2",
+      "type": "host"
+    },
+    {
+      "id": "h3",
+      "type": "host"
+    },
+    {
+      "id": "s1",
+      "type": "switch"
+    },
+    {
+      "id": "s2",
+      "type": "switch"
+    },
+    {
+      "id": "s3",
+      "type": "switch"
+    },
+    {
+      "id": "s4",
+      "type": "switch"
+    },
+    {
+      "id": "h4",
+      "type": "host"
+    },
+    {
+      "id": "h5",
+      "type": "host"
+    }
+  ],
+  "links": [
+    {
+      "source": "s1",
+      "target": "s2",
+      "source_port": 1,
+      "destination_port": 1
+    },
+    {
+      "source": "h1",
+      "target": "s2",
+      "source_port": null,
+      "destination_port": 2
+    },
+    {
+      "source": "h2",
+      "target": "s2",
+      "source_port": null,
+      "destination_port": 3
+    },
+    {
+      "source": "h3",
+      "target": "s2",
+      "source_port": null,
+      "destination_port": 4
+    },
+    {
+      "source": "s2",
+      "target": "s3",
+      "source_port": 5,
+      "destination_port": 1
+    },
+    {
+      "source": "s3",
+      "target": "s4",
+      "source_port": 2,
+      "destination_port": 1
+    },
+    {
+      "source": "h4",
+      "target": "s4",
+      "source_port": null,
+      "destination_port": 2
+    },
+    {
+      "source": "h5",
+      "target": "s3",
+      "source_port": null,
+      "destination_port": 3
+    }
+  ]
+}

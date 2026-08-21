@@ -2,6 +2,13 @@ import subprocess
 import os
 import signal
 
+project_root = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        "../../.."
+    )
+)
+
 
 class OsKenController:
 
@@ -18,13 +25,25 @@ class OsKenController:
         self.process = subprocess.Popen(
             [
                 "osken-manager",
+                "--observe-links",
+                "--ofp-tcp-listen-port",
+                "6653",
                 "engine.controllers.apps.simple_switch_13"
             ],
             stdout=open(
                 "logs/osken.log",
                 "w"
             ),
-            stderr=subprocess.STDOUT
+            stderr=subprocess.STDOUT,
+            cwd=project_root,
+            env={
+                **os.environ,
+                "PYTHONPATH": (
+                    project_root
+                    + ":"
+                    + os.environ.get("PYTHONPATH", "")
+                )
+            }
         )
 
         return {

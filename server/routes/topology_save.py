@@ -326,3 +326,60 @@ def list_topologies():
 
     })
 
+
+
+# ------------------------------------------------------------
+# Delete topology
+# ------------------------------------------------------------
+
+@topology_save.route(
+    "/api/topology/<topology_id>",
+    methods=["DELETE"]
+)
+def delete_topology(topology_id):
+
+    file_path = (
+        TOPOLOGY_DIR /
+        f"{topology_id}.json"
+    )
+
+    if not file_path.exists():
+
+        return jsonify({
+
+            "success": False,
+
+            "message":
+                "Topology not found."
+
+        }), 404
+
+
+    try:
+
+        file_path.unlink()
+
+
+        return jsonify({
+
+            "success": True,
+
+            "message":
+                "Topology deleted successfully.",
+
+            "topology_id":
+                topology_id
+
+        })
+
+
+    except OSError as error:
+
+        return jsonify({
+
+            "success": False,
+
+            "message":
+                f"Failed to delete topology: {error}"
+
+        }), 500

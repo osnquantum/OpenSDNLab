@@ -99,6 +99,17 @@ class ExperimentService:
                 default.variables
             ),
 
+            # Adaptive prediction / recovery configuration
+            prediction_enabled=data.get(
+                "prediction_enabled",
+                default.prediction_enabled
+            ),
+
+            recovery_enabled=data.get(
+                "recovery_enabled",
+                default.recovery_enabled
+            ),
+
             metadata=data.get(
                 "metadata",
                 default.metadata

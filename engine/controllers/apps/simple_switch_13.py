@@ -9,6 +9,8 @@ from os_ken.base import app_manager
 from os_ken.controller import ofp_event
 from os_ken.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from os_ken.controller.handler import set_ev_cls
+from os_ken.topology import event
+from os_ken.topology.api import get_switch, get_link
 from os_ken.ofproto import ofproto_v1_3
 from os_ken.lib.packet import packet
 from os_ken.lib.packet import ethernet
@@ -24,10 +26,19 @@ class SimpleSwitch13(app_manager.OSKenApp):
         super(SimpleSwitch13, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
 
+        # Connected OpenFlow datapaths
+        self.datapaths = {}
+
+        # Controller view of network topology
+        self.topology_switches = {}
+        self.topology_links = []
+
         self.stats = {
             "switch_count": 0,
             "packet_in_count": 0,
-            "flow_install_count": 0
+            "flow_install_count": 0,
+            "topology_switch_count": 0,
+            "topology_link_count": 0
         }
 
 
@@ -47,6 +58,61 @@ class SimpleSwitch13(app_manager.OSKenApp):
                 f,
                 indent=4
             )
+
+    ############################################################
+
+    def refresh_topology(self):
+
+        switches = get_switch(
+            self,
+            None
+        )
+
+        links = get_link(
+            self,
+            None
+        )
+
+        self.topology_switches = {}
+
+        for switch in switches:
+
+            datapath = switch.dp
+
+            self.datapaths[datapath.id] = datapath
+
+            self.topology_switches[datapath.id] = {
+                "dpid": datapath.id
+            }
+
+        self.topology_links = []
+
+        for link in links:
+
+            self.topology_links.append(
+                {
+                    "src": link.src.dpid,
+                    "src_port": link.src.port_no,
+                    "dst": link.dst.dpid,
+                    "dst_port": link.dst.port_no
+                }
+            )
+
+        self.stats["topology_switch_count"] = len(
+            self.topology_switches
+        )
+
+        self.stats["topology_link_count"] = len(
+            self.topology_links
+        )
+
+        self.export_stats()
+
+        self.logger.info(
+            "Topology updated: switches=%s links=%s",
+            len(self.topology_switches),
+            len(self.topology_links)
+        )
 
     ############################################################
 
@@ -74,6 +140,42 @@ class SimpleSwitch13(app_manager.OSKenApp):
         self.stats["flow_install_count"] += 1
 
         self.export_stats()
+
+    ############################################################
+    # TOPOLOGY DISCOVERY
+    ############################################################
+
+    @set_ev_cls(event.EventSwitchEnter)
+    def switch_enter_handler(self, ev):
+
+        self.logger.info("Switch entered topology")
+
+        self.refresh_topology()
+
+
+    @set_ev_cls(event.EventSwitchLeave)
+    def switch_leave_handler(self, ev):
+
+        self.logger.info("Switch left topology")
+
+        self.refresh_topology()
+
+
+    @set_ev_cls(event.EventLinkAdd)
+    def link_add_handler(self, ev):
+
+        self.logger.info("Link added to topology")
+
+        self.refresh_topology()
+
+
+    @set_ev_cls(event.EventLinkDelete)
+    def link_delete_handler(self, ev):
+
+        self.logger.info("Link removed from topology")
+
+        self.refresh_topology()
+
 
     ############################################################
 

@@ -3,7 +3,7 @@ OpenSDNLab Mininet Backend
 """
 
 from mininet.net import Mininet
-from mininet.node import OVSSwitch
+from mininet.node import OVSSwitch, RemoteController
 from mininet.link import TCLink
 from mininet.clean import cleanup
 
@@ -26,12 +26,28 @@ class MininetBackend:
             switch=OVSSwitch,
             link=TCLink,
             autoSetMacs=True,
-            autoStaticArp=True
+            autoStaticArp=True,
+            controller=None,
+            build=False
         )
 
         ########################################################
+        # Configure the external SDN controller BEFORE starting
+        # the Mininet network.
+        ########################################################
 
-        logger.info("Controller managed externally")
+        if controller:
+
+            logger.info(
+                f"Adding external controller on port {controller.port}"
+            )
+
+            self.net.addController(
+                "c0",
+                controller=RemoteController,
+                ip="127.0.0.1",
+                port=int(controller.port)
+            )
 
         ########################################################
 
@@ -117,36 +133,15 @@ class MininetBackend:
 
         ########################################################
 
-        logger.info("Starting network")
+        logger.info("Building Mininet network")
+
+        self.net.build()
+
+        logger.info("Starting Mininet network")
 
         self.net.start()
 
-        logger.info("Network started")
-
-
-        ########################################################
-        # Connect switches to SDN Controller
-        ########################################################
-
-        if controller:
-
-            logger.info(
-                f"Connecting switches to controller {controller}"
-            )
-
-            for sw in switches.values():
-
-                logger.info(
-                    f"Setting controller for {sw.name}"
-                )
-
-                sw.cmd(
-                    f"ovs-vsctl set-controller {sw.name} tcp:127.0.0.1:{controller.port}"
-                )
-
-                sw.cmd(
-                    f"ovs-vsctl set-fail-mode {sw.name} secure"
-                )
+        logger.info("Network started successfully")
 
 
         return self.net

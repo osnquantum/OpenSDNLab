@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>
+OpenSDNLab
+</title>
+
+
+<style>
+
+body{
+
+margin:0;
+background:#08111f;
+color:#e5e7eb;
+font-family:Consolas,monospace;
+
+}
+
+
+.sidebar{
+
+position:fixed;
+width:230px;
+height:100vh;
+background:#111827;
+padding:20px;
+
+}
+
+
+.sidebar h2{
+
+color:#38bdf8;
+
+}
+
+
+.sidebar a{
+
+display:block;
+padding:12px;
+margin:5px 0;
+color:white;
+text-decoration:none;
+border-radius:6px;
+
+}
+
+
+.sidebar a:hover{
+
+background:#2563eb;
+
+}
+
+
+
+.content{
+
+margin-left:270px;
+padding:30px;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+{% include "layout/sidebar.html" %}
+
+
+<div class="content">
+
+
+{% block content %}
+
+{% endblock %}
+
+
+</div>
+
+
+</body>
+
+</html>

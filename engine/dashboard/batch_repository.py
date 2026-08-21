@@ -358,6 +358,59 @@ class BatchRepository:
             key=lambda item: item["run_number"]
         )
 
+        # ------------------------------------------------------------
+        # Calculate per-run controller metric deltas.
+        #
+        # OS-Ken counters are cumulative while the controller process
+        # remains active. The delta represents activity that occurred
+        # between consecutive runs in this batch.
+        #
+        # The first run has no previous batch snapshot, so its delta
+        # is reported as 0.
+        # ------------------------------------------------------------
+
+        previous = None
+
+        metric_deltas = {
+            "packet_in_count": "packet_in_delta",
+            "flow_install_count": "flow_install_delta",
+            "switch_count": "switch_count_delta"
+        }
+
+        for item in controller_summary:
+
+            for metric, delta_key in metric_deltas.items():
+
+                if previous is None:
+
+                    item[delta_key] = 0
+                    continue
+
+                try:
+
+                    current_value = float(
+                        item.get(metric, 0)
+                    )
+
+                    previous_value = float(
+                        previous.get(metric, 0)
+                    )
+
+                    item[delta_key] = (
+                        current_value
+                        -
+                        previous_value
+                    )
+
+                except (
+                    TypeError,
+                    ValueError
+                ):
+
+                    item[delta_key] = 0
+
+            previous = item
+
         # Display batch-relative run numbers (1..N) instead of
         # the experiment-wide database run numbers.
         for batch_index, item in enumerate(

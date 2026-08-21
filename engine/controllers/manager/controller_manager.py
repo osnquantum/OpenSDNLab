@@ -83,7 +83,6 @@ class ControllerManager:
 
         name = name.lower()
 
-
         if self.active_controller:
 
             if self.active_controller != name:
@@ -97,21 +96,40 @@ class ControllerManager:
                 )
 
 
+        controller = self.get(name)
+
+        # Reuse an existing controller instead of
+        # starting another process on the same port.
+        status = controller.status()
+
+        if status.get("running"):
+
+            ControllerLogger.add(
+                f"Controller already running: {name}"
+            )
+
+            self.active_controller = name
+
+            return {
+                "controller": name,
+                "pid": status.get("pid"),
+                "port": status.get("port"),
+                "running": True,
+                "reused": True
+            }
+
+
         ControllerLogger.add(
             f"Starting controller: {name}"
         )
 
-
-        result = self.get(name).start()
-
+        result = controller.start()
 
         self.active_controller = name
-
 
         ControllerLogger.add(
             f"Controller active: {name}"
         )
-
 
         return result
 
