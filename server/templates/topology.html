@@ -131,20 +131,6 @@
     border-color:#38bdf8;
 }
 
-.node-button-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-    margin-bottom:8px;
-}
-
-.node-button-grid .tool-button{
-    width:100%;
-    margin:0;
-    text-align:center;
-}
-
-
 .tool-button.primary{
     background:#2563eb;
     border-color:#2563eb;
@@ -215,31 +201,16 @@
 }
 
 .device{
-    position:absolute;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-
-    width:auto !important;
-    min-width:90px;
-    max-width:180px;
-
     padding:13px 16px;
-    box-sizing:border-box;
-
     border-radius:10px;
     cursor:move;
-
     background:#2563eb;
     border:1px solid rgba(255,255,255,.15);
-
     box-shadow:0 8px 20px rgba(0,0,0,.25);
-
     color:white;
     font-size:13px;
+    min-width:90px;
     text-align:center;
-
-    user-select:none;
 }
 
 .device.controller{
@@ -345,6 +316,76 @@
 
 }
 
+
+/* ===== FORCE COMPACT TOPOLOGY NODE SIZE ===== */
+
+#canvas .device,
+#canvas .jtk-endpoint,
+#canvas div.device{
+    position:absolute !important;
+    display:inline-flex !important;
+    width:auto !important;
+    min-width:90px !important;
+    max-width:max-content !important;
+    box-sizing:border-box !important;
+    flex:none !important;
+    white-space:nowrap !important;
+}
+
+
+
+
+/* Saved topology load action - matches existing page buttons */
+.load-topology-button{
+    padding:8px 14px;
+    white-space:nowrap;
+    font-size:13px;
+}
+
+
+
+/* =========================================================
+   SAVED TOPOLOGY SEARCH
+   Matches existing Topology Designer controls
+========================================================= */
+
+.topology-search-input{
+
+    width:100%;
+    max-width:320px;
+
+    padding:11px 12px;
+
+    background:#0f172a;
+
+    border:1px solid #334155;
+
+    border-radius:8px;
+
+    color:#e5e7eb;
+
+    font-size:14px;
+
+    outline:none;
+
+    box-sizing:border-box;
+
+}
+
+
+.topology-search-input::placeholder{
+
+    color:#64748b;
+
+}
+
+
+.topology-search-input:focus{
+
+    border-color:#0284c7;
+
+}
+
 </style>
 
 
@@ -416,23 +457,19 @@
                             Devices
                         </span>
 
-                        <div class="node-button-grid">
+                        <button
+                            class="tool-button"
+                            onclick="addHost()"
+                        >
+                            🖥 + Add Host
+                        </button>
 
-                            <button
-                                class="tool-button"
-                                onclick="addHost()"
-                            >
-                                🖥 + Add Host
-                            </button>
-
-                            <button
-                                class="tool-button"
-                                onclick="addSwitch()"
-                            >
-                                🔀 + Add Switch
-                            </button>
-
-                        </div>
+                        <button
+                            class="tool-button"
+                            onclick="addSwitch()"
+                        >
+                            🔀 + Add Switch
+                        </button>
 
                     </div>
 
@@ -583,11 +620,6 @@
 
             <div class="topology-footer">
 
-                <div class="footer-info">
-                    Save the topology before execution. Custom experiments
-                    use the current controller and workspace configuration.
-                </div>
-
                 <div class="footer-actions">
 
                     <button
@@ -604,13 +636,6 @@
                         💾 Save Topology
                     </button>
 
-                    <button
-                        class="footer-button run"
-                        onclick="runCustomExperiment()"
-                    >
-                        ▶ Run Experiment
-                    </button>
-
                 </div>
 
             </div>
@@ -623,32 +648,340 @@
 
 
 
-<script>
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function(){
+<!-- ========================================================= -->
+<!-- SAVED TOPOLOGIES                                          -->
+<!-- ========================================================= -->
 
-        const controllerNode =
-            document.getElementById(
-                "controllerNode"
-            );
+
+<div class="saved-topologies-section">
+
+    <div class="topology-panel">
+
+        <div class="panel-header">
+
+            <div class="saved-topology-toolbar">
+
+                <div>
+
+                    <h3>Saved Topologies</h3>
+
+                    <p>
+                        Load one of your recently saved network topologies.
+                    </p>
+
+                </div>
+
+                <input
+                    type="text"
+                    id="savedTopologySearch"
+                        class="topology-search-input"
+                    class="saved-topology-search"
+                    placeholder="Search name, controller or ID..."
+                    oninput="filterSavedTopologies()"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="panel-body">
+
+            <div class="saved-topology-meta"
+                 id="savedTopologyMeta">
+                Loading saved topologies...
+            </div>
+
+            <br>
+
+            <div class="saved-topology-table-wrap">
+
+                <table class="saved-topologies-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Name</th>
+                            <th>Controller</th>
+                            <th>Nodes</th>
+                            <th>Links</th>
+                            <th>Topology ID</th>
+                            <th>Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="savedTopologyTableBody">
+
+                        <tr>
+
+                            <td
+                                colspan="6"
+                                class="topology-empty"
+                            >
+                                Loading saved topologies...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+</div>
+
+
+<script src="/static/js/jsplumb.min.js">
+/* =========================================================
+   LOAD SAVED TOPOLOGY - SINGLE IMPLEMENTATION
+========================================================= */
+
+async function loadSavedTopology(topologyId){
+
+    if(!topologyId){
+        return;
+    }
+
+    try{
+
+        const response = await fetch(
+            "/api/topology/" +
+            encodeURIComponent(topologyId)
+        );
+
+        const result = await response.json();
 
         if(
-            controllerNode &&
-            typeof makeNodeDraggable === "function"
+            !response.ok ||
+            !result.success
         ){
-
-            makeNodeDraggable(
-                controllerNode
+            throw new Error(
+                result.message ||
+                "Failed to load topology"
             );
+        }
+
+        const topology = result.data;
+
+        /*
+         * Update topology state first.
+         */
+        topologyState.nodes =
+            Array.isArray(topology.nodes)
+                ? topology.nodes
+                : [];
+
+        topologyState.links =
+            Array.isArray(topology.links)
+                ? topology.links
+                : [];
+
+        topologyState.controller =
+            topology.controller || "osken";
+
+
+        /*
+         * Restore controller selection.
+         */
+        const controller =
+            document.getElementById("controller");
+
+        if(controller){
+
+            const savedController =
+                String(
+                    topologyState.controller
+                ).toLowerCase();
+
+            for(const option of controller.options){
+
+                if(
+                    option.value
+                        .toLowerCase() ===
+                    savedController
+                ){
+
+                    controller.value =
+                        option.value;
+
+                    break;
+                }
+
+            }
 
         }
 
+
+        /*
+         * Get canvas.
+         */
+        const canvas =
+            document.getElementById("canvas");
+
+        if(!canvas){
+            throw new Error(
+                "Topology canvas not found"
+            );
+        }
+
+
+        /*
+         * Remove existing jsPlumb connections.
+         */
+        if(
+            typeof jsPlumb !== "undefined"
+        ){
+
+            try{
+                jsPlumb.deleteEveryConnection();
+            }
+            catch(error){
+                console.warn(
+                    "Could not clear connections:",
+                    error
+                );
+            }
+
+        }
+
+
+        /*
+         * Remove existing topology nodes only.
+         * Do NOT remove controllerNode if it exists.
+         */
+        canvas.querySelectorAll(
+            ".device"
+        ).forEach(function(node){
+
+            node.remove();
+
+        });
+
+
+        /*
+         * Recreate nodes.
+         *
+         * Copy the array because createNode()
+         * uses topologyState.nodes to calculate
+         * automatic positions.
+         */
+        const savedNodes =
+            [...topologyState.nodes];
+
+        savedNodes.forEach(function(node){
+
+            createNode(
+                node.id,
+                node.type
+            );
+
+        });
+
+
+        /*
+         * Recreate topology links.
+         */
+        topologyState.links.forEach(
+            function(link){
+
+                if(
+                    typeof createLink ===
+                    "function"
+                ){
+
+                    createLink(
+                        link.source,
+                        link.target
+                    );
+
+                }
+                else if(
+                    typeof jsPlumb !==
+                    "undefined"
+                ){
+
+                    jsPlumb.connect({
+
+                        source:
+                            link.source,
+
+                        target:
+                            link.target
+
+                    });
+
+                }
+
+            }
+        );
+
+
+        /*
+         * Refresh JSON preview.
+         */
+        if(
+            typeof updateJSON ===
+            "function"
+        ){
+
+            updateJSON();
+
+        }
+
+
+        /*
+         * Save current loaded state locally.
+         */
+        localStorage.setItem(
+            "opensdnlab_topology",
+            JSON.stringify(topologyState)
+        );
+
+        localStorage.setItem(
+            "opensdnlab_topology_id",
+            topologyId
+        );
+
+
+        console.log(
+            "Topology loaded and rendered:",
+            topology
+        );
+
+
+        alert(
+            "Topology loaded successfully."
+        );
+
     }
-);
+    catch(error){
+
+        console.error(
+            "Topology load error:",
+            error
+        );
+
+        alert(
+            "Failed to load topology: " +
+            error.message
+        );
+
+    }
+
+}
 
 
+</script>
+
+<script>
 
 
 let topologyState={
@@ -751,40 +1084,6 @@ type:"switch"
 createNode(id,"switch");
 
 
-/*
- * Restore the original OpenSDNLab behavior:
- * automatically connect the first switch
- * to the controller.
- */
-if(switchCounter === 1){
-
-    setTimeout(
-        function(){
-
-            try{
-
-                createLink(
-                    "controllerNode",
-                    id
-                );
-
-            }
-            catch(error){
-
-                console.warn(
-                    "Automatic controller link failed:",
-                    error
-                );
-
-            }
-
-        },
-        100
-    );
-
-}
-
-
 updateJSON();
 
 
@@ -793,182 +1092,6 @@ updateJSON();
 
 
 
-
-function makeNodeDraggable(node){
-
-    if(!node){
-        return;
-    }
-
-
-    node.style.position = "absolute";
-    node.style.width = "auto";
-    node.style.cursor = "move";
-
-
-    /*
-     * Use jsPlumb dragging when available.
-     * If it fails, the native drag implementation below
-     * remains active as a reliable fallback.
-     */
-    if(typeof jsPlumb !== "undefined"){
-
-        try{
-
-            jsPlumb.draggable(
-                node,
-                {
-                    containment:"parent"
-                }
-            );
-
-        }
-        catch(error){
-
-            console.warn(
-                "jsPlumb drag initialization failed:",
-                error
-            );
-
-        }
-
-    }
-
-
-    let dragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-
-    node.addEventListener(
-        "mousedown",
-        function(event){
-
-            if(
-                currentMode === "link" ||
-                currentMode === "delete" ||
-                currentMode === "deleteLink"
-            ){
-                return;
-            }
-
-
-            dragging = true;
-
-
-            const rect =
-                node.getBoundingClientRect();
-
-
-            offsetX =
-                event.clientX -
-                rect.left;
-
-
-            offsetY =
-                event.clientY -
-                rect.top;
-
-
-            event.preventDefault();
-
-        }
-    );
-
-
-    document.addEventListener(
-        "mousemove",
-        function(event){
-
-            if(!dragging){
-                return;
-            }
-
-
-            const parent =
-                node.parentElement;
-
-
-            const parentRect =
-                parent.getBoundingClientRect();
-
-
-            let x =
-                event.clientX -
-                parentRect.left -
-                offsetX;
-
-
-            let y =
-                event.clientY -
-                parentRect.top -
-                offsetY;
-
-
-            x = Math.max(
-                0,
-                Math.min(
-                    x,
-                    parent.clientWidth -
-                    node.offsetWidth
-                )
-            );
-
-
-            y = Math.max(
-                0,
-                Math.min(
-                    y,
-                    parent.clientHeight -
-                    node.offsetHeight
-                )
-            );
-
-
-            node.style.left =
-                x + "px";
-
-
-            node.style.top =
-                y + "px";
-
-
-            if(typeof jsPlumb !== "undefined"){
-
-                try{
-                    jsPlumb.repaintEverything();
-                }
-                catch(error){
-                    console.warn(
-                        "Topology repaint failed:",
-                        error
-                    );
-                }
-
-            }
-
-        }
-    );
-
-
-    document.addEventListener(
-        "mouseup",
-        function(){
-
-            if(!dragging){
-                return;
-            }
-
-
-            dragging = false;
-
-
-            updateJSON();
-
-        }
-    );
-
-}
 function createNode(id,type){
 
     let canvas=document.getElementById("canvas");
@@ -1016,8 +1139,6 @@ function createNode(id,type){
     }
 
     canvas.appendChild(node);
-
-makeNodeDraggable(node);
 
     /*
      * Make the node draggable.
@@ -1501,60 +1622,7 @@ function clearTopology(){
 
 
 
-function enableLinkMode(){
 
-    linkMode = !linkMode;
-
-    selectedNode = null;
-
-    /*
-     * Clear any previous node selection highlight.
-     */
-    document
-        .querySelectorAll(".device")
-        .forEach(function(node){
-
-            node.style.border = "";
-
-        });
-
-    /*
-     * Update the Connect Link button state.
-     */
-    let button =
-        document.getElementById("connectLinkBtn");
-
-    if(button){
-
-        if(linkMode){
-
-            button.classList.add("active");
-
-            button.style.background =
-                "#2563eb";
-
-            button.style.color =
-                "#ffffff";
-
-            button.style.borderColor =
-                "#2563eb";
-
-        }
-        else{
-
-            button.classList.remove("active");
-
-            button.style.background = "";
-
-            button.style.color = "";
-
-            button.style.borderColor = "";
-
-        }
-
-    }
-
-}
 
 function getNextSwitchPort(switchId){
 
@@ -1913,6 +1981,30 @@ function deleteLink(source,target,connection){
 
 async function saveTopology(){
 
+    const topologyName =
+        prompt(
+            "Enter a name for this topology:",
+            "Custom Topology"
+        );
+
+    if(
+        topologyName === null
+    ){
+        return;
+    }
+
+    const cleanTopologyName =
+        topologyName.trim();
+
+    if(
+        !cleanTopologyName
+    ){
+        alert(
+            "Topology name is required."
+        );
+        return;
+    }
+
     topologyState.controller =
         document.getElementById("controller").value;
 
@@ -1951,7 +2043,7 @@ async function saveTopology(){
      */
     const payload = {
 
-        name: "custom_topology",
+        name: cleanTopologyName,
 
         type: "custom",
 
@@ -2017,6 +2109,8 @@ async function saveTopology(){
             "Topology saved successfully:",
             result
         );
+
+        await loadSavedTopologies();
 
         alert(
             "Topology saved successfully"
@@ -2579,6 +2673,795 @@ async function runBatchExperiment(){
     }
 }
 
+
+/* ========================================================= */
+/* SAVED TOPOLOGIES                                         */
+/* ========================================================= */
+
+
+function escapeTopologyValue(value){
+
+    const element =
+        document.createElement(
+            "div"
+        );
+
+    element.textContent =
+        value || "";
+
+    return element.innerHTML;
+
+}
+
+
+
+/* ========================================================= */
+/* RENDER LOADED SAVED TOPOLOGY */
+/* ========================================================= */
+
+function renderLoadedTopology(){
+
+    const canvas =
+        document.getElementById(
+            "canvas"
+        );
+
+    if(!canvas){
+        console.error(
+            "Topology canvas not found"
+        );
+        return;
+    }
+
+
+    /*
+     * Clear existing jsPlumb connections.
+     */
+
+    try{
+        jsPlumb.deleteEveryConnection();
+    }
+    catch(error){
+        console.warn(
+            "Could not clear jsPlumb connections:",
+            error
+        );
+    }
+
+
+    /*
+     * Clear existing nodes.
+     */
+
+    canvas.innerHTML = "";
+
+
+    /*
+     * Recreate nodes using the existing
+     * topology node creation function.
+     */
+
+    topologyState.nodes.forEach(
+        function(node){
+
+            createNode(
+                node.id,
+                node.type
+            );
+
+        }
+    );
+
+
+    /*
+     * Recreate links.
+     */
+
+    setTimeout(
+        function(){
+
+            topologyState.links.forEach(
+                function(link){
+
+                    try{
+
+                        const source =
+                            document.getElementById(
+                                link.source
+                            );
+
+                        const target =
+                            document.getElementById(
+                                link.target
+                            );
+
+                        if(
+                            !source ||
+                            !target
+                        ){
+                            console.warn(
+                                "Cannot restore link:",
+                                link
+                            );
+                            return;
+                        }
+
+
+                        jsPlumb.connect({
+
+                            source:
+                                link.source,
+
+                            target:
+                                link.target,
+
+                            anchors:
+                                [
+                                    "Continuous",
+                                    "Continuous"
+                                ]
+
+                        });
+
+                    }
+                    catch(error){
+
+                        console.error(
+                            "Failed to restore link:",
+                            link,
+                            error
+                        );
+
+                    }
+
+                }
+            );
+
+
+            try{
+
+                jsPlumb.repaintEverything();
+
+            }
+            catch(error){
+
+                console.warn(
+                    "Topology repaint failed:",
+                    error
+                );
+
+            }
+
+
+            updateJSON();
+
+        },
+        200
+    );
+
+}
+
+
+
+/* ========================================================= */
+/* FILTER SAVED TOPOLOGIES */
+/* ========================================================= */
+
+
+
+
+function found."
+            );
+
+        }
+
+
+        if(
+            typeof updateJSON ===
+            "function"
+        ){
+
+            updateJSON();
+
+        }
+
+
+        localStorage.setItem(
+            "opensdnlab_topology",
+            JSON.stringify(
+                topologyState
+            )
+        );
+
+
+        localStorage.setItem(
+            "opensdnlab_topology_id",
+            topologyId
+        );
+
+
+        alert(
+            "Topology loaded successfully."
+        );
+
+
+    }
+    catch(error){
+
+        console.error(
+            "Topology load error:",
+            error
+        );
+
+        alert(
+            "Failed to load topology: " +
+            error.message
+        );
+
+    }
+
+}
+
+
+/*
+ * Load table when page opens.
+ */
+
+
+
+
+
+
+/* ========================================================= */
+/* SAVED TOPOLOGIES                                         */
+/* ========================================================= */
+
+
+function escapeTopologyValue(value){
+
+    const element =
+        document.createElement(
+            "div"
+        );
+
+    element.textContent =
+        value || "";
+
+    return element.innerHTML;
+
+}
+
+
+function found."
+            );
+
+        }
+
+
+        if(
+            typeof updateJSON ===
+            "function"
+        ){
+
+            updateJSON();
+
+        }
+
+
+        localStorage.setItem(
+            "opensdnlab_topology",
+            JSON.stringify(
+                topologyState
+            )
+        );
+
+
+        localStorage.setItem(
+            "opensdnlab_topology_id",
+            topologyId
+        );
+
+
+        alert(
+            "Topology loaded successfully."
+        );
+
+
+    }
+    catch(error){
+
+        console.error(
+            "Topology load error:",
+            error
+        );
+
+        alert(
+            "Failed to load topology: " +
+            error.message
+        );
+
+    }
+
+}
+
+
+/*
+ * Load table when page opens.
+ */
+
+
+
+
+
+
+/* --------------------------------------------------
+   Saved Topologies
+-------------------------------------------------- */
+
+/* =========================================================
+   SAVED TOPOLOGIES
+========================================================= */
+
+
+
+
+function escapeTopologyHTML(value){
+
+    const element =
+        document.createElement("div");
+
+    element.textContent =
+        value ?? "";
+
+    return element.innerHTML;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+/*
+ * Load table after all page elements exist.
+ */
+setTimeout(
+    loadSavedTopologies,
+    300
+);
+
+
+
+
+
+
+
+
+
+/* Load Saved Topologies */
+
+
+
+
+/* =========================================================
+   SAVED TOPOLOGIES - SINGLE IMPLEMENTATION
+========================================================= */
+
+
+
+
+function escapeTopologyHTML(value){
+
+    const element =
+        document.createElement("div");
+
+    element.textContent =
+        value ?? "";
+
+    return element.innerHTML;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   SAVED TOPOLOGIES
+   Backend search + latest first
+========================================================= */
+
+let savedTopologySearchTimer = null;
+
+
+function escapeTopologyHTML(value){
+
+    const element =
+        document.createElement("div");
+
+    element.textContent =
+        value ?? "";
+
+    return element.innerHTML;
+
+}
+
+
+
+
+
+
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        const search =
+            document.getElementById(
+                "savedTopologySearch"
+            );
+
+
+        if(search){
+
+            search.addEventListener(
+                "input",
+                function(){
+
+                    clearTimeout(
+                        savedTopologySearchTimer
+                    );
+
+
+                    savedTopologySearchTimer =
+                        setTimeout(
+                            function(){
+
+                                loadSavedTopologies(
+                                    search.value
+                                );
+
+                            },
+                            300
+                        );
+
+                }
+            );
+
+        }
+
+
+        loadSavedTopologies();
+
+    }
+);
+
+
+
+
+
+
+/* =========================================================
+   SAVED TOPOLOGIES TABLE - SINGLE IMPLEMENTATION
+========================================================= */
+
+let savedTopologiesData = [];
+
+
+function escapeSavedTopology(value){
+
+    const div = document.createElement("div");
+
+    div.textContent =
+        value == null ? "" : String(value);
+
+    return div.innerHTML;
+}
+
+
+async function loadSavedTopologies(){
+
+    const body =
+        document.getElementById(
+            "savedTopologyTableBody"
+        );
+
+    const meta =
+        document.getElementById(
+            "savedTopologyMeta"
+        );
+
+    if(!body){
+
+        console.error(
+            "savedTopologyTableBody not found"
+        );
+
+        return;
+
+    }
+
+    try{
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="6"
+                    class="topology-empty">
+                    Loading saved topologies...
+                </td>
+            </tr>
+        `;
+
+        const response =
+            await fetch("/api/topologies");
+
+        const result =
+            await response.json();
+
+        console.log(
+            "Saved topology response:",
+            result
+        );
+
+        if(
+            !response.ok ||
+            !result.success
+        ){
+
+            throw new Error(
+                result.message ||
+                "Failed to load saved topologies"
+            );
+
+        }
+
+        /*
+         * API is already sorted newest first.
+         * Display only the latest 10.
+         */
+        savedTopologiesData =
+            Array.isArray(result.data)
+                ? result.data.slice(0, 10)
+                : [];
+
+        renderSavedTopologies(
+            savedTopologiesData
+        );
+
+    }
+    catch(error){
+
+        console.error(
+            "Saved topology table error:",
+            error
+        );
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="6"
+                    class="topology-empty">
+                    Failed to load saved topologies.
+                </td>
+            </tr>
+        `;
+
+        if(meta){
+
+            meta.textContent =
+                "Unable to load saved topologies";
+
+        }
+
+    }
+
+}
+
+
+function renderSavedTopologies(topologies){
+
+    const body =
+        document.getElementById(
+            "savedTopologyTableBody"
+        );
+
+    const meta =
+        document.getElementById(
+            "savedTopologyMeta"
+        );
+
+    if(!body){
+
+        return;
+
+    }
+
+    if(meta){
+
+        meta.textContent =
+            `${topologies.length} topology result(s)`;
+
+    }
+
+    if(!topologies.length){
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="6"
+                    class="topology-empty">
+                    No matching topology found.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    body.innerHTML =
+        topologies.map(function(topology){
+
+            const id =
+                escapeSavedTopology(
+                    topology.topology_id
+                );
+
+            const name =
+                escapeSavedTopology(
+                    topology.name ||
+                    "Unnamed Topology"
+                );
+
+            const controller =
+                escapeSavedTopology(
+                    topology.controller ||
+                    "-"
+                );
+
+            const nodes =
+                escapeSavedTopology(
+                    topology.nodes || 0
+                );
+
+            const links =
+                escapeSavedTopology(
+                    topology.links || 0
+                );
+
+            return `
+                <tr>
+                    <td class="saved-topology-name">
+                        ${name}
+                    </td>
+
+                    <td>
+                        ${controller}
+                    </td>
+
+                    <td>
+                        ${nodes}
+                    </td>
+
+                    <td>
+                        ${links}
+                    </td>
+
+                    <td>
+                        <span class="topology-id">
+                            ${id}
+                        </span>
+                    </td>
+
+                    <td>
+                        <button
+                            type="button"
+                            class="footer-button"
+                            onclick="loadSavedTopology('${id}')"
+                        >
+                            Load
+                        </button>
+                    </td>
+                </tr>
+            `;
+
+        }).join("");
+
+}
+
+
+function filterSavedTopologies(){
+
+    const search =
+        document.getElementById(
+            "savedTopologySearch"
+        );
+
+    if(!search){
+
+        renderSavedTopologies(
+            savedTopologiesData
+        );
+
+        return;
+
+    }
+
+    const query =
+        search.value
+            .trim()
+            .toLowerCase();
+
+    const filtered =
+        savedTopologiesData.filter(
+            function(topology){
+
+                return [
+                    topology.name,
+                    topology.controller,
+                    topology.topology_id
+                ].some(function(value){
+
+                    return String(
+                        value || ""
+                    )
+                    .toLowerCase()
+                    .includes(query);
+
+                });
+
+            }
+        );
+
+    renderSavedTopologies(filtered);
+
+}
+
+
+/*
+ * Load table when page opens.
+ */
+document.addEventListener(
+    "DOMContentLoaded",
+    function(){
+
+        loadSavedTopologies();
+
+        const search =
+            document.getElementById(
+                "savedTopologySearch"
+            );
+
+        if(search){
+
+            search.addEventListener(
+                "input",
+                filterSavedTopologies
+            );
+
+        }
+
+    }
+);
+
+
 </script>
 
 {% endblock %}
+

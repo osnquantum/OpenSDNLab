@@ -162,3 +162,167 @@ def get_topology(topology_id):
             topology
 
     })
+
+
+# ------------------------------------------------------------
+# List saved topologies
+# ------------------------------------------------------------
+
+
+# ------------------------------------------------------------
+# List / search saved topologies
+# ------------------------------------------------------------
+
+@topology_save.route(
+    "/api/topologies",
+    methods=["GET"]
+)
+def list_topologies():
+
+    search = (
+        request.args.get(
+            "search",
+            ""
+        )
+        .strip()
+        .lower()
+    )
+
+
+    try:
+
+        limit = int(
+            request.args.get(
+                "limit",
+                10
+            )
+        )
+
+    except ValueError:
+
+        limit = 10
+
+
+    # Safety limits.
+    limit = max(
+        1,
+        min(limit, 100)
+    )
+
+
+    topologies = []
+
+
+    # Newest files first.
+    files = sorted(
+        TOPOLOGY_DIR.glob("*.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True
+    )
+
+
+    for file_path in files:
+
+        try:
+
+            with file_path.open(
+                "r",
+                encoding="utf-8"
+            ) as file:
+
+                topology = json.load(file)
+
+
+            name = topology.get(
+                "name",
+                "Unnamed Topology"
+            )
+
+
+            # Search all saved topologies by name.
+            if (
+                search and
+                search not in name.lower()
+            ):
+
+                continue
+
+
+            # Return metadata only.
+            topologies.append({
+
+                "topology_id":
+                    topology.get(
+                        "topology_id"
+                    ),
+
+                "name":
+                    name,
+
+                "type":
+                    topology.get(
+                        "type",
+                        "custom"
+                    ),
+
+                "controller":
+                    topology.get(
+                        "controller",
+                        "unknown"
+                    ),
+
+                "nodes":
+                    len(
+                        topology.get(
+                            "nodes",
+                            []
+                        )
+                    ),
+
+                "links":
+                    len(
+                        topology.get(
+                            "links",
+                            []
+                        )
+                    ),
+
+                "created_at":
+                    file_path.stat().st_mtime
+
+            })
+
+
+            # Stop reading once we have enough results.
+            if len(topologies) >= limit:
+
+                break
+
+
+        except Exception as error:
+
+            print(
+                "Failed to read topology:",
+                file_path,
+                error
+            )
+
+
+    return jsonify({
+
+        "success": True,
+
+        "search":
+            search,
+
+        "limit":
+            limit,
+
+        "count":
+            len(topologies),
+
+        "data":
+            topologies
+
+    })
+
