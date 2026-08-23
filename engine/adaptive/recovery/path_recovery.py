@@ -235,18 +235,98 @@ class PathRecovery(BaseRecovery):
 
         primary_path = paths[0]
 
+        if controller is None:
+
+            return {
+
+                "executed": False,
+
+                "success": False,
+
+                "recovery_type":
+                    "PATH_RECOVERY",
+
+                "reason":
+                    "Controller unavailable for path enforcement",
+
+                "primary_path":
+                    primary_path,
+
+                "best_path":
+                    best_path,
+
+                "path_selection":
+                    selection,
+
+                "path_analysis":
+                    analysis,
+
+            }
+
+
+        apply_recovery_path = getattr(
+            controller,
+            "apply_recovery_path",
+            None,
+        )
+
+        if not callable(apply_recovery_path):
+
+            return {
+
+                "executed": False,
+
+                "success": False,
+
+                "recovery_type":
+                    "PATH_RECOVERY",
+
+                "reason":
+                    "Controller does not support path enforcement",
+
+                "primary_path":
+                    primary_path,
+
+                "best_path":
+                    best_path,
+
+                "path_selection":
+                    selection,
+
+                "path_analysis":
+                    analysis,
+
+            }
+
+
+        enforcement = apply_recovery_path(
+            path=best_path,
+        )
+
+        executed = enforcement.get(
+            "executed",
+            False,
+        )
+
+        success = enforcement.get(
+            "success",
+            False,
+        )
+
 
         return {
 
-            "executed": False,
+            "executed": executed,
 
-            "success": True,
+            "success": success,
 
             "recovery_type":
                 "PATH_RECOVERY",
 
             "reason":
-                "Best recovery path selected",
+                "Recovery path enforcement completed"
+                if success
+                else "Recovery path enforcement failed",
 
             "trigger_action":
                 action,
@@ -256,6 +336,9 @@ class PathRecovery(BaseRecovery):
 
             "best_path":
                 best_path,
+
+            "enforcement":
+                enforcement,
 
             "path_selection":
                 selection,
