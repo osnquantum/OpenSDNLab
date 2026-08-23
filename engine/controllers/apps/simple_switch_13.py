@@ -109,12 +109,26 @@ class SimpleSwitch13(app_manager.OSKenApp):
             exist_ok=True,
         )
 
-        with open(path, "w") as f:
+        temp_path = (
+            path
+            + "."
+            + str(os.getpid())
+            + "."
+            + str(time.time_ns())
+            + ".tmp"
+        )
+
+        with open(temp_path, "w") as f:
             json.dump(
                 self.stats,
                 f,
                 indent=4,
             )
+
+        os.replace(
+            temp_path,
+            path,
+        )
 
     ############################################################
     # DYNAMIC OPENFLOW PORT MONITORING
@@ -532,6 +546,30 @@ class SimpleSwitch13(app_manager.OSKenApp):
         switches = get_switch(self, None)
         links = get_link(self, None)
 
+        # OS-Ken topology discovery is asynchronous and may
+        # temporarily return a partial topology during events.
+        # Do not replace an already more complete topology with
+        # a smaller transient discovery result.
+        if self.graph and self.link_map:
+
+            current_switches = len(self.graph)
+            current_links = len(self.link_map)
+
+            if (
+                len(switches) < current_switches
+                or len(links) < current_links
+            ):
+                self.logger.info(
+                    "Ignoring transient partial topology: "
+                    "switches=%s links=%s "
+                    "(current switches=%s links=%s)",
+                    len(switches),
+                    len(links),
+                    current_switches,
+                    current_links,
+                )
+                return
+
         # Rebuild topology structures from
         # the latest OS-Ken discovery result.
         self.graph = {}
@@ -929,12 +967,6 @@ class SimpleSwitch13(app_manager.OSKenApp):
 
         datapath = ev.msg.datapath
 
-        self.datapaths[datapath.id] = datapath
-
-        self.stats["switch_count"] = len(
-            self.datapaths
-        )
-
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
@@ -958,29 +990,6 @@ class SimpleSwitch13(app_manager.OSKenApp):
             "Switch connected: %s",
             datapath.id,
         )
-
-    @set_ev_cls(
-        ofp_event.EventOFPStateChange,
-        DEAD_DISPATCHER,
-    )
-    def state_change_handler(self, ev):
-
-        datapath = ev.datapath
-
-        if datapath.id in self.datapaths:
-
-            del self.datapaths[datapath.id]
-
-            self.stats["switch_count"] = len(
-                self.datapaths
-            )
-
-            self.export_stats()
-
-            self.logger.info(
-                "Switch disconnected: %s",
-                datapath.id,
-            )
 
     ############################################################
     # PACKET PROCESSING
@@ -1034,16 +1043,20 @@ class SimpleSwitch13(app_manager.OSKenApp):
             if link["src_dpid"] == dpid
         }
 
-        if in_port not in neighbor_ports:
+
+        # Learn only unicast hosts arriving on edge ports.
+        is_multicast = bool(int(src.split(":")[0], 16) & 1)
+
+        if not is_multicast and in_port not in neighbor_ports:
 
             previous = self.host_locations.get(src)
 
-            self.host_locations[src] = (
-                dpid,
-                in_port,
-            )
+            if previous is None:
 
-            if previous != self.host_locations[src]:
+                self.host_locations[src] = (
+                    dpid,
+                    in_port,
+                )
 
                 self.logger.info(
                     "Host learned: %s -> switch=%s port=%s",
@@ -1071,9 +1084,6 @@ class SimpleSwitch13(app_manager.OSKenApp):
                     continue
 
                 if port_no == in_port:
-                    continue
-
-                if port_no in neighbor_ports:
                     continue
 
                 actions.append(

@@ -8,3 +8,6 @@ venv/
 *.log
 *.key
 *.pem
+
+runtime/controller_stats/*.json
+runtime/controller_stats/*.tmp
