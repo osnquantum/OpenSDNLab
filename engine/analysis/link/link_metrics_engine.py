@@ -74,11 +74,16 @@ class LinkMetricsEngine:
                 dst_key
             )
 
-            if (
-                src_metrics is None
-                or dst_metrics is None
-            ):
-                continue
+            # Keep the logical link even when statistics are
+            # temporarily available from only one direction.
+            #
+            # Missing directional measurements are represented
+            # explicitly instead of dropping the entire link.
+            if src_metrics is None:
+                src_metrics = {}
+
+            if dst_metrics is None:
+                dst_metrics = {}
 
             link_id = (
                 f"s{src_dpid}:p{src_port}"
@@ -189,6 +194,15 @@ class LinkMetricsEngine:
 
                 "total_errors":
                     total_errors,
+
+                "measurement_status": {
+                    "src_available": bool(src_metrics),
+                    "dst_available": bool(dst_metrics),
+                    "complete": bool(
+                        src_metrics
+                        and dst_metrics
+                    ),
+                },
 
                 # Raw directional references
 
