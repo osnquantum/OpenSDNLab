@@ -677,6 +677,213 @@ class SimpleSwitch13(app_manager.OSKenApp):
         return None
 
     ############################################################
+    # ADAPTIVE PATH RECOVERY
+    ############################################################
+
+    def apply_recovery_path(
+        self,
+        path,
+        destination=None,
+        priority=100,
+    ):
+
+        if not path or len(path) < 2:
+
+            return {
+                "executed": False,
+                "success": False,
+                "reason": "Recovery path is too short",
+            }
+
+        def resolve_switch(node):
+
+            if isinstance(node, int):
+                return node
+
+            if isinstance(node, str):
+                name = node.strip()
+
+                if name.startswith("s") and name[1:].isdigit():
+                    return int(name[1:])
+
+            return None
+
+
+        switch_path = [
+            resolved
+            for node in path
+            for resolved in [resolve_switch(node)]
+            if resolved is not None
+        ]
+
+        if len(switch_path) < 2:
+
+            return {
+                "executed": False,
+                "success": False,
+                "reason":
+                    "Recovery path does not contain "
+                    "enough switches",
+                "path": path,
+                "switch_path": switch_path,
+            }
+
+        installed_switches = []
+
+        destination_mac = None
+        destination_location = None
+
+        if destination is not None:
+
+            if destination in self.host_locations:
+
+                destination_mac = destination
+                destination_location = (
+                    self.host_locations[destination]
+                )
+
+            else:
+
+                destination_name = str(
+                    destination
+                ).lower()
+
+                for mac, location in (
+                    self.host_locations.items()
+                ):
+
+                    mac_suffix = mac.split(
+                        ":"
+                    )[-1].lower()
+
+                    if (
+                        destination_name.startswith("h")
+                        and destination_name[1:].isdigit()
+                        and int(destination_name[1:])
+                        == int(mac_suffix, 16)
+                    ):
+
+                        destination_mac = mac
+                        destination_location = location
+                        break
+
+        if destination_location is None:
+
+            return {
+                "executed": False,
+                "success": False,
+                "reason":
+                    "Destination host location unavailable",
+                "path": path,
+                "switch_path": switch_path,
+                "destination": destination,
+            }
+
+        destination_dpid, destination_port = (
+            destination_location
+        )
+
+        if switch_path[-1] != destination_dpid:
+
+            return {
+                "executed": False,
+                "success": False,
+                "reason":
+                    "Recovery path does not end at "
+                    "destination switch",
+                "path": path,
+                "switch_path": switch_path,
+                "destination_dpid": destination_dpid,
+            }
+
+        for index, switch_id in enumerate(switch_path):
+
+            datapath = self.datapaths.get(
+                switch_id
+            )
+
+            if datapath is None:
+
+                return {
+                    "executed": False,
+                    "success": False,
+                    "reason":
+                        f"Datapath unavailable for switch "
+                        f"{switch_id}",
+                    "installed_switches":
+                        installed_switches,
+                }
+
+            if index == len(switch_path) - 1:
+
+                out_port = destination_port
+
+            else:
+
+                next_switch = switch_path[index + 1]
+
+                out_port = self.graph.get(
+                    switch_id,
+                    {},
+                ).get(
+                    next_switch
+                )
+
+                if out_port is None:
+
+                    return {
+                        "executed": False,
+                        "success": False,
+                        "reason":
+                            f"No link from {switch_id} "
+                            f"to {next_switch}",
+                        "installed_switches":
+                            installed_switches,
+                    }
+
+            parser = datapath.ofproto_parser
+
+            match_kwargs = {}
+
+            if destination_mac is not None:
+                match_kwargs["eth_dst"] = destination_mac
+
+            match = parser.OFPMatch(
+                **match_kwargs
+            )
+
+            actions = [
+                parser.OFPActionOutput(
+                    out_port
+                )
+            ]
+
+            self.add_flow(
+                datapath,
+                priority,
+                match,
+                actions,
+            )
+
+            installed_switches.append(
+                switch_id
+            )
+
+
+        return {
+            "executed": True,
+            "success": True,
+            "path": path,
+            "switch_path": switch_path,
+            "destination": destination,
+            "destination_dpid": destination_dpid,
+            "installed_switches":
+                installed_switches,
+            "priority": priority,
+        }
+
+
+    ############################################################
     # FLOW INSTALLATION
     ############################################################
 

@@ -301,6 +301,7 @@ class PathRecovery(BaseRecovery):
 
         enforcement = apply_recovery_path(
             path=best_path,
+            destination=destination,
         )
 
         executed = enforcement.get(
