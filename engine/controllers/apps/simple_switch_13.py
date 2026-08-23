@@ -1023,12 +1023,16 @@ class SimpleSwitch13(app_manager.OSKenApp):
         # LEARN SOURCE HOST LOCATION
         ########################################################
 
-        neighbor_ports = set(
-            self.graph.get(
-                dpid,
-                {},
-            ).values()
-        )
+        # Build neighbor ports from the directional topology
+        # map rather than only the graph. During asynchronous
+        # topology discovery, graph updates may temporarily be
+        # incomplete while link_map already contains the physical
+        # inter-switch port relationships.
+        neighbor_ports = {
+            link["src_port"]
+            for link in self.link_map.values()
+            if link["src_dpid"] == dpid
+        }
 
         if in_port not in neighbor_ports:
 
