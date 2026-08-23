@@ -26,12 +26,3 @@ class BaseController(ABC):
     @abstractmethod
     def name(self):
         pass
-
-
-    @abstractmethod
-    def get_topology(self):
-        """
-        Return the controller's current discovered topology
-        using the OpenSDNLab standardized representation.
-        """
-        pass

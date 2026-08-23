@@ -51,7 +51,7 @@ def experiment_detail(experiment_name):
 
         FROM experiments
 
-        WHERE experiment_name=?
+        WHERE experiment_id=?
 
         """,
         (experiment_name,)

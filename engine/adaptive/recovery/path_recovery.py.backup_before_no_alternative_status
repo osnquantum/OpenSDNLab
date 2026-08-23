@@ -180,9 +180,6 @@ class PathRecovery(BaseRecovery):
                 "reason":
                     "No alternative path available",
 
-                "path_recovery_status":
-                    "PATH_RECOVERY_NO_ALTERNATIVE_PATH",
-
                 "path_analysis":
                     analysis
 

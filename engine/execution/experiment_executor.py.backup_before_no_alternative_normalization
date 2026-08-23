@@ -549,39 +549,23 @@ class ExperimentExecutor:
 
             path_recovery_status = "PATH_RECOVERY_NOT_REQUIRED"
 
-        elif recovery_result.get(
-            "path_recovery_status"
-        ) == "PATH_RECOVERY_NO_ALTERNATIVE_PATH":
-
-            path_recovery_status = (
-                "PATH_RECOVERY_NO_ALTERNATIVE_PATH"
-            )
-
         elif recovery_result.get("success", False):
 
             if recovery_result.get("executed", False):
 
-                path_recovery_status = (
-                    "PATH_RECOVERY_EXECUTED"
-                )
+                path_recovery_status = "PATH_RECOVERY_EXECUTED"
 
             elif recovery_result.get("best_path"):
 
-                path_recovery_status = (
-                    "PATH_SELECTED"
-                )
+                path_recovery_status = "PATH_SELECTED"
 
             else:
 
-                path_recovery_status = (
-                    "PATH_RECOVERY_TRIGGERED"
-                )
+                path_recovery_status = "PATH_RECOVERY_TRIGGERED"
 
         else:
 
-            path_recovery_status = (
-                "PATH_RECOVERY_FAILED"
-            )
+            path_recovery_status = "PATH_RECOVERY_FAILED"
 
 
         recovery_result["path_recovery_status"] = path_recovery_status

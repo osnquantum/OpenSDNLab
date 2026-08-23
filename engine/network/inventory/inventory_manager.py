@@ -7,13 +7,30 @@ Builds a deployable inventory from a blueprint.
 from engine.network.inventory.inventory import Inventory
 from engine.network.inventory.device import Device
 from engine.network.inventory.interface import Interface
+from engine.network.validators import TopologyIntegrityValidator
 
 from engine.core.logger import logger
 
 
 class InventoryManager:
 
+    def __init__(self):
+
+        self.validator = TopologyIntegrityValidator()
+
+
     def build(self, blueprint):
+
+        logger.info("Validating topology integrity")
+
+        validation = self.validator.validate(
+            blueprint
+        )
+
+        logger.info(
+            "Topology validation successful: "
+            f"{validation}"
+        )
 
         logger.info("Building inventory")
 

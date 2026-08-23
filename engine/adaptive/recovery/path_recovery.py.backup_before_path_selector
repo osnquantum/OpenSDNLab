@@ -13,10 +13,6 @@ from engine.adaptive.recovery.topology_path_analyzer import (
     TopologyPathAnalyzer
 )
 
-from engine.adaptive.recovery.path_selector import (
-    PathSelector
-)
-
 
 class PathRecovery(BaseRecovery):
 
@@ -25,10 +21,6 @@ class PathRecovery(BaseRecovery):
 
         self.path_analyzer = (
             TopologyPathAnalyzer()
-        )
-
-        self.path_selector = (
-            PathSelector()
         )
 
 
@@ -180,9 +172,6 @@ class PathRecovery(BaseRecovery):
                 "reason":
                     "No alternative path available",
 
-                "path_recovery_status":
-                    "PATH_RECOVERY_NO_ALTERNATIVE_PATH",
-
                 "path_analysis":
                     analysis
 
@@ -191,49 +180,9 @@ class PathRecovery(BaseRecovery):
 
         paths = analysis["paths"]
 
-        network_health = metrics.get(
-            "network_health",
-            {}
-        )
-
-        selection = (
-            self.path_selector.select_best_path(
-                paths=paths,
-                network_health=network_health,
-                qos_metrics=metrics,
-                objective=trigger.get(
-                    "objective"
-                ),
-            )
-        )
-
-        best_path = selection.get(
-            "best_path"
-        )
-
-        if best_path is None:
-
-            return {
-
-                "executed": False,
-
-                "success": False,
-
-                "recovery_type":
-                    "PATH_RECOVERY",
-
-                "reason":
-                    "No healthy recovery path available",
-
-                "path_analysis":
-                    analysis,
-
-                "path_selection":
-                    selection,
-
-            }
-
         primary_path = paths[0]
+
+        alternative_path = paths[1]
 
 
         return {
@@ -246,7 +195,7 @@ class PathRecovery(BaseRecovery):
                 "PATH_RECOVERY",
 
             "reason":
-                "Best recovery path selected",
+                "Alternative path identified",
 
             "trigger_action":
                 action,
@@ -254,11 +203,8 @@ class PathRecovery(BaseRecovery):
             "primary_path":
                 primary_path,
 
-            "best_path":
-                best_path,
-
-            "path_selection":
-                selection,
+            "alternative_path":
+                alternative_path,
 
             "path_analysis":
                 analysis

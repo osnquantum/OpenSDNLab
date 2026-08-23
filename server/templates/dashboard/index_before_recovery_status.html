@@ -350,16 +350,6 @@
             </div>
 
             <div class="status-card">
-                <span class="label">Path Recovery</span>
-                <div
-                    id="path_recovery_status"
-                    class="value small"
-                >
-                    -
-                </div>
-            </div>
-
-            <div class="status-card">
                 <span class="label">Current Stage</span>
                 <div id="stage" class="value small">-</div>
             </div>
@@ -695,15 +685,6 @@ function update(){
 
         document.getElementById("status").innerHTML =
             data.status || "-";
-
-        const pathRecoveryStatus =
-            data.path_recovery_status ||
-            "PATH_RECOVERY_NOT_REQUIRED";
-
-        document.getElementById(
-            "path_recovery_status"
-        ).textContent =
-            pathRecoveryStatus;
 
         document.getElementById("stage").innerHTML =
             data.stage || "-";

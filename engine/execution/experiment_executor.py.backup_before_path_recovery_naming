@@ -543,48 +543,32 @@ class ExperimentExecutor:
         # Normalize recovery state for API and dashboard.
         if not getattr(experiment, "recovery_enabled", False):
 
-            path_recovery_status = "PATH_RECOVERY_DISABLED"
+            recovery_status = "DISABLED"
 
         elif not adaptive_trigger.get("triggered", False):
 
-            path_recovery_status = "PATH_RECOVERY_NOT_REQUIRED"
-
-        elif recovery_result.get(
-            "path_recovery_status"
-        ) == "PATH_RECOVERY_NO_ALTERNATIVE_PATH":
-
-            path_recovery_status = (
-                "PATH_RECOVERY_NO_ALTERNATIVE_PATH"
-            )
+            recovery_status = "NOT_REQUIRED"
 
         elif recovery_result.get("success", False):
 
             if recovery_result.get("executed", False):
 
-                path_recovery_status = (
-                    "PATH_RECOVERY_EXECUTED"
-                )
+                recovery_status = "RECOVERY_EXECUTED"
 
             elif recovery_result.get("best_path"):
 
-                path_recovery_status = (
-                    "PATH_SELECTED"
-                )
+                recovery_status = "BEST_PATH_SELECTED"
 
             else:
 
-                path_recovery_status = (
-                    "PATH_RECOVERY_TRIGGERED"
-                )
+                recovery_status = "TRIGGERED"
 
         else:
 
-            path_recovery_status = (
-                "PATH_RECOVERY_FAILED"
-            )
+            recovery_status = "FAILED"
 
 
-        recovery_result["path_recovery_status"] = path_recovery_status
+        recovery_result["status"] = recovery_status
 
 
         RuntimeState.update(
@@ -685,8 +669,8 @@ class ExperimentExecutor:
                 "run_number": run_number,
                 "total_runs": total_runs,
                 "completed": False,
-                "path_recovery_status": path_recovery_status,
-                "path_recovery": recovery_result
+                "recovery_status": recovery_status,
+                "recovery": recovery_result
             }
 
         logger.info(
@@ -728,6 +712,6 @@ class ExperimentExecutor:
             "run_number": run_number,
             "total_runs": total_runs,
             "completed": True,
-            "path_recovery_status": path_recovery_status,
-            "path_recovery": recovery_result
+            "recovery_status": recovery_status,
+            "recovery": recovery_result
         }

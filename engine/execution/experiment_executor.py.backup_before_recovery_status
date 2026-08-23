@@ -540,53 +540,6 @@ class ExperimentExecutor:
             f"{recovery_result}"
         )
 
-        # Normalize recovery state for API and dashboard.
-        if not getattr(experiment, "recovery_enabled", False):
-
-            path_recovery_status = "PATH_RECOVERY_DISABLED"
-
-        elif not adaptive_trigger.get("triggered", False):
-
-            path_recovery_status = "PATH_RECOVERY_NOT_REQUIRED"
-
-        elif recovery_result.get(
-            "path_recovery_status"
-        ) == "PATH_RECOVERY_NO_ALTERNATIVE_PATH":
-
-            path_recovery_status = (
-                "PATH_RECOVERY_NO_ALTERNATIVE_PATH"
-            )
-
-        elif recovery_result.get("success", False):
-
-            if recovery_result.get("executed", False):
-
-                path_recovery_status = (
-                    "PATH_RECOVERY_EXECUTED"
-                )
-
-            elif recovery_result.get("best_path"):
-
-                path_recovery_status = (
-                    "PATH_SELECTED"
-                )
-
-            else:
-
-                path_recovery_status = (
-                    "PATH_RECOVERY_TRIGGERED"
-                )
-
-        else:
-
-            path_recovery_status = (
-                "PATH_RECOVERY_FAILED"
-            )
-
-
-        recovery_result["path_recovery_status"] = path_recovery_status
-
-
         RuntimeState.update(
             stage="Metrics Collected",
             metrics=metrics,
@@ -684,9 +637,7 @@ class ExperimentExecutor:
                 "experiment_id": experiment.experiment_id,
                 "run_number": run_number,
                 "total_runs": total_runs,
-                "completed": False,
-                "path_recovery_status": path_recovery_status,
-                "path_recovery": recovery_result
+                "completed": False
             }
 
         logger.info(
@@ -727,7 +678,5 @@ class ExperimentExecutor:
             "experiment_id": experiment.experiment_id,
             "run_number": run_number,
             "total_runs": total_runs,
-            "completed": True,
-            "path_recovery_status": path_recovery_status,
-            "path_recovery": recovery_result
+            "completed": True
         }

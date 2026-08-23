@@ -1,0 +1,683 @@
+.
+├── address
+├── admin
+│   ├── ovs_check.sh
+│   ├── readiness.sh
+│   ├── restart.sh
+│   ├── start.sh
+│   ├── status.sh
+│   └── stop.sh
+├── analyses
+│   ├── analysis_engine.py
+│   ├── analysis.py
+│   ├── analysis_runner.py
+│   ├── analysis_variable.py
+│   ├── base_analysis.py
+│   ├── delay_analysis.py
+│   └── __init__.py
+├── analytics
+│   ├── comparison_engine.py
+│   ├── comparison_result.py
+│   ├── __init__.py
+│   ├── insight_engine.py
+│   ├── insight.py
+│   └── statistics_engine.py
+├── api
+├── bootstrap
+│   ├── bootstrap.py
+│   ├── create_database.py
+│   ├── create_structure.py
+│   ├── create_structure.sh
+│   ├── generate_configs.sh
+│   ├── __init__.py
+│   ├── install_packages.sh
+│   ├── install.py
+│   ├── reports
+│   │   └── structure_report.txt
+│   ├── setup.sh
+│   ├── verify_environment.sh
+│   └── verify.py
+├── captures
+├── CHANGELOG.md
+├── config
+│   ├── controllers.yaml
+│   ├── default_topology.yaml
+│   └── settings.yaml
+├── controller_state.log
+├── dashboard
+├── database
+│   ├── backups
+│   ├── connection.py
+│   ├── database.py
+│   ├── __init__.py
+│   ├── migrations
+│   ├── models
+│   │   ├── base.py
+│   │   ├── configuration.py
+│   │   ├── experiment.py
+│   │   └── __init__.py
+│   ├── opensdnlab.db
+│   ├── schema
+│   │   └── schema.sql
+│   └── seed
+│       └── seed.sql
+├── dataset
+│   ├── dataset_builder.py
+│   ├── dataset.py
+│   └── __init__.py
+├── diagrams
+├── docs
+│   ├── ADR
+│   │   ├── ADR-001-Builder-Pattern.md
+│   │   ├── ADR-002-Blueprint-Layer.md
+│   │   ├── ADR-003-Inventory-Layer.md
+│   │   ├── ADR-004-Deployment-Manager.md
+│   │   ├── ADR-005-Controller-Framework.md
+│   │   ├── ADR-006-Address-Manager.md
+│   │   └── ADR-007-Generic-Remote-Controller.md
+│   ├── API.md
+│   ├── Architecture.md
+│   ├── Database_Design.md
+│   ├── Developer_Guide.md
+│   ├── INSTALL.md
+│   ├── research_logs
+│   │   └── dynamic_topology_generator.md
+│   ├── Testing_Guide.md
+│   ├── Troubleshooting.md
+│   └── User_Guide.md
+├── engine
+│   ├── adaptive
+│   │   ├── adaptive_config.py
+│   │   ├── adaptive_manager.py
+│   │   ├── adaptive_manager.py.backup_before_dynamic_config
+│   │   ├── adaptive_trigger.py
+│   │   ├── __init__.py
+│   │   ├── prediction
+│   │   └── recovery
+│   ├── analysis
+│   │   ├── comparison
+│   │   ├── delay
+│   │   ├── export
+│   │   ├── graphs
+│   │   ├── __init__.py
+│   │   ├── qos
+│   │   ├── service
+│   │   ├── statistics
+│   │   └── visualization
+│   ├── control
+│   │   ├── qos_qoe_engine.py
+│   │   └── qos_qoe_engine.py.backup_before_adaptive_actions
+│   ├── controllers
+│   │   ├── apps
+│   │   ├── base_controller.py
+│   │   ├── config
+│   │   ├── controller_logger.py
+│   │   ├── controller_manager.py
+│   │   ├── __init__.py
+│   │   ├── local
+│   │   ├── log_reader.py
+│   │   ├── manager
+│   │   ├── monitoring
+│   │   ├── plugins
+│   │   └── remote
+│   ├── core
+│   │   ├── configuration.py
+│   │   ├── event_bus.py
+│   │   ├── events.py
+│   │   ├── __init__.py
+│   │   ├── interfaces
+│   │   ├── logger.py
+│   │   ├── plugin_manager.py
+│   │   ├── plugin.py
+│   │   ├── plugin_registry.py
+│   │   └── registry.py
+│   ├── dashboard
+│   │   ├── batch_executor.py
+│   │   ├── batch_manager.py
+│   │   ├── batch_repository.py
+│   │   ├── batch_worker.py
+│   │   ├── experiment_loader.py
+│   │   └── experiment_manager.py
+│   ├── deployment
+│   │   ├── adapters
+│   │   ├── backends
+│   │   ├── deployment_manager.py
+│   │   └── __init__.py
+│   ├── execution
+│   │   ├── experiment_executor_backup_before_cleanup.py
+│   │   ├── experiment_executor_backup_qosqoe.py
+│   │   ├── experiment_executor_before_stage.py
+│   │   ├── experiment_executor.py
+│   │   ├── experiment_executor.py.backup
+│   │   ├── experiment_executor.py.backup_before_adaptive_evaluation
+│   │   ├── experiment_executor.py.backup_before_adaptive_manager
+│   │   ├── experiment_executor.py.backup_before_adaptive_trigger
+│   │   ├── experiment_executor.py.backup_before_batch_job_fix
+│   │   ├── experiment_executor.py.backup_before_dynamic_adaptive_call
+│   │   ├── experiment_executor.py.backup_before_experiment_status
+│   │   ├── experiment_executor.py.backup_before_jitter_decision
+│   │   ├── experiment_executor.py.backup_before_metrics_history
+│   │   ├── experiment_executor.py.backup_before_save_adaptive_result
+│   │   ├── experiment_executor.py.backup_before_trigger_fix
+│   │   ├── experiment_executor.py.backup_before_trigger_save
+│   │   └── __init__.py
+│   ├── __init__.py
+│   ├── interfaces
+│   │   ├── controller.py
+│   │   ├── deployment.py
+│   │   ├── monitoring.py
+│   │   ├── plugin.py
+│   │   └── repository.py
+│   ├── jobs
+│   │   ├── job_before_progress.py
+│   │   ├── job_executor_before_lock.py
+│   │   ├── job_executor_before_progress.py
+│   │   ├── job_executor_before_queue.py
+│   │   ├── job_executor.py
+│   │   ├── job_manager_before_debug.py
+│   │   ├── job_manager.py
+│   │   ├── job.py
+│   │   └── job_status.py
+│   ├── logs
+│   │   └── osken.log
+│   ├── metrics
+│   │   ├── __init__.py
+│   │   ├── metric_collector.py
+│   │   ├── metric_registry.py
+│   │   └── metric_repository.py
+│   ├── models
+│   │   ├── experiment_configuration.py
+│   │   ├── experiment_configuration.py.backup_before_adaptive_config
+│   │   └── __init__.py
+│   ├── monitoring
+│   │   ├── collectors
+│   │   ├── __init__.py
+│   │   ├── metric_parser.py
+│   │   ├── models
+│   │   └── monitoring_manager.py
+│   ├── network
+│   │   ├── address_manager.py
+│   │   ├── backends
+│   │   ├── blueprint
+│   │   ├── builders
+│   │   ├── controller_manager.py
+│   │   ├── factory
+│   │   ├── __init__.py
+│   │   ├── inventory
+│   │   ├── link_manager.py
+│   │   ├── managers
+│   │   ├── models
+│   │   ├── network_engine.py
+│   │   ├── node_manager.py
+│   │   ├── topology_manager.py
+│   │   ├── traffic_manager.py
+│   │   └── validators
+│   ├── orchestration
+│   │   ├── cleanup_manager.py
+│   │   ├── controller_guard.py
+│   │   ├── controller_runtime.py
+│   │   ├── controller_runtime.py.bak
+│   │   ├── __init__.py
+│   │   └── system_manager.py
+│   ├── plugins
+│   │   ├── analysis
+│   │   ├── analytics
+│   │   ├── controllers
+│   │   ├── deployment
+│   │   ├── metrics
+│   │   ├── monitoring
+│   │   ├── repositories
+│   │   ├── topology
+│   │   └── traffic
+│   ├── repository
+│   │   ├── experiment_repository.py
+│   │   ├── __init__.py
+│   │   ├── models.py
+│   │   └── sqlite
+│   ├── runtime
+│   │   └── controller_stats
+│   ├── scenario
+│   │   ├── experiment_generator.py
+│   │   ├── __init__.py
+│   │   ├── scenario_engine.py
+│   │   ├── scenario.py
+│   │   ├── scenario_runner.py
+│   │   └── scenario_variable.py
+│   ├── services
+│   │   ├── experiment_manager_backup_address_fix.py
+│   │   ├── experiment_manager_backup_metric.py
+│   │   ├── experiment_manager_backup.py
+│   │   ├── experiment_manager_backup_runs.py
+│   │   ├── experiment_manager_before_addressing_fix.py
+│   │   ├── experiment_manager_before_progress.py
+│   │   ├── experiment_manager_old.py
+│   │   ├── experiment_manager.py
+│   │   ├── experiment_manager.py.backup_debug
+│   │   ├── experiment_manager.py.before_executor_bridge
+│   │   ├── experiment_manager.py.before_run_bridge
+│   │   ├── experiment_pipeline.py
+│   │   ├── experiment_service.py
+│   │   ├── __init__.py
+│   │   └── job_execution_service.py
+│   ├── system
+│   │   ├── cleanup_manager.py
+│   │   ├── __init__.py
+│   │   ├── process_manager.py
+│   │   ├── runtime_logger.py
+│   │   ├── runtime_state.py
+│   │   └── system_monitor.py
+│   └── topology
+├── examples
+│   └── run_real_deployment.py
+├── experiment_result.json
+├── experiment_runs.log
+├── experiments
+│   ├── ipv6_lab.json
+│   └── ipv6_sdn.json
+├── experiment_server.log
+├── exports
+├── flask_live.log
+├── flask.log
+├── flows.log
+├── h2
+├── __init__.py
+├── labs
+│   ├── delay
+│   │   ├── delay_lab.py
+│   │   └── __init__.py
+│   ├── __init__.py
+│   ├── lab.py
+│   └── lab_runner.py
+├── LICENSE
+├── logs
+│   ├── application
+│   │   └── app.log
+│   ├── bootstrap
+│   │   └── bootstrap.log
+│   ├── controller.log
+│   ├── errors
+│   │   └── error.log
+│   ├── experiments
+│   ├── flask.log
+│   ├── flask.pid
+│   ├── osken.log
+│   └── server.log
+├── metrics
+├── nodes
+├── opensdn_flask.log
+├── opensdnlab.db
+├── ovs_state.log
+├── pipeline
+│   ├── __init__.py
+│   └── pipeline.py
+├── PROJECT.md
+├── project_structure.txt
+├── README.md
+├── reports
+│   ├── health_report.txt
+│   └── installation_report.txt
+├── requirements.txt
+├── results
+│   ├── async_test_01.json
+│   ├── complete_experiment.json
+│   ├── configuration_experiment.json
+│   ├── default_config_test.json
+│   ├── delay_100ms.json
+│   ├── delay_10ms.json
+│   ├── delay_1ms.json
+│   ├── delay_50ms.json
+│   ├── delay_analysis.csv
+│   ├── delay_analysis.json
+│   ├── delay_vs_jitter.png
+│   ├── delay_vs_rtt.png
+│   ├── delay_vs_throughput.png
+│   ├── flow_check.json
+│   ├── job_remote_controller_test.json
+│   ├── linear_baseline_v2.json
+│   ├── live_debug_test.json
+│   ├── metadata_test.json
+│   ├── metric_ipv4_test.json
+│   ├── metric_test_clean.json
+│   ├── orchestrator_test.json
+│   ├── osken_delay_test.json
+│   ├── osken_of13_test.json
+│   ├── qos_one_way_delay_test.json
+│   ├── real_deployment.json
+│   ├── repository_demo.json
+│   ├── save_result_demo.json
+│   ├── simple_switch_test.json
+│   ├── system_manager_test.json
+│   ├── web_delay_test.json
+│   └── web_test_db.json
+├── ROADMAP.md
+├── runtime
+│   ├── controller_stats
+│   │   └── osken.json
+│   ├── osken.pid
+│   └── server.pid
+├── saved_topologies
+│   ├── topology-4ae80541-7a09-4de6-9dd1-e6700fab9492.json
+│   ├── topology-7183b425-8c8f-41f6-927e-da43bd1c5022.json
+│   ├── topology-cd13f6a2-b0cb-4e6f-8d9b-8e0baf9cc2e0.json
+│   └── topology-d5bb7566-d3fe-47e3-a197-899598414e0d.json
+├── scenarios
+│   ├── bandwidth
+│   │   └── __init__.py
+│   ├── controller
+│   │   └── __init__.py
+│   ├── delay
+│   │   ├── increasing_delay.py
+│   │   └── __init__.py
+│   ├── __init__.py
+│   ├── loss
+│   │   └── __init__.py
+│   ├── protocol
+│   │   └── __init__.py
+│   └── topology
+│       └── __init__.py
+├── scheduler
+│   ├── __init__.py
+│   ├── job.py
+│   ├── job_queue.py
+│   └── job_scheduler.py
+├── scripts
+│   ├── restart_lab.sh
+│   ├── start_lab.sh
+│   ├── start_opensdnlab.sh
+│   └── stop_lab.sh
+├── server
+│   ├── app.py
+│   ├── app.py.backup_topology_register
+│   ├── config.py
+│   ├── __init__.py
+│   ├── models
+│   ├── routes
+│   │   ├── admin.py
+│   │   ├── admin.py.backup_before_service_logs
+│   │   ├── analysis_api.py
+│   │   ├── analysis.py
+│   │   ├── analytics_data.py
+│   │   ├── analytics.py
+│   │   ├── batch.py
+│   │   ├── capabilities.py
+│   │   ├── cdf.py
+│   │   ├── compare_dashboard.py
+│   │   ├── compare.py
+│   │   ├── controller_analysis.py
+│   │   ├── controller.py
+│   │   ├── controllers.py
+│   │   ├── correlation.py
+│   │   ├── dashboard.py
+│   │   ├── dashboard.py.backup
+│   │   ├── dashboard.py.before_execution_history
+│   │   ├── experiment_page.py
+│   │   ├── experiment.py
+│   │   ├── flask_logs.py
+│   │   ├── health.py
+│   │   ├── history.py
+│   │   ├── __init__.py
+│   │   ├── job.py
+│   │   ├── jobs.py
+│   │   ├── latency.py
+│   │   ├── live.py
+│   │   ├── matrix.py
+│   │   ├── percentile.py
+│   │   ├── qos_qoe.py
+│   │   ├── research
+│   │   ├── research_compare.py
+│   │   ├── research_summary.py
+│   │   ├── result.py
+│   │   ├── running.py
+│   │   ├── running.py.backup_before_live_status_fix
+│   │   ├── running.py.before_experiment_id_fix
+│   │   ├── scatter.py
+│   │   ├── statistical_compare.py
+│   │   ├── system_control.py
+│   │   ├── system.py
+│   │   ├── topology_api.py
+│   │   ├── topology_api.py.backup_graph
+│   │   ├── topology.py
+│   │   ├── topology_save.py
+│   │   ├── topology_save.py.before_limit_search
+│   │   ├── topology_save.py.before_list_api
+│   │   └── topology_save.py.before_name_limit_filter
+│   ├── services
+│   │   ├── analytics_service.py
+│   │   ├── campaign_analysis_service.py
+│   │   ├── comparison_service.py
+│   │   ├── controller_analysis_service.py
+│   │   ├── correlation_service.py
+│   │   ├── dashboard_service.py
+│   │   ├── engine_service.py
+│   │   ├── experiment_generator.py
+│   │   ├── experiment_generator.py.backup
+│   │   ├── experiment_generator.py.bak2
+│   │   ├── experiment_service.py
+│   │   ├── experiment_service.py.backup_before_adaptive_config
+│   │   ├── __init__.py
+│   │   ├── job_service.py
+│   │   ├── latency_service.py
+│   │   ├── matrix_service.py
+│   │   ├── research_summary_service.py
+│   │   ├── running_service.py
+│   │   ├── statistical_service.py
+│   │   └── system_service.py
+│   ├── socketio
+│   ├── static
+│   │   └── js
+│   ├── templates
+│   │   ├── admin.html
+│   │   ├── admin.html.backup_before_single_service_log
+│   │   ├── analytics.html
+│   │   ├── batch_results.html
+│   │   ├── batch_results.html.backup_before_analytics_link
+│   │   ├── batch_results.html.before_icon_change
+│   │   ├── compare.html
+│   │   ├── dashboard
+│   │   ├── dashboard.html
+│   │   ├── dashboard.html.backup
+│   │   ├── experiment_create.html
+│   │   ├── experiment_create.html.backup_before_auto_batch
+│   │   ├── experiment_create.html.backup_before_batch_redirect
+│   │   ├── experiment_create.html.backup_before_current_experiment_id
+│   │   ├── experiment_create.html.backup_before_session_experiment_id
+│   │   ├── experiment_create.html.backup_before_single_run_batch
+│   │   ├── experiment_create.html.backup_unified
+│   │   ├── experiment_create.html.before_icon_change
+│   │   ├── layout
+│   │   ├── research
+│   │   ├── running_before_layout.html
+│   │   ├── running.html
+│   │   ├── running.html.backup
+│   │   ├── running.html.backup_before_job_api_fix
+│   │   ├── running.html.backup_before_live_status_fix
+│   │   ├── running.html.before_auto_redirect
+│   │   ├── running.html.before_icon_change
+│   │   ├── running.html.before_jobid_fix
+│   │   ├── system
+│   │   ├── topology.html
+│   │   ├── topology.html.backup_before_load_link_fix
+│   │   ├── topology.html.backup_button
+│   │   ├── topology.html.backup_delete_fix
+│   │   ├── topology.html.backup_draw
+│   │   ├── topology.html.backup_inputs
+│   │   ├── topology.html.backup_js
+│   │   ├── topology.html.backup_manual_editor
+│   │   ├── topology.html.backup_static_preview
+│   │   ├── topology.html.before_action_repair
+│   │   ├── topology.html.before_add_buttons_repair
+│   │   ├── topology.html.before_clean_canvas
+│   │   ├── topology.html.before_cleanup
+│   │   ├── topology.html.before_cleanup_footer
+│   │   ├── topology.html.before_delete_button
+│   │   ├── topology.html.before_delete_cleanup
+│   │   ├── topology.html.before_delete_fix
+│   │   ├── topology.html.before_delete_mode
+│   │   ├── topology.html.before_final_cleanup
+│   │   ├── topology.html.before_final_saved_cleanup
+│   │   ├── topology.html.before_fix_saved_table_again
+│   │   ├── topology.html.before_fix_saved_topology_ui
+│   │   ├── topology.html.before_fix_topology_load
+│   │   ├── topology.html.before_graph_renderer
+│   │   ├── topology.html.before_js_fix
+│   │   ├── topology.html.before_link_fix
+│   │   ├── topology.html.before_load_rebuild
+│   │   ├── topology.html.before_multi_delete
+│   │   ├── topology.html.before_multi_delete_fix
+│   │   ├── topology.html.before_name_limit_filter
+│   │   ├── topology.html.before_native_saved_topologies
+│   │   ├── topology.html.before_node_fix
+│   │   ├── topology.html.before_node_position
+│   │   ├── topology.html.before_orphan_cleanup
+│   │   ├── topology.html.before_orphan_cleanup2
+│   │   ├── topology.html.before_remove_duplicate_loaders
+│   │   ├── topology.html.before_remove_generator_js
+│   │   ├── topology.html.before_remove_latest_text
+│   │   ├── topology.html.before_remove_old_jsplumb
+│   │   ├── topology.html.before_remove_old_run_button
+│   │   ├── topology.html.before_saved_topologies
+│   │   ├── topology.html.before_saved_topology_cleanup
+│   │   ├── topology.html.before_saved_topology_fix
+│   │   ├── topology.html.before_saved_topology_render
+│   │   ├── topology.html.before_table_search
+│   │   ├── topology.html.before_unified_designer
+│   │   ├── topology.html.before_window_load_fix
+│   │   ├── topology.html.broken_20260821_022640
+│   │   ├── topology.html.full_backup
+│   │   ├── topology.html.mixed_backup
+│   │   └── topology.html.syntax_step2_backup
+│   └── utils
+│       ├── api_response.py
+│       └── __init__.py
+├── server.log
+├── static
+├── storage
+│   ├── cache
+│   ├── database
+│   │   ├── opensdnlab_before_cleanup.db
+│   │   ├── opensdnlab_before_decision_json_migration.db
+│   │   ├── opensdnlab_before_metrics.db
+│   │   ├── opensdnlab_before_qos_qoe_migration.db
+│   │   ├── opensdnlab.db
+│   │   ├── opensdnlab.db.backup_before_trigger_columns
+│   │   └── opensdnlab_full_backup_before_reset.db
+│   ├── exports
+│   ├── json
+│   ├── reports
+│   ├── temp
+│   └── uploads
+├── studies
+│   ├── __init__.py
+│   ├── study.py
+│   └── study_runner.py
+├── templates
+├── tests
+│   ├── __init__.py
+│   ├── test_address_manager.py
+│   ├── test_analysis_engine.py
+│   ├── test_analysis_runner.py
+│   ├── test_blueprint_adapter.py
+│   ├── test_blueprint.py
+│   ├── test_comparison_engine.py
+│   ├── test_configuration_model.py
+│   ├── test_configuration.py
+│   ├── test_controller_manager.py
+│   ├── test_database.py
+│   ├── test_dataset_builder.py
+│   ├── test_delay_analysis.py
+│   ├── test_delay_lab.py
+│   ├── test_delay_scenario.py
+│   ├── test_deployment_profile.py
+│   ├── test_deployment.py
+│   ├── test_event_bus.py
+│   ├── test_experiment_deployment.py
+│   ├── test_experiment_generator.py
+│   ├── test_experiment_manager.py
+│   ├── test_experiment_monitoring.py
+│   ├── test_experiment.py
+│   ├── test_experiment_service.py
+│   ├── test_insight_engine.py
+│   ├── test_inventory.py
+│   ├── test_job_scheduler.py
+│   ├── test_logger.py
+│   ├── test_mininet_backend.py
+│   ├── test_models.py
+│   ├── test_monitoring_manager.py
+│   ├── test_monitoring.py
+│   ├── test_network_blueprint.py
+│   ├── test_network_models.py
+│   ├── test_ping_collector.py
+│   ├── test_pipeline.py
+│   ├── test_plugin_manager.py
+│   ├── test_plugin_registry.py
+│   ├── test_real_deployment.py
+│   ├── test_repository.py
+│   ├── test_run_batch.py
+│   ├── test_run_experiment.py
+│   ├── test_run_with_config.py
+│   ├── test_save_result.py
+│   ├── test_scenario_engine.py
+│   ├── test_scenario_runner.py
+│   ├── test_sqlite_repository.py
+│   ├── test_sqlite_save.py
+│   ├── test_study_runner.py
+│   ├── test_throughput_collector.py
+│   ├── test_topology_factory.py
+│   └── test_validator.py
+├── tools
+│   ├── debug_experiment.sh
+│   ├── flask_live.log
+│   ├── run_30_experiments.sh
+│   ├── run_experiment.sh
+│   └── start_flask.sh
+├── traffic
+├── ui_backups
+│   ├── base.html.before_phase1
+│   ├── base.html.before_phase1_v2
+│   ├── base_phase1_verified.html
+│   ├── dashboard_before_phase2a.html
+│   ├── dashboard_before_phase2.html
+│   ├── dashboard.index.html.before_phase1
+│   ├── dashboard_phase2a_js_reference.txt
+│   ├── experiment_create_before_phase2b.html
+│   ├── experiment_create_before_phase3.html
+│   ├── git_status_before_phase1.txt
+│   ├── research_dashboard_before_phase5.html
+│   ├── running_before_batch_status_fix.html
+│   ├── running_before_job_api_fix.html
+│   ├── running_before_response_structure_fix.html
+│   ├── sidebar.html.before_phase1
+│   ├── sidebar.html.before_phase1_v2
+│   ├── sidebar_phase1_verified.html
+│   ├── topology_before_button_fix.html
+│   ├── topology_before_button_force_fix.html
+│   ├── topology_before_clean_button_layout.html
+│   ├── topology_before_clean_link_fix.html
+│   ├── topology_before_clean_recovery.html
+│   ├── topology_before_clean_restore.html
+│   ├── topology_before_compact_buttons.html
+│   ├── topology_before_connect_link_fix.html
+│   ├── topology_before_direct_button_fix.html
+│   ├── topology_before_drag_controller_fix.html
+│   ├── topology_before_drag_restore.html
+│   ├── topology_before_duplicate_link_fix.html
+│   ├── topology_before_force_node_width.html
+│   ├── topology_before_horizontal_node_buttons.html
+│   ├── topology_before_html_structure_repair.html
+│   ├── topology_before_interaction_cleanup.html
+│   ├── topology_before_interaction_fix.html
+│   ├── topology_before_jinja_fix.html
+│   ├── topology_before_jsplumb_fix.html
+│   ├── topology_before_node_click_fix.html
+│   ├── topology_before_node_fix.html
+│   ├── topology_before_node_size_fix.html
+│   ├── topology_before_node_sizing_fix.html
+│   ├── topology_before_phase4.html
+│   ├── topology_broken_20260820_161348.html
+│   ├── topology_broken_before_recovery.html
+│   └── topology_broken_before_restore.html
+├── utilities
+├── VERSION
+└── X
+
+143 directories, 538 files

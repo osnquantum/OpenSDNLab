@@ -39,9 +39,7 @@ def run_experiment(experiment_id):
         controller,
         bandwidth,
         delay,
-        loss,
-        prediction_enabled,
-        recovery_enabled
+        loss
 
         FROM experiments
 
@@ -85,10 +83,6 @@ def run_experiment(experiment_id):
     exp.bandwidth = row[8]
     exp.delay = row[9]
     exp.loss = row[10]
-
-    # Adaptive control configuration
-    exp.prediction_enabled = bool(row[11])
-    exp.recovery_enabled = bool(row[12])
 
 
     try:

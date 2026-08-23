@@ -615,9 +615,7 @@ class ExperimentManager:
 
             result = self.executor.execute(
                 experiment,
-                job,
-                run_number=run_number,
-                total_runs=config.runs
+                job
             )
 
 

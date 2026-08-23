@@ -5,7 +5,6 @@ OpenSDNLab Mininet Backend
 from mininet.net import Mininet
 from mininet.node import OVSSwitch, RemoteController
 from mininet.link import TCLink
-from mininet.clean import cleanup
 
 from engine.core.logger import logger
 
@@ -20,7 +19,9 @@ class MininetBackend:
 
     def deploy(self, inventory, controller):
 
-        logger.info("Initializing Mininet")
+        logger.info(
+            "Initializing Mininet without global cleanup"
+        )
 
         self.net = Mininet(
             switch=OVSSwitch,

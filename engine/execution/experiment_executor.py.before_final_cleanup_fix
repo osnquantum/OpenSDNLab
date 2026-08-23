@@ -24,11 +24,7 @@ from engine.control.qos_qoe_engine import QoSQoEEngine
 from engine.adaptive.adaptive_manager import AdaptiveManager
 from engine.adaptive.adaptive_trigger import AdaptiveTrigger
 from engine.adaptive.recovery import recovery_manager
-from engine.adaptive.adaptive_state import AdaptiveState
-import json
-from pathlib import Path
 from engine.controllers.monitoring.controller_monitor import ControllerMonitor
-from engine.network.health.network_health_manager import NetworkHealthManager
 
 class ExperimentExecutor:
 
@@ -43,9 +39,6 @@ class ExperimentExecutor:
         self.controller_manager = ControllerManager()
 
         self.controller_monitor = ControllerMonitor()
-
-        # Tracks real switch health using OS-Ken active datapaths.
-        self.network_health = NetworkHealthManager()
 
         self.monitoring = MonitoringManager()
 
@@ -72,13 +65,7 @@ class ExperimentExecutor:
         self.active_inventory = None
         self.active_controller = None
 
-    def execute(
-        self,
-        experiment,
-        job=None,
-        run_number=1,
-        total_runs=1
-    ):
+    def execute(self, experiment, job=None):
 
         # --------------------------------------------------------
         # Deploy topology once and reuse it for later runs.
@@ -138,17 +125,6 @@ class ExperimentExecutor:
             )
 
             inventory = self.inventory_manager.build(topology)
-
-            # Register every switch so no intermediate node is left untracked.
-            registered_switches = (
-                self.network_health
-                .register_switches_from_inventory(inventory)
-            )
-
-            logger.info(
-                f"Registered switches for health monitoring: "
-                f"{registered_switches}"
-            )
 
             RuntimeState.update(
                 stage="Topology Ready",
@@ -266,132 +242,6 @@ class ExperimentExecutor:
             f"Batch DEBUG: metrics parsed: {metrics}"
         )
 
-        # Build a common adaptive observation for
-        # reactive QoS, GRU prediction, and DRL.
-        # Current experiment traffic represents one active flow.
-        # This is the initial data-plane observation and will later
-        # be replaced by live OVS flow statistics.
-        active_flows = 1
-
-        # Read live control-plane statistics exported by OS-Ken.
-        controller_stats = {}
-
-        controller_stats_path = Path(
-            "runtime/controller_stats/osken.json"
-        )
-
-        if controller_stats_path.exists():
-            try:
-                with controller_stats_path.open() as f:
-                    controller_stats = json.load(f)
-            except Exception as exc:
-                logger.warning(
-                    f"Unable to read controller stats: {exc}"
-                )
-
-        adaptive_state = AdaptiveState.from_metrics(
-            metrics,
-            {
-                "bandwidth": getattr(
-                    experiment,
-                    "bandwidth",
-                    0.0
-                ),
-                "active_flows": active_flows,
-                "hosts": experiment.hosts,
-                "switches": experiment.switches,
-                "controller": experiment.controller,
-                "run_number": run_number,
-
-                # Control-plane observation
-                "controller_switch_count":
-                    controller_stats.get("switch_count", 0),
-
-                "topology_switch_count":
-                    controller_stats.get(
-                        "topology_switch_count",
-                        0
-                    ),
-
-                "topology_link_count":
-                    controller_stats.get(
-                        "topology_link_count",
-                        0
-                    ),
-
-                "packet_in_count":
-                    controller_stats.get(
-                        "packet_in_count",
-                        0
-                    ),
-
-                "flow_install_count":
-                    controller_stats.get(
-                        "flow_install_count",
-                        0
-                    ),
-            }
-        )
-
-        logger.info(
-            f"Adaptive state: {adaptive_state}"
-        )
-
-        # --------------------------------------------------------
-        # CONTROL-PLANE / NETWORK HEALTH
-        # --------------------------------------------------------
-
-        # Read live OS-Ken controller datapath statistics.
-        stats_path = Path(
-            "runtime/controller_stats/osken.json"
-        )
-
-        try:
-
-            with stats_path.open() as f:
-                controller_stats = json.load(f)
-
-        except (
-            FileNotFoundError,
-            json.JSONDecodeError,
-        ):
-
-            logger.warning(
-                "Controller stats unavailable; "
-                "using empty datapath state"
-            )
-
-            controller_stats = {}
-
-        registered_switches = [
-            device.hostname
-            for device in inventory.devices
-            if device.device_type == "switch"
-        ]
-
-        self.network_health.update_from_controller_stats(
-            controller_stats,
-            registered_switches,
-        )
-
-        network_health_state = self.network_health.get_state()
-
-        unresponsive_nodes = (
-            self.network_health.get_unresponsive_nodes()
-        )
-
-        logger.info(
-            f"Network health: {network_health_state}"
-        )
-
-        if unresponsive_nodes:
-
-            logger.warning(
-                f"Unresponsive network nodes detected: "
-                f"{unresponsive_nodes}"
-            )
-
-        # --------------------------------------------------------
 
         # Store current QoS observation for prediction.
         self.metrics_history.append({
@@ -540,53 +390,6 @@ class ExperimentExecutor:
             f"{recovery_result}"
         )
 
-        # Normalize recovery state for API and dashboard.
-        if not getattr(experiment, "recovery_enabled", False):
-
-            path_recovery_status = "PATH_RECOVERY_DISABLED"
-
-        elif not adaptive_trigger.get("triggered", False):
-
-            path_recovery_status = "PATH_RECOVERY_NOT_REQUIRED"
-
-        elif recovery_result.get(
-            "path_recovery_status"
-        ) == "PATH_RECOVERY_NO_ALTERNATIVE_PATH":
-
-            path_recovery_status = (
-                "PATH_RECOVERY_NO_ALTERNATIVE_PATH"
-            )
-
-        elif recovery_result.get("success", False):
-
-            if recovery_result.get("executed", False):
-
-                path_recovery_status = (
-                    "PATH_RECOVERY_EXECUTED"
-                )
-
-            elif recovery_result.get("best_path"):
-
-                path_recovery_status = (
-                    "PATH_SELECTED"
-                )
-
-            else:
-
-                path_recovery_status = (
-                    "PATH_RECOVERY_TRIGGERED"
-                )
-
-        else:
-
-            path_recovery_status = (
-                "PATH_RECOVERY_FAILED"
-            )
-
-
-        recovery_result["path_recovery_status"] = path_recovery_status
-
-
         RuntimeState.update(
             stage="Metrics Collected",
             metrics=metrics,
@@ -666,47 +469,15 @@ class ExperimentExecutor:
             experiment.experiment_id, run_number, decision
         )
 
-        if run_number < total_runs:
-
-            logger.info(
-                f"Run {run_number}/{total_runs} completed. "
-                "Keeping Mininet topology alive for the next run."
-            )
-
-            RuntimeState.update(
-                status="RUNNING",
-                experiment_id=experiment.experiment_id,
-                stage=f"Run {run_number}/{total_runs} Completed"
-            )
-
-            return {
-                "success": True,
-                "experiment_id": experiment.experiment_id,
-                "run_number": run_number,
-                "total_runs": total_runs,
-                "completed": False,
-                "path_recovery_status": path_recovery_status,
-                "path_recovery": recovery_result
-            }
-
-        logger.info(
-            "Final run completed. Stopping Mininet topology."
-        )
+        logger.info("Stopping Mininet after successful experiment")
 
         try:
             self.backend.stop()
 
-        except Exception as error:
-            logger.warning(
-                f"Error stopping Mininet: {error}"
-            )
+        except Exception:
+            pass
 
         CleanupManager.cleanup()
-
-        self.active_experiment_id = None
-        self.active_network = None
-        self.active_inventory = None
-        self.active_controller = None
 
         self.database.update_experiment_status(
             experiment.experiment_id,
@@ -717,17 +488,6 @@ class ExperimentExecutor:
             f"Experiment {experiment.experiment_id} marked as COMPLETED"
         )
 
-        RuntimeState.update(
-            status="COMPLETED",
-            stage="Finished"
-        )
+        RuntimeState.update(status="COMPLETED", stage="Finished")
 
-        return {
-            "success": True,
-            "experiment_id": experiment.experiment_id,
-            "run_number": run_number,
-            "total_runs": total_runs,
-            "completed": True,
-            "path_recovery_status": path_recovery_status,
-            "path_recovery": recovery_result
-        }
+        return {"success": True, "experiment_id": experiment.experiment_id}

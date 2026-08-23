@@ -2,7 +2,6 @@ import subprocess
 import os
 import signal
 import time
-import json
 
 from engine.controllers.base_controller import BaseController
 from engine.controllers.controller_logger import ControllerLogger
@@ -266,59 +265,6 @@ class OsKenController(BaseController):
             "uptime_seconds": uptime
 
         }
-
-
-    def get_topology(self):
-        """
-        Return the topology discovered by the running OS-Ken
-        controller using the OpenSDNLab standard representation.
-        """
-
-        topology_path = os.path.join(
-            project_root,
-            "runtime",
-            "controller_stats",
-            "osken_topology.json"
-        )
-
-        if not os.path.exists(topology_path):
-
-            return {
-                "controller": self.name(),
-                "switches": [],
-                "links": [],
-                "switch_count": 0,
-                "link_count": 0,
-                "available": False
-            }
-
-        try:
-
-            with open(topology_path, "r") as f:
-
-                topology = json.load(f)
-
-        except Exception as error:
-
-            ControllerLogger.add(
-                f"Failed to read OS-Ken topology: {error}"
-            )
-
-            return {
-                "controller": self.name(),
-                "switches": [],
-                "links": [],
-                "switch_count": 0,
-                "link_count": 0,
-                "available": False,
-                "error": str(error)
-            }
-
-        topology["controller"] = self.name()
-
-        topology["available"] = True
-
-        return topology
 
 
     def name(self):

@@ -37,14 +37,12 @@ class CleanupManager:
 
         commands = [
 
-            # Mininet cleanup
-            "mn -c",
+            # Do not use global `mn -c` here.
+            # The Flask API and OS-Ken controller are long-running
+            # processes and experiment cleanup must not broadly kill
+            # unrelated runtime processes.
 
-            # Kill stale processes
-            # removed unsafe mininet kill,
-            "pkill -9 -f ovs-testcontroller",
-            # removed unsafe ryu kill,
-            # removed unsafe osken kill,
+            # Remove only stale Mininet interfaces.
 
             # Remove stale namespaces
             "ip netns list | awk '{print $1}' | xargs -r -n1 ip netns delete",
