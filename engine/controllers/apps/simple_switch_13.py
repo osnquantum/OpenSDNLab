@@ -18,6 +18,10 @@ from os_ken.lib.packet import packet
 from os_ken.lib.packet import ethernet
 from os_ken.lib import hub
 
+from engine.analysis.link.link_metrics_engine import (
+    link_metrics_engine,
+)
+
 import json
 import os
 import time
@@ -42,6 +46,28 @@ class SimpleSwitch13(app_manager.OSKenApp):
 
         # dpid -> {neighbor_dpid: out_port}
         self.graph = {}
+
+        # --------------------------------------------------
+        # TOPOLOGY LINK MAP
+        # --------------------------------------------------
+        #
+        # Stores exact OpenFlow link endpoints.
+        #
+        # Example:
+        #
+        # (1, 2) -> {
+        #     "src_dpid": 1,
+        #     "src_port": 2,
+        #     "dst_dpid": 2,
+        #     "dst_port": 1
+        # }
+        #
+        # The forwarding graph remains unchanged.
+        # This structure is used for dynamic link metrics.
+        self.link_map = {}
+
+        # Latest calculated logical link metrics
+        self.link_metrics = {}
 
         self.stats = {
             "switch_count": 0,
@@ -329,6 +355,22 @@ class SimpleSwitch13(app_manager.OSKenApp):
 
         self._update_port_statistics()
 
+        self._rebuild_link_metrics()
+
+
+    def _rebuild_link_metrics(
+        self
+    ):
+
+        self.link_metrics = (
+            link_metrics_engine.build(
+                link_map=self.link_map,
+                port_metrics=self.port_metrics,
+            )
+        )
+
+        self._update_link_statistics()
+
 
     def _update_port_statistics(
         self
@@ -342,9 +384,26 @@ class SimpleSwitch13(app_manager.OSKenApp):
 
             dpid, port_no = key
 
-            ports[
-                f"{dpid}:{port_no}"
-            ] = metrics
+            switch_ports = ports.setdefault(
+                str(dpid),
+                {}
+            )
+
+            # Remove identifiers already represented
+            # by the nested structure.
+            exported_metrics = {
+                name: value
+                for name, value in metrics.items()
+                if name not in (
+                    "dpid",
+                    "port_no"
+                )
+            }
+
+            switch_ports[
+                str(port_no)
+            ] = exported_metrics
+
 
         self.stats[
             "port_metrics"
@@ -352,9 +411,19 @@ class SimpleSwitch13(app_manager.OSKenApp):
 
         self.stats[
             "port_metric_count"
-        ] = len(
-            ports
+        ] = sum(
+            len(switch_ports)
+            for switch_ports
+            in ports.values()
         )
+
+        self.stats[
+            "switch_port_metric_count"
+        ] = {
+            dpid: len(switch_ports)
+            for dpid, switch_ports
+            in ports.items()
+        }
 
         self.stats[
             "port_monitoring_enabled"
@@ -363,6 +432,27 @@ class SimpleSwitch13(app_manager.OSKenApp):
         self.stats[
             "port_monitor_interval"
         ] = self.monitor_interval
+
+        self.export_stats()
+
+
+    def _update_link_statistics(
+        self
+    ):
+
+        self.stats[
+            "link_metrics"
+        ] = self.link_metrics
+
+        self.stats[
+            "link_metric_count"
+        ] = len(
+            self.link_metrics
+        )
+
+        self.stats[
+            "link_monitoring_enabled"
+        ] = True
 
         self.export_stats()
 
@@ -394,6 +484,12 @@ class SimpleSwitch13(app_manager.OSKenApp):
                 dpid,
             )
 
+            # Give OS-Ken topology discovery time to
+            # observe LLDP packets and register links.
+            hub.spawn(
+                self._delayed_topology_refresh
+            )
+
         elif ev.state == DEAD_DISPATCHER:
 
             self.datapaths.pop(dpid, None)
@@ -408,7 +504,23 @@ class SimpleSwitch13(app_manager.OSKenApp):
                 dpid,
             )
 
+            # Refresh topology after a switch
+            # disappears from the active datapath set.
+            self.refresh_topology()
+
         self.export_stats()
+
+
+    def _delayed_topology_refresh(
+        self
+    ):
+
+        # Allow LLDP-based topology discovery to complete.
+        hub.sleep(
+            3
+        )
+
+        self.refresh_topology()
 
 
     ############################################################
@@ -420,7 +532,10 @@ class SimpleSwitch13(app_manager.OSKenApp):
         switches = get_switch(self, None)
         links = get_link(self, None)
 
+        # Rebuild topology structures from
+        # the latest OS-Ken discovery result.
         self.graph = {}
+        self.link_map = {}
 
         for switch in switches:
             self.graph.setdefault(
@@ -432,14 +547,49 @@ class SimpleSwitch13(app_manager.OSKenApp):
 
             src = link.src.dpid
             dst = link.dst.dpid
-            port = link.src.port_no
+
+            src_port = link.src.port_no
+            dst_port = link.dst.port_no
+
+            # --------------------------------------------------
+            # FORWARDING GRAPH
+            # --------------------------------------------------
 
             self.graph.setdefault(
                 src,
                 {},
             )
 
-            self.graph[src][dst] = port
+            self.graph[src][dst] = src_port
+
+            # --------------------------------------------------
+            # EXACT LINK ENDPOINT MAP
+            # --------------------------------------------------
+            #
+            # Example:
+            #
+            # (1, 2) -> {
+            #     "src_dpid": 1,
+            #     "src_port": 2,
+            #     "dst_dpid": 2,
+            #     "dst_port": 1
+            # }
+            #
+            # OS-Ken topology discovery normally reports both
+            # directions independently. LinkMetricsEngine will
+            # later normalize them into one logical link.
+
+            self.link_map[
+                (
+                    src,
+                    src_port,
+                )
+            ] = {
+                "src_dpid": src,
+                "src_port": src_port,
+                "dst_dpid": dst,
+                "dst_port": dst_port,
+            }
 
         self.stats["topology_switch_count"] = len(
             self.graph
@@ -448,6 +598,10 @@ class SimpleSwitch13(app_manager.OSKenApp):
         self.stats["topology_link_count"] = len(
             links
         )
+
+        # Rebuild link metrics using the latest
+        # discovered topology and available port metrics.
+        self._rebuild_link_metrics()
 
         self.export_stats()
 
