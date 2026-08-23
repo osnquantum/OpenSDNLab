@@ -31,47 +31,49 @@ class OsKenController(BaseController):
             "OSKen start requested"
         )
 
-        # If another OS-Ken instance is already listening on
-        # the OpenFlow port, reuse it instead of starting a duplicate.
-        port_check = subprocess.run(
-            [
-                "ss",
-                "-ltn"
-            ],
-            capture_output=True,
-            text=True
-        )
-
-        if f":{self.port}" in port_check.stdout:
-
-            pid_result = subprocess.run(
-                [
-                    "pgrep",
-                    "-o",
-                    "-f",
-                    "osken-manager"
-                ],
-                capture_output=True,
-                text=True
-            )
-
-            existing_pid = pid_result.stdout.strip()
+        # Reuse only the process owned by this controller instance.
+        if self.process and self.process.poll() is None:
 
             ControllerLogger.add(
-                f"OSKen already running on port "
-                f"{self.port}, PID={existing_pid}"
+                f"OSKen already running PID={self.process.pid}"
             )
 
             return {
                 "controller": self.name(),
-                "pid": existing_pid,
+                "pid": self.process.pid,
                 "port": self.port,
                 "running": True,
                 "reused": True
             }
 
-        # Ensure only one OS-Ken process exists.
-        self.stop()
+        # Do not silently reuse an unknown OS-Ken process.
+        # A process listening on the OpenFlow port must be cleaned
+        # up explicitly before this controller starts.
+        port_check = subprocess.run(
+            [
+                "ss",
+                "-ltn",
+                f"sport = :{self.port}"
+            ],
+            capture_output=True,
+            text=True
+        )
+
+        # Ignore the header line. Any additional line means
+        # something is actually listening on this exact port.
+        listening_lines = [
+            line
+            for line in port_check.stdout.splitlines()
+            if line.strip()
+            and not line.strip().startswith("State")
+        ]
+
+        if listening_lines:
+
+            raise RuntimeError(
+                f"Port {self.port} is already in use by "
+                "another process"
+            )
 
         ControllerLogger.add(
             "Launching OSKen controller process"
@@ -123,6 +125,8 @@ class OsKenController(BaseController):
 
         if self.process.poll() is not None:
 
+            self.process = None
+
             raise RuntimeError(
                 "OSKen failed to start. "
                 "Check logs/osken.log"
@@ -133,82 +137,46 @@ class OsKenController(BaseController):
         )
 
         return {
-
             "controller": self.name(),
-
             "pid": self.process.pid,
-
             "port": self.port,
-
-            "running": True
-
+            "running": True,
+            "reused": False
         }
 
 
     def stop(self):
 
         ControllerLogger.add(
-            "Stopping all OSKen processes"
+            "Stopping managed OSKen controller"
         )
 
-        # Stop the process owned by this controller object.
         if self.process:
 
             try:
-                self.process.terminate()
 
-                self.process.wait(
-                    timeout=5
-                )
+                if self.process.poll() is None:
 
-            except Exception:
-                try:
-                    self.process.kill()
-                except Exception:
-                    pass
+                    self.process.terminate()
 
-        # Kill orphaned OS-Ken processes.
-        subprocess.run(
-            [
-                "pkill",
-                "-9",
-                "-f",
-                "osken-manager"
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False
-        )
+                    self.process.wait(
+                        timeout=5
+                    )
 
-        # Wait until port 6653 is actually released.
-        for _ in range(10):
+            except subprocess.TimeoutExpired:
 
-            result = subprocess.run(
-                [
-                    "ss",
-                    "-ltn"
-                ],
-                capture_output=True,
-                text=True
-            )
+                self.process.kill()
 
-            if f":{self.port}" not in result.stdout:
+                self.process.wait()
 
-                break
+            finally:
 
-            time.sleep(1)
+                self.process = None
 
-        else:
-
-            raise RuntimeError(
-                f"Port {self.port} is still in use"
-            )
-
-        self.process = None
         self.start_time = None
 
         ControllerLogger.add(
-            "OSKen stopped and port released"
+            "Managed OSKen controller stopped"
         )
 
         return True
@@ -216,31 +184,20 @@ class OsKenController(BaseController):
 
     def status(self):
 
-        result = subprocess.run(
-            [
-                "pgrep",
-                "-o",
-                "-f",
-                "osken-manager"
-            ],
-            capture_output=True,
-            text=True
+        running = (
+            self.process is not None
+            and self.process.poll() is None
         )
 
-        running = result.returncode == 0
-
         pid = (
-            result.stdout.strip()
+            self.process.pid
             if running
             else None
         )
 
         uptime = None
 
-        if (
-            running
-            and self.start_time
-        ):
+        if running and self.start_time:
 
             uptime = round(
                 time.time()
@@ -249,22 +206,16 @@ class OsKenController(BaseController):
             )
 
         return {
-
             "controller": self.name(),
-
             "port": self.port,
-
             "running": running,
-
             "pid": pid,
-
-            "health":
+            "health": (
                 "OK"
                 if running
-                else "DOWN",
-
+                else "DOWN"
+            ),
             "uptime_seconds": uptime
-
         }
 
 

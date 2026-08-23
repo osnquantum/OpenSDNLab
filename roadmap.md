@@ -3,6 +3,269 @@
 PATH RECOVERY STATUS MODEL AND VALIDATION
 ============================================================
 
+
+============================================================
+DYNAMIC LINK-LEVEL QOS INTELLIGENCE
+============================================================
+
+CURRENT STATUS
+
+The OS-Ken controller now dynamically collects OpenFlow
+port statistics every monitoring interval.
+
+Currently available dynamic measurements include:
+
+- Throughput
+- Packet rate
+- TX/RX byte deltas
+- TX/RX packet deltas
+- TX/RX error deltas
+- Raw OpenFlow port counters
+
+The controller remains measurement-driven.
+
+No static QoS degradation thresholds should be embedded
+inside the OS-Ken controller.
+
+------------------------------------------------------------
+CURRENT ARCHITECTURE PROBLEM
+------------------------------------------------------------
+
+OpenFlow statistics are collected per switch port.
+
+However, SDN routing and recovery operate on:
+
+- Links
+- Paths
+- End-to-end network conditions
+
+A physical bidirectional connection currently produces
+two directional port measurements.
+
+Example:
+
+s1:port2 <----------> s2:port1
+
+Current port-level representation:
+
+(1,2) -> s1 to s2
+(2,1) -> s2 to s1
+
+These must be normalized into one logical link.
+
+------------------------------------------------------------
+NEXT CORE STAGE
+LINK METRICS ENGINE
+------------------------------------------------------------
+
+Build a topology-aware Link Metrics Engine.
+
+Responsibilities:
+
+1. Read dynamic OpenFlow port metrics.
+2. Read SDN topology relationships.
+3. Map switch ports to neighboring switches.
+4. Combine bidirectional port measurements.
+5. Maintain one normalized record per SDN link.
+6. Continuously update link metrics.
+7. Prevent duplicate link entries.
+
+------------------------------------------------------------
+NORMALIZED LINK MODEL
+------------------------------------------------------------
+
+Each logical connection should have one link identity.
+
+Example:
+
+link_id:
+s1:2--s2:1
+
+Structure:
+
+Link
+|
++-- link_id
+|
++-- endpoints
+|   +-- source_switch
+|   +-- source_port
+|   +-- destination_switch
+|   +-- destination_port
+|
++-- forward_metrics
+|   +-- throughput
+|   +-- packet_rate
+|   +-- errors
+|
++-- reverse_metrics
+|   +-- throughput
+|   +-- packet_rate
+|   +-- errors
+|
++-- aggregated_metrics
+    +-- utilization
+    +-- congestion_score
+    +-- packet_loss_estimate
+    +-- error_rate
+    +-- link_health
+
+------------------------------------------------------------
+LINK METRICS MATRIX
+------------------------------------------------------------
+
+For efficient topology-wide lookup, maintain a link matrix.
+
+Example:
+
+            s1        s2        s3
+
+s1           -      LINK01    LINK02
+s2        LINK01       -      LINK03
+s3        LINK02    LINK03       -
+
+The matrix provides efficient lookup for:
+
+- Link existence
+- Neighbor relationships
+- Current link metrics
+- Path construction
+- Path QoS aggregation
+- Recovery path selection
+
+------------------------------------------------------------
+DYNAMIC LINK HEALTH
+------------------------------------------------------------
+
+The controller provides measurements.
+
+The analysis layer interprets measurements.
+
+Dynamic link analysis should calculate:
+
+- Throughput
+- Packet rate
+- Error rate
+- Estimated packet loss
+- Utilization
+- Congestion score
+- Link health
+
+Link health states:
+
+NORMAL
+DEGRADED
+CRITICAL
+
+Threshold interpretation must remain configurable and
+independent from OpenFlow collection.
+
+------------------------------------------------------------
+TARGET ARCHITECTURE
+------------------------------------------------------------
+
+OpenFlow Switches
+        |
+        v
+OS-Ken Controller
+        |
+        +--> Port Statistics Collection
+        |
+        v
+Dynamic Port Metrics
+        |
+        +--> Topology Discovery
+        |
+        v
+Link Metrics Engine
+        |
+        +--> Bidirectional Link Mapping
+        |
+        +--> Link Metrics Matrix
+        |
+        +--> Aggregated Link Metrics
+        |
+        v
+QoS Analysis Layer
+        |
+        +--> QoS Degradation Engine
+        |
+        +--> QoS/QoE Analysis
+        |
+        v
+Adaptive Trigger
+        |
+        v
+Decision Engine
+        |
+        v
+Path Recovery / Path Selection
+        |
+        v
+Dashboard
+
+------------------------------------------------------------
+DEVELOPMENT SEQUENCE
+------------------------------------------------------------
+
+STAGE 1
+Build Link Metrics Engine.
+
+STAGE 2
+Normalize bidirectional OpenFlow port statistics into
+single logical SDN links.
+
+STAGE 3
+Build topology-wide Link Metrics Matrix.
+
+STAGE 4
+Calculate dynamic link health and QoS indicators.
+
+STAGE 5
+Aggregate link metrics into path-level QoS metrics.
+
+STAGE 6
+Use measured path conditions for dynamic path selection.
+
+STAGE 7
+Connect adaptive recovery to real-time link and path QoS.
+
+STAGE 8
+Store historical link and path measurements.
+
+STAGE 9
+Expose all dynamic states in the dashboard:
+
+- Controller status
+- Port metrics
+- Link metrics
+- Link health
+- Link matrix
+- Path metrics
+- QoS degradation
+- Adaptive decisions
+- Recovery status
+
+------------------------------------------------------------
+CORE DESIGN PRINCIPLE
+------------------------------------------------------------
+
+OpenFlow collects measurements.
+
+Topology identifies relationships.
+
+Link Metrics Engine normalizes connections.
+
+QoS Engine interprets network quality.
+
+Adaptive Engine determines whether action is required.
+
+Recovery Engine selects an improved path.
+
+The SDN controller remains measurement-driven and does
+not contain static QoS degradation thresholds.
+
+
 Date: 2026-08-23
 
 The adaptive recovery framework currently implements PATH_RECOVERY
