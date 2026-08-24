@@ -44,6 +44,11 @@ class SimpleSwitch13(app_manager.OSKenApp):
         # MAC -> (dpid, port)
         self.host_locations = {}
 
+        # (source_mac, destination_mac) -> actual switch path
+        # Path is recorded when the controller resolves and installs
+        # forwarding rules for a known destination.
+        self.flow_paths = {}
+
         # dpid -> {neighbor_dpid: out_port}
         self.graph = {}
 
@@ -101,6 +106,15 @@ class SimpleSwitch13(app_manager.OSKenApp):
         self.stats["active_datapaths"] = sorted(
             self.active_datapaths
         )
+
+        # Export controller-resolved forwarding paths.
+        # JSON requires string keys, so each MAC flow is represented
+        # as "source_mac->destination_mac".
+        self.stats["flow_paths"] = {
+            f"{source}->{destination}": list(flow_path)
+            for (source, destination), flow_path
+            in self.flow_paths.items()
+        }
 
         path = "runtime/controller_stats/osken.json"
 
@@ -1141,6 +1155,15 @@ class SimpleSwitch13(app_manager.OSKenApp):
             dst,
             path,
         )
+
+        # Record the controller-resolved switch path as the source
+        # of truth for this Ethernet flow. The path corresponds to
+        # the forwarding rules installed below.
+        self.flow_paths[
+            (src, dst)
+        ] = list(path)
+
+        self.export_stats()
 
         ########################################################
         # INSTALL PATH FLOWS

@@ -26,6 +26,10 @@ from engine.adaptive.adaptive_trigger import AdaptiveTrigger
 from engine.adaptive.recovery import recovery_manager
 from engine.adaptive.adaptive_state import AdaptiveState
 import json
+
+from engine.analysis.qos.qos_observation import (
+    QoSObservation,
+)
 from pathlib import Path
 from engine.controllers.monitoring.controller_monitor import ControllerMonitor
 from engine.network.health.network_health_manager import NetworkHealthManager
@@ -266,14 +270,10 @@ class ExperimentExecutor:
             f"Batch DEBUG: metrics parsed: {metrics}"
         )
 
-        # Build a common adaptive observation for
-        # reactive QoS, GRU prediction, and DRL.
-        # Current experiment traffic represents one active flow.
-        # This is the initial data-plane observation and will later
-        # be replaced by live OVS flow statistics.
-        active_flows = 1
-
-        # Read live control-plane statistics exported by OS-Ken.
+        # Resolve the actual forwarding path from the
+        # controller-exported flow_paths. The controller is the
+        # source of truth because it calculated and installed the
+        # forwarding path for the Ethernet flow.
         controller_stats = {}
 
         controller_stats_path = Path(
@@ -288,6 +288,70 @@ class ExperimentExecutor:
                 logger.warning(
                     f"Unable to read controller stats: {exc}"
                 )
+
+        source_host = net.hosts[0]
+        destination_host = net.hosts[-1]
+
+        source_mac = source_host.MAC()
+        destination_mac = destination_host.MAC()
+
+        flow_path_key = (
+            f"{source_mac}->{destination_mac}"
+        )
+
+        flow_path = controller_stats.get(
+            "flow_paths",
+            {}
+        ).get(
+            flow_path_key,
+            []
+        )
+
+        if not flow_path:
+            logger.warning(
+                f"No controller-resolved path found for {flow_path_key}"
+            )
+
+        logger.info(
+            f"Controller-resolved path for {flow_path_key}: "
+            f"{flow_path}"
+        )
+
+        # Create a standardized per-flow QoS observation directly
+        # from experiment measurements and the controller-resolved
+        # forwarding path.
+        qos_observation = QoSObservation(
+            flow_id=(
+                f"{source_host.name}"
+                f"->{destination_host.name}"
+            ),
+            source=source_host.name,
+            destination=destination_host.name,
+            path=flow_path,
+            rtt_ms=metrics.get("average_rtt", 0.0),
+            delay_ms=metrics.get("delay", 0.0),
+            jitter_ms=metrics.get("jitter", 0.0),
+            packet_loss_percent=metrics.get(
+                "packet_loss",
+                0.0
+            ),
+            throughput_mbps=metrics.get(
+                "throughput",
+                0.0
+            ),
+        )
+
+        logger.info(
+            f"QoS observation: "
+            f"{qos_observation.to_dict()}"
+        )
+
+        # Build a common adaptive observation for
+        # reactive QoS, GRU prediction, and DRL.
+        # Current experiment traffic represents one active flow.
+        # This is the initial data-plane observation and will later
+        # be replaced by live OVS flow statistics.
+        active_flows = 1
 
         adaptive_state = AdaptiveState.from_metrics(
             metrics,

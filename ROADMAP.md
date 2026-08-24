@@ -1153,3 +1153,279 @@ PATH_RECOVERY_EXECUTED validation:
 PENDING
 
 ============================================================
+
+# Core Requirement: Evidence-Based Composite QoS Quality Score
+
+## Requirement
+
+The Adaptive SDN QoS Framework shall not use arbitrary QoS quality
+values, thresholds, normalization bounds, or metric weights.
+
+QoS quality shall be represented using a formally defined Composite
+QoS Quality Score (CQQS):
+
+CQQS ∈ [0,100]
+
+QoS_score =
+wT * T_score +
+wD * D_score +
+wJ * J_score +
+wL * L_score
+
+Where:
+
+- T = throughput
+- D = delay
+- J = jitter
+- L = packet loss
+- w = documented and justified metric weights
+
+## Metric Normalization
+
+All QoS metrics shall be normalized to a common 0–100 scale before
+aggregation.
+
+Throughput (higher is better):
+
+T_score = 100 * (T - T_min) / (T_max - T_min)
+
+Delay (lower is better):
+
+D_score = 100 * (D_max - D) / (D_max - D_min)
+
+Jitter (lower is better):
+
+J_score = 100 * (J_max - J) / (J_max - J_min)
+
+Packet loss (lower is better):
+
+L_score = 100 * (L_max - L) / (L_max - L_min)
+
+All normalized metric scores shall be clamped to [0,100].
+
+## Evidence Requirement
+
+The framework shall not hard-code the following values unless they are
+supported and documented:
+
+- T_min
+- T_max
+- D_min
+- D_max
+- J_min
+- J_max
+- L_min
+- L_max
+- wT
+- wD
+- wJ
+- wL
+
+Each value must be justified using one or more of:
+
+1. Recognized standards or recommendations
+2. Application-specific QoS requirements
+3. Peer-reviewed research
+4. Experimentally derived baseline calibration
+
+## Methodological Basis
+
+The composite QoS methodology follows a normalization and weighted
+composite-index approach consistent with ITU-T E.813.
+
+SDN research also supports combining normalized QoS metrics for
+network decision-making. Specific weights from research papers must
+not automatically be adopted unless justified for the corresponding
+traffic scenario or experimental design.
+
+## Architecture Requirement
+
+Live Network Metrics
+        |
+        v
+Metric Normalization
+        |
+        +-- Throughput  -> 0–100
+        +-- Delay       -> 0–100
+        +-- Jitter      -> 0–100
+        +-- Packet Loss -> 0–100
+        |
+        v
+Composite QoS Quality Score
+CQQS ∈ [0,100]
+        |
+        v
+QoS Decision Engine
+        |
+        v
+QoS-Aware Routing
+
+## Implementation Constraint
+
+The framework may implement the normalization and composite-score
+architecture before final parameter values are selected.
+
+Any provisional thresholds, bounds, or weights used during software
+testing must be explicitly labeled:
+
+TEST / PLACEHOLDER ONLY
+NOT VALIDATED FOR RESEARCH RESULTS
+
+Placeholder values shall not be presented as scientifically valid QoS
+thresholds and shall not be used for final experimental evaluation.
+
+## Next Research Requirement
+
+Before finalizing the CQQS implementation, defensible normalization
+bounds and weighting strategies must be identified for:
+
+1. Throughput
+2. End-to-end delay
+3. Jitter
+4. Packet loss
+
+The selected values must be appropriate for the traffic or application
+scenario evaluated by the Adaptive SDN QoS Framework.
+
+Current status:
+QoS scoring methodology is defined.
+Final numerical bounds and metric weights remain research-dependent
+and must be referenced, experimentally calibrated, and documented.
+
+
+---
+
+## 12. Unified Flow Observation
+
+The adaptive framework requires a common observation unit that
+combines end-to-end QoS measurements with controller-observed
+data-plane telemetry.
+
+Each monitored flow should be represented by a Unified Flow
+Observation containing:
+
+### Flow Identity
+
+- flow ID
+- source host
+- destination host
+- timestamp
+
+### End-to-End QoS Metrics
+
+Collected from monitoring or experiment traffic:
+
+- RTT
+- delay
+- jitter
+- packet loss
+- throughput
+
+### Actual Flow Path
+
+The observation must identify the network path used by the flow.
+
+Example:
+
+    h1 -> s1 -> s2 -> s4 -> h2
+
+Represented as:
+
+    [1, 2, 4]
+
+The framework must not assume or manually assign the path.
+Path information should be derived from controller topology and
+forwarding information.
+
+### Path-Specific Data-Plane Telemetry
+
+Only telemetry belonging to links on the actual flow path should
+be associated with the flow.
+
+Examples:
+
+- link throughput
+- packet rate
+- TX/RX errors
+- TX/RX byte counters
+- TX/RX packet counters
+- port statistics
+
+The framework must not attach unrelated network-wide link metrics
+to every flow.
+
+### Controller and Network State
+
+The observation may also include:
+
+- active datapaths
+- topology switch count
+- topology link count
+- controller connectivity
+- relevant topology changes
+
+The resulting observation conceptually becomes:
+
+    Flow Identity
+          +
+    End-to-End QoS
+          +
+    Actual Flow Path
+          +
+    Path-Specific Data-Plane Telemetry
+          +
+    Controller / Network State
+          =
+    Unified Flow Observation
+
+This Unified Flow Observation is the common input for:
+
+- historical QoS analysis
+- degradation detection
+- GRU time-series prediction
+- DRL state construction
+- adaptive recovery verification
+
+The framework should initially preserve raw measured values.
+QoS thresholds, normalization bounds, composite scores and metric
+weights must not be assigned arbitrarily. They must be referenced,
+experimentally calibrated, and documented.
+
+---
+
+## 13. Observation Time-Series
+
+Unified Flow Observations should be collected continuously over time.
+
+    Observation t1
+            |
+            v
+    Observation t2
+            |
+            v
+    Observation t3
+            |
+            v
+          ...
+
+Each observation should preserve:
+
+- timestamp
+- flow identity
+- end-to-end QoS metrics
+- actual path
+- path-specific telemetry
+- relevant controller state
+
+The resulting time-series becomes the evidence base for:
+
+- baseline analysis
+- controlled degradation experiments
+- degradation detection
+- GRU dataset preparation
+- recovery evaluation
+
+Before implementing prediction or recovery policies, the framework
+must verify that controlled network changes produce measurable and
+correctly recorded changes in the observations.
+

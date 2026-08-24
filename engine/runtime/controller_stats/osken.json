@@ -1,7 +1,169 @@
 {
-    "switch_count": 1,
-    "packet_in_count": 0,
-    "flow_install_count": 1,
-    "topology_switch_count": 1,
-    "topology_link_count": 0
+    "switch_count": 0,
+    "packet_in_count": 100,
+    "flow_install_count": 12,
+    "topology_switch_count": 2,
+    "topology_link_count": 2,
+    "link_metrics": {
+        "s2:p2<->s1:p2": {
+            "link_id": "s2:p2<->s1:p2",
+            "src": {
+                "dpid": 2,
+                "port": 2
+            },
+            "dst": {
+                "dpid": 1,
+                "port": 2
+            },
+            "timestamp": 1787537006.262335,
+            "throughput_mbps": 24.3662,
+            "packet_rate": 1725.1267,
+            "tx_errors": 0,
+            "rx_errors": 0,
+            "total_errors": 0,
+            "measurement_status": {
+                "src_available": true,
+                "dst_available": true,
+                "complete": true
+            },
+            "src_port_metrics": {
+                "dpid": 2,
+                "port_no": 2,
+                "timestamp": 1787537006.2581046,
+                "interval_seconds": 2.008,
+                "throughput_mbps": 24.3253,
+                "packet_rate": 1722.5714,
+                "tx_bytes_delta": 103296,
+                "rx_bytes_delta": 6002502,
+                "tx_packets_delta": 1564,
+                "rx_packets_delta": 1895,
+                "tx_errors_delta": 0,
+                "rx_errors_delta": 0,
+                "tx_bytes": 544688,
+                "rx_bytes": 36047312,
+                "tx_packets": 8238,
+                "rx_packets": 9505,
+                "tx_errors": 0,
+                "rx_errors": 0
+            },
+            "dst_port_metrics": {
+                "dpid": 1,
+                "port_no": 2,
+                "timestamp": 1787537006.2559874,
+                "interval_seconds": 2.0033,
+                "throughput_mbps": 24.4071,
+                "packet_rate": 1727.6821,
+                "tx_bytes_delta": 6008426,
+                "rx_bytes_delta": 103296,
+                "tx_packets_delta": 1897,
+                "rx_packets_delta": 1564,
+                "tx_errors_delta": 0,
+                "rx_errors_delta": 0,
+                "tx_bytes": 36047312,
+                "rx_bytes": 544688,
+                "tx_packets": 9505,
+                "rx_packets": 8238,
+                "tx_errors": 0,
+                "rx_errors": 0
+            }
+        }
+    },
+    "link_metric_count": 1,
+    "link_monitoring_enabled": true,
+    "active_datapaths": [],
+    "flow_paths": {
+        "00:00:00:00:00:01->00:00:00:00:00:02": [
+            1,
+            2
+        ],
+        "00:00:00:00:00:02->00:00:00:00:00:01": [
+            2,
+            1
+        ]
+    },
+    "port_metrics": {
+        "1": {
+            "1": {
+                "timestamp": 1787537006.2559874,
+                "interval_seconds": 2.0033,
+                "throughput_mbps": 24.3117,
+                "packet_rate": 1722.1911,
+                "tx_bytes_delta": 103098,
+                "rx_bytes_delta": 5984730,
+                "tx_packets_delta": 1561,
+                "rx_packets_delta": 1889,
+                "tx_errors_delta": 0,
+                "rx_errors_delta": 0,
+                "tx_bytes": 545080,
+                "rx_bytes": 36159112,
+                "tx_packets": 8242,
+                "rx_packets": 9532,
+                "tx_errors": 0,
+                "rx_errors": 0
+            },
+            "2": {
+                "timestamp": 1787537006.2559874,
+                "interval_seconds": 2.0033,
+                "throughput_mbps": 24.4071,
+                "packet_rate": 1727.6821,
+                "tx_bytes_delta": 6008426,
+                "rx_bytes_delta": 103296,
+                "tx_packets_delta": 1897,
+                "rx_packets_delta": 1564,
+                "tx_errors_delta": 0,
+                "rx_errors_delta": 0,
+                "tx_bytes": 36047312,
+                "rx_bytes": 544688,
+                "tx_packets": 9505,
+                "rx_packets": 8238,
+                "tx_errors": 0,
+                "rx_errors": 0
+            }
+        },
+        "2": {
+            "1": {
+                "timestamp": 1787537006.2581046,
+                "interval_seconds": 2.008,
+                "throughput_mbps": 24.2545,
+                "packet_rate": 1719.5834,
+                "tx_bytes_delta": 5984730,
+                "rx_bytes_delta": 103296,
+                "tx_packets_delta": 1889,
+                "rx_packets_delta": 1564,
+                "tx_errors_delta": 0,
+                "rx_errors_delta": 0,
+                "tx_bytes": 35976734,
+                "rx_bytes": 544210,
+                "tx_packets": 9487,
+                "rx_packets": 8231,
+                "tx_errors": 0,
+                "rx_errors": 0
+            },
+            "2": {
+                "timestamp": 1787537006.2581046,
+                "interval_seconds": 2.008,
+                "throughput_mbps": 24.3253,
+                "packet_rate": 1722.5714,
+                "tx_bytes_delta": 103296,
+                "rx_bytes_delta": 6002502,
+                "tx_packets_delta": 1564,
+                "rx_packets_delta": 1895,
+                "tx_errors_delta": 0,
+                "rx_errors_delta": 0,
+                "tx_bytes": 544688,
+                "rx_bytes": 36047312,
+                "tx_packets": 8238,
+                "rx_packets": 9505,
+                "tx_errors": 0,
+                "rx_errors": 0
+            }
+        }
+    },
+    "port_metric_count": 4,
+    "switch_port_metric_count": {
+        "1": 2,
+        "2": 2
+    },
+    "port_monitoring_enabled": true,
+    "port_monitor_interval": 2
 }

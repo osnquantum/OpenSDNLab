@@ -70,10 +70,19 @@ class OsKenController(BaseController):
 
         if listening_lines:
 
-            raise RuntimeError(
-                f"Port {self.port} is already in use by "
-                "another process"
+            ControllerLogger.add(
+                f"OSKen already listening on port {self.port}; "
+                "reusing existing controller"
             )
+
+            return {
+                "controller": self.name(),
+                "pid": None,
+                "port": self.port,
+                "running": True,
+                "reused": True,
+                "external": True
+            }
 
         ControllerLogger.add(
             "Launching OSKen controller process"

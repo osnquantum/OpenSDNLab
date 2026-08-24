@@ -82,7 +82,9 @@ class Logger:
     def critical(self, message):
         self.logger.critical(message)
 
-    def exception(self, message):
+    def exception(self, message, *args):
+        if args:
+            message = f"{message}: {args[0]}"
         self.logger.exception(message)
 
 

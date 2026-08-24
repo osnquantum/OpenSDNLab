@@ -99,8 +99,8 @@ def run_experiment(experiment_id):
 
     except Exception as e:
 
-        logger.exception(
-            f"Experiment execution failed for {experiment_id}"
+        logger.error(
+            f"Experiment execution failed for {experiment_id}: {e}"
         )
 
         return jsonify({
