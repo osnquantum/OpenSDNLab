@@ -161,10 +161,9 @@ class OsKenController(BaseController):
     def stop(self):
 
         ControllerLogger.add(
-            "Stopping OSKen controller"
+            "Stopping managed OSKen controller"
         )
 
-        # First stop the process directly owned by this instance.
         if self.process:
 
             try:
@@ -173,40 +172,24 @@ class OsKenController(BaseController):
 
                     self.process.terminate()
 
-                    try:
-                        self.process.wait(
-                            timeout=5
-                        )
+                    self.process.wait(
+                        timeout=5
+                    )
 
-                    except subprocess.TimeoutExpired:
+            except subprocess.TimeoutExpired:
 
-                        self.process.kill()
+                self.process.kill()
 
-                        self.process.wait()
+                self.process.wait()
 
             finally:
 
                 self.process = None
 
-        # Also remove stale OS-Ken processes. This is necessary because
-        # OS-Ken may previously have been launched through sudo or by a
-        # different controller instance.
-        subprocess.run(
-            [
-                "sudo",
-                "pkill",
-                "-f",
-                "osken-manager"
-            ],
-            check=False
-        )
-
-        time.sleep(1)
-
         self.start_time = None
 
         ControllerLogger.add(
-            "OSKen controller stopped"
+            "Managed OSKen controller stopped"
         )
 
         return True

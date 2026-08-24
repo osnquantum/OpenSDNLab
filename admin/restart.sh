@@ -1,16 +1,16 @@
 #!/bin/bash
 
-cd ~/OpenSDNLab
+cd /home/mininet/OpenSDNLab
 
-echo "Restarting OpenSDNLab..."
+printf '\nRestarting OpenSDNLab...\n'
 
-sudo pkill -9 -f "python3 -m server.app"
+sudo pkill -9 -f "[p]ython3 -m server.app" 2>/dev/null || true \
+    >/dev/null 2>&1 || true
 
 sleep 2
 
 nohup env PYTHONPATH=/home/mininet/OpenSDNLab \
-python3 -m server.app \
-> /tmp/opensdn.log 2>&1 &
+    python3 -m server.app \
+    >/tmp/opensdn.log 2>&1 &
 
-echo "OpenSDNLab started in background"
-
+printf 'OpenSDNLab started in background\n\n'

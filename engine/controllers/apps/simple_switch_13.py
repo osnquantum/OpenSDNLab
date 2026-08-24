@@ -160,8 +160,106 @@ class SimpleSwitch13(app_manager.OSKenApp):
                     datapath
                 )
 
+            # Process QoS orchestration commands without
+            # starting another controller or rebuilding Mininet.
+            self._process_qos_commands()
+
             hub.sleep(
                 self.monitor_interval
+            )
+
+
+    def _process_qos_commands(self):
+
+        command_path = (
+            "runtime/controller_commands/"
+            "qos_decisions.json"
+        )
+
+        if not os.path.exists(command_path):
+            return
+
+        try:
+
+            with open(command_path, "r") as f:
+                payload = json.load(f)
+
+        except (
+            OSError,
+            json.JSONDecodeError,
+        ) as exc:
+
+            self.logger.warning(
+                f"Unable to read QoS commands: {exc}"
+            )
+
+            return
+
+        decisions = payload.get(
+            "decisions",
+            []
+        )
+
+        if not decisions:
+            return
+
+        results = []
+
+        for decision in decisions:
+
+            action = decision.get("action")
+
+            if action not in (
+                "INSTALL",
+                "REROUTE",
+            ):
+                continue
+
+            result = self.apply_qos_decision(
+                action=action,
+                path=decision.get(
+                    "selected_path"
+                ),
+                destination=decision.get(
+                    "destination"
+                ),
+            )
+
+            results.append({
+                "flow_id": decision.get(
+                    "flow_id"
+                ),
+                "action": action,
+                "result": result,
+            })
+
+        if results:
+
+            payload["results"] = results
+            payload["processed_at"] = time.time()
+
+            os.makedirs(
+                "runtime/controller_commands",
+                exist_ok=True,
+            )
+
+            temp_path = (
+                command_path
+                + "."
+                + str(os.getpid())
+                + ".tmp"
+            )
+
+            with open(temp_path, "w") as f:
+                json.dump(
+                    payload,
+                    f,
+                    indent=4,
+                )
+
+            os.replace(
+                temp_path,
+                command_path,
             )
 
 
@@ -938,6 +1036,44 @@ class SimpleSwitch13(app_manager.OSKenApp):
     ############################################################
     # FLOW INSTALLATION
     ############################################################
+
+    ############################################################
+    # QOS PATH ORCHESTRATION
+    ############################################################
+
+    def apply_qos_decision(
+        self,
+        action,
+        path,
+        destination,
+        priority=200,
+    ):
+        """
+        Apply a QoS orchestration decision using the existing
+        topology-aware flow installation mechanism.
+        """
+
+        if action not in (
+            "INSTALL",
+            "REROUTE",
+        ):
+            return {
+                "executed": False,
+                "success": False,
+                "reason":
+                    f"Unsupported QoS action: {action}",
+            }
+
+        result = self.apply_recovery_path(
+            path=path,
+            destination=destination,
+            priority=priority,
+        )
+
+        result["action"] = action
+
+        return result
+
 
     def add_flow(
         self,

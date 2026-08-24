@@ -1,0 +1,70 @@
+{
+  "topology_id": "topology-cbd623e9-e425-46b7-9fff-b32eac8b63bf",
+  "name": "custom_topology",
+  "type": "custom",
+  "controller": "OS-Ken",
+  "nodes": [
+    {
+      "id": "s1",
+      "type": "switch"
+    },
+    {
+      "id": "s2",
+      "type": "switch"
+    },
+    {
+      "id": "h1",
+      "type": "host"
+    },
+    {
+      "id": "h2",
+      "type": "host"
+    },
+    {
+      "id": "h3",
+      "type": "host"
+    },
+    {
+      "id": "s3",
+      "type": "switch"
+    }
+  ],
+  "links": [
+    {
+      "source": "s1",
+      "target": "s3",
+      "source_port": 1,
+      "destination_port": 1
+    },
+    {
+      "source": "s3",
+      "target": "s2",
+      "source_port": 2,
+      "destination_port": 1
+    },
+    {
+      "source": "s1",
+      "target": "s2",
+      "source_port": 2,
+      "destination_port": 2
+    },
+    {
+      "source": "s3",
+      "target": "h1",
+      "source_port": 3,
+      "destination_port": null
+    },
+    {
+      "source": "s2",
+      "target": "h2",
+      "source_port": 3,
+      "destination_port": null
+    },
+    {
+      "source": "h3",
+      "target": "s1",
+      "source_port": null,
+      "destination_port": 3
+    }
+  ]
+}
