@@ -71,18 +71,22 @@ class OsKenController(BaseController):
         if listening_lines:
 
             ControllerLogger.add(
-                f"OSKen already listening on port {self.port}; "
-                "reusing existing controller"
+                f"Stale OSKen detected on port {self.port}; "
+                "stopping it before starting a fresh controller"
             )
 
-            return {
-                "controller": self.name(),
-                "pid": None,
-                "port": self.port,
-                "running": True,
-                "reused": True,
-                "external": True
-            }
+            subprocess.run(
+                [
+                    "pkill",
+                    "-f",
+                    "osken-manager"
+                ],
+                check=False
+            )
+
+            time.sleep(1)
+
+            self.process = None
 
         ControllerLogger.add(
             "Launching OSKen controller process"
