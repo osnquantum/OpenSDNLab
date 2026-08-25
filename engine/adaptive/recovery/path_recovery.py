@@ -1,8 +1,9 @@
 """
 Topology-Aware Path Recovery Strategy.
 
-Analyzes the OpenSDNLab topology and determines
-whether an alternative path exists.
+Analyzes the OpenSDNLab topology, evaluates
+candidate paths using real controller link metrics,
+and selects the best recovery path.
 """
 
 from engine.adaptive.recovery.base_recovery import (
@@ -15,6 +16,10 @@ from engine.adaptive.recovery.topology_path_analyzer import (
 
 from engine.adaptive.recovery.path_selector import (
     PathSelector
+)
+
+from engine.analysis.path.path_metrics_engine import (
+    path_metrics_engine
 )
 
 
@@ -45,58 +50,42 @@ class PathRecovery(BaseRecovery):
             "action"
         )
 
-
         if action not in (
             "REACTIVE_RECOVERY",
             "PROACTIVE_RECOVERY"
         ):
 
             return {
-
                 "executed": False,
-
                 "success": False,
-
                 "recovery_type":
                     "PATH_RECOVERY",
-
                 "reason":
                     "No recovery action requested"
-
             }
 
 
         if network is None:
 
             return {
-
                 "executed": False,
-
                 "success": False,
-
                 "recovery_type":
                     "PATH_RECOVERY",
-
                 "reason":
                     "Network unavailable"
-
             }
 
 
         if inventory is None:
 
             return {
-
                 "executed": False,
-
                 "success": False,
-
                 "recovery_type":
                     "PATH_RECOVERY",
-
                 "reason":
                     "Topology inventory unavailable"
-
             }
 
 
@@ -106,21 +95,15 @@ class PathRecovery(BaseRecovery):
             []
         )
 
-
         if not links:
 
             return {
-
                 "executed": False,
-
                 "success": False,
-
                 "recovery_type":
                     "PATH_RECOVERY",
-
                 "reason":
                     "No topology links available"
-
             }
 
 
@@ -130,21 +113,15 @@ class PathRecovery(BaseRecovery):
             []
         )
 
-
         if len(hosts) < 2:
 
             return {
-
                 "executed": False,
-
                 "success": False,
-
                 "recovery_type":
                     "PATH_RECOVERY",
-
                 "reason":
                     "Insufficient hosts for path analysis"
-
             }
 
 
@@ -169,23 +146,16 @@ class PathRecovery(BaseRecovery):
         ]:
 
             return {
-
                 "executed": False,
-
                 "success": False,
-
                 "recovery_type":
                     "PATH_RECOVERY",
-
                 "reason":
                     "No alternative path available",
-
                 "path_recovery_status":
                     "PATH_RECOVERY_NO_ALTERNATIVE_PATH",
-
                 "path_analysis":
                     analysis
-
             }
 
 
@@ -196,11 +166,64 @@ class PathRecovery(BaseRecovery):
             {}
         )
 
+
+        # --------------------------------------------------
+        # Evaluate real controller link metrics for each
+        # candidate path.
+        # --------------------------------------------------
+
+        controller_link_metrics = getattr(
+            controller,
+            "link_metrics",
+            {}
+        )
+
+        path_metrics = {}
+
+        for path in paths:
+
+            switch_path = (
+                self._extract_switch_path(
+                    path=path,
+                    inventory=inventory,
+                )
+            )
+
+            switch_dpids = (
+                self._convert_switch_path_to_dpids(
+                    switch_path
+                )
+            )
+
+            evaluated_metrics = (
+                path_metrics_engine.evaluate(
+                    path=switch_dpids,
+                    link_metrics=controller_link_metrics,
+                )
+            )
+
+            # Preserve the original full path and add
+            # the switch-only representation used for
+            # controller metric evaluation.
+            evaluated_metrics[
+                "full_path"
+            ] = list(path)
+
+            evaluated_metrics[
+                "switch_path"
+            ] = switch_path
+
+            path_metrics[
+                tuple(path)
+            ] = evaluated_metrics
+
+
         selection = (
             self.path_selector.select_best_path(
                 paths=paths,
                 network_health=network_health,
                 qos_metrics=metrics,
+                path_metrics=path_metrics,
                 objective=trigger.get(
                     "objective"
                 ),
@@ -214,53 +237,38 @@ class PathRecovery(BaseRecovery):
         if best_path is None:
 
             return {
-
                 "executed": False,
-
                 "success": False,
-
                 "recovery_type":
                     "PATH_RECOVERY",
-
                 "reason":
                     "No healthy recovery path available",
-
                 "path_analysis":
                     analysis,
-
                 "path_selection":
                     selection,
-
             }
+
 
         primary_path = paths[0]
 
         if controller is None:
 
             return {
-
                 "executed": False,
-
                 "success": False,
-
                 "recovery_type":
                     "PATH_RECOVERY",
-
                 "reason":
                     "Controller unavailable for path enforcement",
-
                 "primary_path":
                     primary_path,
-
                 "best_path":
                     best_path,
-
                 "path_selection":
                     selection,
-
                 "path_analysis":
                     analysis,
-
             }
 
 
@@ -270,32 +278,25 @@ class PathRecovery(BaseRecovery):
             None,
         )
 
-        if not callable(apply_recovery_path):
+        if not callable(
+            apply_recovery_path
+        ):
 
             return {
-
                 "executed": False,
-
                 "success": False,
-
                 "recovery_type":
                     "PATH_RECOVERY",
-
                 "reason":
                     "Controller does not support path enforcement",
-
                 "primary_path":
                     primary_path,
-
                 "best_path":
                     best_path,
-
                 "path_selection":
                     selection,
-
                 "path_analysis":
                     analysis,
-
             }
 
 
@@ -316,35 +317,98 @@ class PathRecovery(BaseRecovery):
 
 
         return {
-
             "executed": executed,
-
             "success": success,
-
             "recovery_type":
                 "PATH_RECOVERY",
-
             "reason":
                 "Recovery path enforcement completed"
                 if success
                 else "Recovery path enforcement failed",
-
             "trigger_action":
                 action,
-
             "primary_path":
                 primary_path,
-
             "best_path":
                 best_path,
-
             "enforcement":
                 enforcement,
-
             "path_selection":
                 selection,
-
+            "path_metrics":
+                path_metrics,
             "path_analysis":
                 analysis
-
         }
+
+
+    def _extract_switch_path(
+        self,
+        path,
+        inventory,
+    ):
+
+        switch_names = {
+            device.hostname
+            for device in getattr(
+                inventory,
+                "devices",
+                []
+            )
+            if getattr(
+                device,
+                "device_type",
+                None
+            ) == "switch"
+        }
+
+        return [
+            node
+            for node in path
+            if node in switch_names
+        ]
+
+
+    def _convert_switch_path_to_dpids(
+        self,
+        switch_path,
+    ):
+
+        dpids = []
+
+        for switch_name in switch_path:
+
+            try:
+
+                if (
+                    isinstance(
+                        switch_name,
+                        str
+                    )
+                    and switch_name.startswith(
+                        "s"
+                    )
+                ):
+
+                    dpid = int(
+                        switch_name[1:]
+                    )
+
+                else:
+
+                    dpid = int(
+                        switch_name
+                    )
+
+                dpids.append(
+                    dpid
+                )
+
+            except (
+                TypeError,
+                ValueError,
+            ):
+
+                continue
+
+        return dpids
