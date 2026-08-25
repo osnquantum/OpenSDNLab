@@ -1429,3 +1429,328 @@ Before implementing prediction or recovery policies, the framework
 must verify that controlled network changes produce measurable and
 correctly recorded changes in the observations.
 
+
+# ============================================================
+# PATH RECOVERY ENGINE - CURRENT IMPLEMENTATION AND NEXT STEPS
+# ============================================================
+
+## Current Development Update
+
+A modular path recovery service has been developed:
+
+    open_sdn_lab_path_recovery.py
+
+The service is intended to provide the core adaptive routing and
+link evaluation logic for OpenSDNLab.
+
+Current capabilities include:
+
+- Normalized bidirectional logical link mapping.
+- LinkMetricsMatrix for topology-wide link storage.
+- Dynamic link metric evaluation.
+- Link health classification.
+- QoS-aware link weight calculation.
+- Congestion-aware path avoidance.
+- Constrained shortest path recovery.
+- Multiplicative path packet-loss calculation.
+- PATH_RECOVERY state transitions.
+
+---
+
+## Normalized Bidirectional Link Mapping
+
+OpenFlow port statistics are directional.
+
+Example:
+
+    s1:port2  --->  s2:port1
+    s2:port1  --->  s1:port2
+
+The LinkMetricsMatrix normalizes directional measurements into one
+logical bidirectional link.
+
+Each logical link may contain:
+
+- forward metrics
+- reverse metrics
+- utilization
+- packet rate
+- error rate
+- packet-loss estimate
+- aggregated metrics
+- health state
+- timestamp
+
+The objective is to prevent directional OpenFlow port statistics from
+being treated as separate network links.
+
+---
+
+## Dynamic Link Health
+
+Logical links are evaluated using dynamic network measurements.
+
+Health states:
+
+    NORMAL
+    DEGRADED
+    CRITICAL
+
+The OS-Ken controller remains responsible for collecting raw
+OpenFlow measurements.
+
+The analysis and recovery layers are responsible for interpreting
+those measurements.
+
+Architecture:
+
+    OS-Ken Controller
+            |
+            v
+    OpenFlow Port Statistics
+            |
+            v
+    LinkMetricsMatrix
+            |
+            v
+    Link Health Evaluation
+            |
+            v
+    QoS Analysis / Recovery
+
+QoS policy interpretation should remain decoupled from the low-level
+OpenFlow statistics collector.
+
+---
+
+## QoS-Aware Link Weight
+
+The recovery engine uses a QoS-aware link cost.
+
+Conceptually:
+
+    W(e) = alpha * Delay + beta * PacketLoss
+
+High congestion receives a large routing penalty.
+
+The current implementation uses:
+
+    Congestion threshold: 90%
+    Congested link penalty: 10000.0
+
+These values should remain configurable.
+
+The purpose is to make highly congested or degraded links unattractive
+during recovery path selection.
+
+---
+
+## Constrained Shortest Path Recovery
+
+The recovery engine provides:
+
+    find_optimal_recovery_path()
+
+The solver evaluates candidate paths using constraints including:
+
+- minimum available bandwidth
+- maximum end-to-end delay
+- maximum cumulative packet loss
+- link utilization
+- link health
+
+The objective is not only shortest hop count.
+
+Recovery path selection considers:
+
+    Topology
+        +
+    Link QoS
+        +
+    Bandwidth Constraints
+        +
+    Delay Constraints
+        +
+    Packet Loss Constraints
+        |
+        v
+    QoS-Aware Recovery Path
+
+---
+
+## Path-Level Packet Loss
+
+Cumulative path packet loss is calculated using success probability.
+
+    PathSuccess =
+        Product of (1 - LinkLoss)
+
+Therefore:
+
+    PathLoss =
+        1 - Product of (1 - LinkLoss)
+
+This avoids directly adding packet-loss percentages across links.
+
+---
+
+## PATH_RECOVERY Integration
+
+The recovery solver follows the PATH_RECOVERY state model.
+
+    QoS Monitoring
+            |
+            v
+    QoS Degradation Detected
+            |
+            v
+    PATH_RECOVERY_TRIGGERED
+            |
+            v
+    Alternative Path Search
+            |
+       +----+----+
+       |         |
+       v         v
+    Valid      No Valid
+    Path       Path
+       |         |
+       v         v
+    PATH_SELECTED
+             PATH_RECOVERY_NO_ALTERNATIVE_PATH
+       |
+       v
+    Path Reconfiguration
+       |
+   +---+---+
+   |       |
+   v       v
+Success   Failure
+   |       |
+   v       v
+PATH_RECOVERY_EXECUTED
+        PATH_RECOVERY_FAILED
+
+---
+
+# NEXT IMPLEMENTATION PRIORITY
+
+The next task is to integrate the path recovery engine into the
+real OpenSDNLab architecture.
+
+Target:
+
+    Real OpenFlow Network
+            |
+            v
+    OS-Ken Topology Discovery
+            |
+            v
+    OS-Ken Port Statistics
+            |
+            v
+    LinkMetricsMatrix
+            |
+            v
+    Live Link Health
+            |
+            v
+    QoS Constraint Solver
+            |
+            v
+    Recovery Path
+            |
+            v
+    OpenFlow Path Enforcement
+            |
+            v
+    Traffic Recovery Evaluation
+
+Required work:
+
+1. Add the path recovery service to the OpenSDNLab architecture.
+2. Connect real OS-Ken topology to LinkMetricsMatrix.
+3. Feed live OpenFlow port statistics into logical links.
+4. Continuously update link metrics and health.
+5. Trigger PATH_RECOVERY from actual QoS degradation.
+6. Execute find_optimal_recovery_path().
+7. Validate the selected recovery path.
+8. Implement OpenFlow path enforcement.
+9. Measure recovery time, packet loss, delay, jitter and throughput.
+
+---
+
+# FUTURE DEVELOPMENT ORDER
+
+Phase 1:
+
+    Real Link Metrics Integration
+
+Phase 2:
+
+    Live LinkMetricsMatrix
+
+Phase 3:
+
+    Path-Level QoS Aggregation
+
+Phase 4:
+
+    Real PATH_RECOVERY Trigger
+
+Phase 5:
+
+    OpenFlow Recovery Enforcement
+
+Phase 6:
+
+    Fast Failover Baseline
+
+Phase 7:
+
+    Recovery Evaluation and Historical Data Collection
+
+Phase 8:
+
+    GRU Dataset Preparation and Offline Training
+
+Phase 9:
+
+    Asynchronous GRU Prediction Service
+
+Phase 10:
+
+    DRL Adaptive Decision Engine
+
+Phase 11:
+
+    Segment Routing / TI-LFA Feasibility Investigation
+
+---
+
+## Core Design Principle
+
+    OpenFlow collects measurements.
+
+    Topology identifies network relationships.
+
+    LinkMetricsMatrix normalizes directional measurements.
+
+    QoS analysis evaluates current network conditions.
+
+    Path recovery selects a valid alternative route.
+
+    OpenFlow enforcement applies the selected route.
+
+    GRU predicts future degradation.
+
+    DRL determines intelligent adaptive actions.
+
+The immediate priority is to validate the path recovery engine using
+real OpenSDNLab topology and OpenFlow measurements before moving to
+GRU, DRL or native Segment Routing.
+
+# ============================================================
+# END PATH RECOVERY ENGINE UPDATE
+# ============================================================
+
