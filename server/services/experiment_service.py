@@ -62,6 +62,10 @@ class ExperimentService:
                     "switches": data.get(
                         "switches",
                         1
+                    ),
+                    "link_qos": data.get(
+                        "link_qos",
+                        []
                     )
                 }
             ),
@@ -162,7 +166,8 @@ class ExperimentService:
                 else {
                     "type": data.get("topology", "linear"),
                     "hosts": data.get("hosts", 2),
-                    "switches": data.get("switches", 1)
+                    "switches": data.get("switches", 1),
+                    "link_qos": data.get("link_qos", [])
                 }
             ),
 
@@ -197,6 +202,16 @@ class ExperimentService:
                 default.variables
             ),
 
+            # Adaptive prediction / recovery configuration
+            prediction_enabled=data.get(
+                "prediction_enabled",
+                default.prediction_enabled
+            ),
+
+            recovery_enabled=data.get(
+                "recovery_enabled",
+                default.recovery_enabled
+            ),
 
             metadata=data.get(
                 "metadata",

@@ -57,6 +57,7 @@ class ExperimentConfiguration:
     deployment: dict = field(default_factory=lambda: {
         "bandwidth": 100,
         "delay": "1ms",
+        "jitter": "0ms",
         "loss": 0.0,
         "queue": 1000
     })

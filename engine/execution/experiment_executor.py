@@ -16,6 +16,7 @@ from engine.monitoring.monitoring_manager import MonitoringManager
 from engine.network.traffic_manager import TrafficManager
 from engine.repository.sqlite.sqlite_repository import SQLiteRepository
 from engine.monitoring.metric_parser import MetricParser
+from engine.analysis.qos.mos_calculator import calculate_mos
 from engine.system.runtime_state import RuntimeState
 
 from engine.core.logger import logger
@@ -33,6 +34,10 @@ from engine.analysis.qos.qos_observation import (
 from pathlib import Path
 from engine.controllers.monitoring.controller_monitor import ControllerMonitor
 from engine.network.health.network_health_manager import NetworkHealthManager
+
+from engine.adaptive.monitoring.minimum_flow_coverage import (
+    minimum_flow_coverage_engine
+)
 
 class ExperimentExecutor:
 
@@ -280,6 +285,9 @@ class ExperimentExecutor:
                 stage="Network Reused"
             )
 
+        # Apply this experiment's QoS impairment profile.
+        # This also runs when the Mininet network is reused.
+        self.backend.apply_link_impairments(inventory)
 
         import time
 
@@ -287,76 +295,10 @@ class ExperimentExecutor:
 
         time.sleep(5)
 
-        logger.info("Starting traffic experiment")
-
-        print("===== TRAFFIC DEBUG 1 =====", flush=True)
-
-        RuntimeState.update(stage="Traffic Measurement")
-
-        print("===== TRAFFIC DEBUG 2 =====", flush=True)
-
-        print(
-            f"===== TRAFFIC HOSTS: {net.hosts[0].name} -> "
-            f"{net.hosts[-1].name} =====",
-            flush=True
-        )
-
-        print("===== TRAFFIC DEBUG 3 =====", flush=True)
-
-        traffic_report = self.traffic.run(
-            net.hosts[0],
-            net.hosts[-1]
-        )
-
-        print("===== TRAFFIC DEBUG 4 =====", flush=True)
-
-        logger.info(traffic_report)
-
-        logger.info("Batch DEBUG: traffic completed")
-
-        metrics = self.metric_parser.parse(
-            traffic_report["ping"], traffic_report["throughput"]
-        )
-
         logger.info(
-            f"Batch DEBUG: metrics parsed: {metrics}"
+            "Deferring primary traffic measurement until "
+            "dynamic flow discovery is complete"
         )
-
-        # --------------------------------------------------------
-        # POPULATE QOS MATRIX WITH MEASURED DATA
-        # --------------------------------------------------------
-        # The existing experiment metrics describe the primary
-        # measurement flow. Preserve them and attach them to the
-        # corresponding matrix row. Other concurrent flows remain
-        # available for independent measurement in the next stage.
-
-        if "qos_matrix" in locals() and qos_matrix:
-
-            primary_flow = qos_matrix[0]
-
-            primary_flow["rtt"] = metrics.get(
-                "average_rtt",
-                metrics.get("rtt")
-            )
-
-            primary_flow["jitter"] = metrics.get("jitter")
-
-            primary_flow["packet_loss"] = metrics.get(
-                "packet_loss"
-            )
-
-            primary_flow["throughput"] = metrics.get(
-                "throughput"
-            )
-
-            logger.info(
-                "Primary flow QoS matrix updated: "
-                f"{primary_flow}"
-            )
-
-            RuntimeState.update(
-                qos_matrix=qos_matrix
-            )
 
         # --------------------------------------------------------
         # CONTROLLER STATS SYNCHRONIZATION
@@ -444,226 +386,327 @@ class ExperimentExecutor:
             )
 
         # --------------------------------------------------------
-        # CONTROLLER-DISCOVERED ACTIVE FLOWS
+        # MINIMUM FLOW COVERAGE PLANNING
         # --------------------------------------------------------
-        # The controller is the source of truth for active forwarding
-        # flows. Do not create positional synthetic flows such as
-        # h1->h5 based on topology order.
+        # Select the smallest useful set of host-to-host monitoring
+        # flows that covers the maximum reachable topology links.
 
         available_hosts = list(net.hosts)
 
-        host_by_mac = {
-            host.MAC().lower(): host
+        host_by_name = {
+            host.name: host
             for host in available_hosts
         }
 
+
         # --------------------------------------------------------
-        # ACTIVE FLOW DISCOVERY
+        # BUILD TOPOLOGY LINKS
         # --------------------------------------------------------
-        # First use controller-known flows. If none exist yet, create
-        # lightweight topology-derived probes so OS-Ken can learn host
-        # locations and install forwarding paths. No positional flow
-        # such as h1->h5 is hard-coded.
 
-        traffic_flows = []
+        topology_links = []
 
-        controller_flow_paths = (
-            controller_stats.get("flow_paths", {})
-            if isinstance(controller_stats, dict)
-            else {}
-        )
+        # Build the topology directly from the live Mininet network.
+        # link_matrix is created later in the execution pipeline, so it
+        # cannot be used during monitoring-flow coverage planning.
+        for link in net.links:
 
-        for flow_key in controller_flow_paths:
+            source = link.intf1.node.name
+            destination = link.intf2.node.name
 
-            try:
-                source_mac, destination_mac = (
-                    flow_key.split("->", 1)
-                )
-
-            except ValueError:
-
-                logger.warning(
-                    f"Invalid controller flow key ignored: "
-                    f"{flow_key!r}"
-                )
+            if source == destination:
                 continue
 
-            flow_source = host_by_mac.get(
-                source_mac.lower()
+            topology_links.append(
+                (
+                    source,
+                    destination
+                )
             )
-            flow_destination = host_by_mac.get(
-                destination_mac.lower()
+
+        logger.info(
+            "Live topology links for coverage planning: "
+            + ", ".join(
+                f"{source}<->{destination}"
+                for source, destination in topology_links
+            )
+        )
+
+
+        # --------------------------------------------------------
+        # BUILD SWITCH GRAPH
+        # --------------------------------------------------------
+
+        switch_names = {
+            device.hostname
+            for device in inventory.devices
+            if device.device_type == "switch"
+        }
+
+        adjacency = {
+            switch_name: set()
+            for switch_name in switch_names
+        }
+
+        host_switch = {}
+
+        for source, destination in topology_links:
+
+            if (
+                source in switch_names
+                and destination in switch_names
+            ):
+
+                adjacency[source].add(
+                    destination
+                )
+
+                adjacency[destination].add(
+                    source
+                )
+
+            elif source in switch_names:
+
+                host_switch[destination] = source
+
+            elif destination in switch_names:
+
+                host_switch[source] = destination
+
+
+        # --------------------------------------------------------
+        # SHORTEST HOST-TO-HOST PATH RESOLVER
+        # --------------------------------------------------------
+
+        def resolve_monitoring_path(
+            source,
+            destination
+        ):
+
+            ingress_switch = host_switch.get(
+                source
+            )
+
+            egress_switch = host_switch.get(
+                destination
             )
 
             if (
-                flow_source is None
-                or flow_destination is None
-                or flow_source == flow_destination
-            ):
-                continue
-
-            flow_pair = (
-                flow_source,
-                flow_destination,
-            )
-
-            if flow_pair not in traffic_flows:
-                traffic_flows.append(
-                    flow_pair
-                )
-
-        # Bootstrap controller flow discovery when no learned flows
-        # are available yet. Generate unique host pairs dynamically
-        # from the active Mininet topology.
-        if not traffic_flows:
-
-            logger.info(
-                "No controller-discovered flows yet; "
-                "starting lightweight flow discovery probes"
-            )
-
-            for source_index, flow_source in enumerate(
-                available_hosts
+                ingress_switch is None
+                or egress_switch is None
             ):
 
-                for flow_destination in available_hosts[
-                    source_index + 1:
-                ]:
+                return []
 
-                    traffic_flows.append(
-                        (
-                            flow_source,
-                            flow_destination,
-                        )
+
+            if ingress_switch == egress_switch:
+
+                return [
+                    source,
+                    ingress_switch,
+                    destination
+                ]
+
+
+            visited = set()
+
+            queue = [
+                (
+                    ingress_switch,
+                    [ingress_switch]
+                )
+            ]
+
+
+            while queue:
+
+                current, switch_path = queue.pop(0)
+
+                if current == egress_switch:
+
+                    return (
+                        [source]
+                        + switch_path
+                        + [destination]
                     )
 
-            # A complete pair matrix can become unnecessarily large
-            # on big topologies. Keep discovery bounded.
-            traffic_flows = traffic_flows[:8]
 
-            for flow_index, (
-                flow_source,
-                flow_destination,
-            ) in enumerate(
-                traffic_flows,
-                start=1
-            ):
+                if current in visited:
 
-                logger.info(
-                    f"Flow discovery probe {flow_index}: "
-                    f"{flow_source.name}->"
-                    f"{flow_destination.name}"
-                )
+                    continue
 
-                # First probe in both directions so OS-Ken learns
-                # both edge-host locations before resolving paths.
-                flow_source.cmd(
-                    "ping -c 2 -i 0.1 -W 1 "
-                    f"{flow_destination.IP()} "
-                    "> /tmp/opensdn_discovery_"
-                    f"{flow_index}_forward.log 2>&1 &"
-                )
 
-                flow_destination.cmd(
-                    "ping -c 2 -i 0.1 -W 1 "
-                    f"{flow_source.IP()} "
-                    "> /tmp/opensdn_discovery_"
-                    f"{flow_index}_reverse.log 2>&1 &"
-                )
+                visited.add(current)
 
-            # Allow PacketIn processing and flow installation.
-            time.sleep(2)
 
-            # Refresh controller state after probes.
-            stats_path = Path(
-                "runtime/controller_stats/osken.json"
-            )
+                for neighbor in adjacency.get(
+                    current,
+                    []
+                ):
 
-            try:
+                    if neighbor not in visited:
 
-                if stats_path.exists():
-
-                    controller_stats = json.loads(
-                        stats_path.read_text()
-                    )
-
-                    controller_flow_paths = (
-                        controller_stats.get(
-                            "flow_paths",
-                            {}
-                        )
-                    )
-
-                    # Replace bootstrap probe pairs with the actual
-                    # flows learned by OS-Ken.
-                    discovered_flows = []
-
-                    for flow_key in controller_flow_paths:
-
-                        try:
-                            source_mac, destination_mac = (
-                                flow_key.split("->", 1)
-                            )
-
-                        except ValueError:
-                            continue
-
-                        flow_source = host_by_mac.get(
-                            source_mac.lower()
-                        )
-                        flow_destination = host_by_mac.get(
-                            destination_mac.lower()
-                        )
-
-                        if (
-                            flow_source is None
-                            or flow_destination is None
-                            or flow_source == flow_destination
-                        ):
-                            continue
-
-                        flow_pair = (
-                            flow_source,
-                            flow_destination,
-                        )
-
-                        if flow_pair not in discovered_flows:
-                            discovered_flows.append(
-                                flow_pair
-                            )
-
-                    if discovered_flows:
-                        traffic_flows = discovered_flows
-
-                        logger.info(
-                            "OS-Ken learned active flows: "
-                            + ", ".join(
-                                f"{src.name}->{dst.name}"
-                                for src, dst in traffic_flows
+                        queue.append(
+                            (
+                                neighbor,
+                                switch_path + [neighbor]
                             )
                         )
 
-            except (
-                OSError,
-                json.JSONDecodeError,
-            ) as exc:
 
-                logger.warning(
-                    f"Unable to refresh controller "
-                    f"flow discovery state: {exc}"
-                )
+            return []
+
+
+        # --------------------------------------------------------
+        # BUILD MINIMUM COVERAGE PLAN
+        # --------------------------------------------------------
+
+        coverage_plan = (
+            minimum_flow_coverage_engine.build_plan(
+                hosts=[
+                    host.name
+                    for host in available_hosts
+                ],
+                links=topology_links,
+                path_resolver=resolve_monitoring_path
+            )
+        )
+
 
         logger.info(
-            "Active/discovered traffic flows: "
+            "Minimum flow coverage plan: "
+            f"selected="
+            f"{coverage_plan['selected_flow_count']}, "
+            f"candidates="
+            f"{coverage_plan['candidate_count']}, "
+            f"links="
+            f"{coverage_plan['covered_links']}/"
+            f"{coverage_plan['total_links']}, "
+            f"coverage="
+            f"{coverage_plan['coverage_ratio']:.2%}"
+        )
+
+
+        logger.info(
+            "Selected monitoring flows: "
+            + ", ".join(
+                f"{flow['source']}->{flow['destination']}"
+                for flow in coverage_plan[
+                    "monitoring_flows"
+                ]
+            )
+        )
+
+
+        # --------------------------------------------------------
+        # CONVERT SELECTED FLOWS TO MININET HOST OBJECTS
+        # --------------------------------------------------------
+
+        traffic_flows = []
+
+        for flow in coverage_plan[
+            "monitoring_flows"
+        ]:
+
+            source_host = host_by_name.get(
+                flow["source"]
+            )
+
+            destination_host = host_by_name.get(
+                flow["destination"]
+            )
+
+
+            if (
+                source_host is None
+                or destination_host is None
+                or source_host == destination_host
+            ):
+
+                logger.warning(
+                    "Invalid monitoring flow ignored: "
+                    f"{flow}"
+                )
+
+                continue
+
+
+            traffic_flows.append(
+                (
+                    source_host,
+                    destination_host
+                )
+            )
+
+
+        # --------------------------------------------------------
+        # BACKUP MONITORING FLOWS
+        # --------------------------------------------------------
+
+        backup_traffic_flows = []
+
+        for flow in coverage_plan[
+            "backup_flows"
+        ]:
+
+            source_host = host_by_name.get(
+                flow["source"]
+            )
+
+            destination_host = host_by_name.get(
+                flow["destination"]
+            )
+
+
+            if (
+                source_host is not None
+                and destination_host is not None
+                and source_host != destination_host
+            ):
+
+                backup_traffic_flows.append(
+                    (
+                        source_host,
+                        destination_host
+                    )
+                )
+
+
+        RuntimeState.update(
+            monitoring_plan=coverage_plan,
+
+            selected_monitoring_flows=[
+                {
+                    "source": source.name,
+                    "destination": destination.name
+                }
+                for source, destination
+                in traffic_flows
+            ],
+
+            backup_monitoring_flows=[
+                {
+                    "source": source.name,
+                    "destination": destination.name
+                }
+                for source, destination
+                in backup_traffic_flows
+            ]
+        )
+
+
+        logger.info(
+            "Active monitoring flows: "
             + (
                 ", ".join(
-                    f"{src.name}->{dst.name}"
-                    for src, dst in traffic_flows
+                    f"{source.name}->{destination.name}"
+                    for source, destination
+                    in traffic_flows
                 )
                 if traffic_flows
                 else "none"
             )
         )
+
 
         # --------------------------------------------------------
         # DATA PLANE / QOS MATRIX
@@ -701,6 +744,27 @@ class ExperimentExecutor:
             active_flows=len(qos_matrix),
             qos_matrix=qos_matrix,
             stage="QoS Matrix Initialized"
+        )
+
+        # --------------------------------------------------------
+        # MONITORING FLOW MEASUREMENT
+        # --------------------------------------------------------
+        # All traffic selected by the Minimum Flow Coverage Engine
+        # is measured below. No single primary flow is privileged.
+
+        if not traffic_flows:
+
+            raise RuntimeError(
+                "No valid monitoring flows discovered for measurement"
+            )
+
+        logger.info(
+            f"Starting measurement for "
+            f"{len(traffic_flows)} selected monitoring flows"
+        )
+
+        RuntimeState.update(
+            stage="Traffic Measurement"
         )
 
         # Start lightweight background traffic for every additional
@@ -977,10 +1041,17 @@ class ExperimentExecutor:
 
             if ingress_switch and egress_switch:
 
-                candidate_paths = discover_paths(
+                switch_paths = discover_paths(
                     ingress_switch,
                     egress_switch
                 )
+
+                candidate_paths = [
+                    [flow_row["source"]]
+                    + switch_path
+                    + [flow_row["destination"]]
+                    for switch_path in switch_paths
+                ]
 
             flow_row["path"] = candidate_paths
 
@@ -989,6 +1060,191 @@ class ExperimentExecutor:
                 f"{flow_row['source']}->{flow_row['destination']}: "
                 f"{candidate_paths}"
             )
+
+        # --------------------------------------------------------
+        # OBSERVED LINK QOS MATRIX
+        # --------------------------------------------------------
+        # Map measured monitoring flows onto the links traversed by
+        # their discovered paths. Multiple observations for the same
+        # link are aggregated into one adaptive-ready link state.
+
+        link_observations = {}
+
+        for link_row in link_matrix:
+
+            link_key = tuple(sorted([
+                link_row["source"],
+                link_row["destination"]
+            ]))
+
+            link_observations[link_key] = []
+
+            link_row["rtt"] = None
+            link_row["jitter"] = None
+            link_row["observed_loss"] = None
+            link_row["qos_score"] = None
+            link_row["monitoring_flows"] = []
+            link_row["observation_count"] = 0
+
+
+        for flow_row in qos_matrix:
+
+            candidate_paths = flow_row.get(
+                "path",
+                []
+            )
+
+            if not candidate_paths:
+                continue
+
+
+            # Use the first discovered path as the currently active
+            # forwarding path. Candidate alternatives remain available
+            # to the path QoS engine below.
+
+            active_path = candidate_paths[0]
+
+            for index in range(
+                len(active_path) - 1
+            ):
+
+                source = active_path[index]
+                destination = active_path[index + 1]
+
+                link_key = tuple(sorted([
+                    source,
+                    destination
+                ]))
+
+                if link_key not in link_observations:
+                    continue
+
+
+                link_observations[
+                    link_key
+                ].append({
+                    "rtt": flow_row.get("rtt"),
+                    "jitter": flow_row.get("jitter"),
+                    "packet_loss": flow_row.get(
+                        "packet_loss"
+                    ),
+                    "qos_score": flow_row.get(
+                        "qos_score"
+                    ),
+                    "flow": (
+                        f"{flow_row['source']}"
+                        f"->{flow_row['destination']}"
+                    )
+                })
+
+
+        for link_row in link_matrix:
+
+            link_key = tuple(sorted([
+                link_row["source"],
+                link_row["destination"]
+            ]))
+
+            observations = link_observations.get(
+                link_key,
+                []
+            )
+
+            link_row["observation_count"] = len(
+                observations
+            )
+
+            link_row["monitoring_flows"] = [
+                observation["flow"]
+                for observation in observations
+            ]
+
+
+            if not observations:
+                continue
+
+
+            def values(metric):
+
+                return [
+                    observation[metric]
+                    for observation in observations
+                    if observation.get(metric)
+                    is not None
+                ]
+
+
+            rtt_values = values("rtt")
+            jitter_values = values("jitter")
+            loss_values = values("packet_loss")
+            score_values = values("qos_score")
+
+
+            if rtt_values:
+
+                link_row["rtt"] = round(
+                    sum(rtt_values)
+                    / len(rtt_values),
+                    3
+                )
+
+
+            if jitter_values:
+
+                link_row["jitter"] = round(
+                    sum(jitter_values)
+                    / len(jitter_values),
+                    3
+                )
+
+
+            if loss_values:
+
+                # Loss is safety-sensitive for adaptive routing.
+                # Preserve the worst observation on this link.
+
+                link_row["observed_loss"] = max(
+                    loss_values
+                )
+
+
+            if score_values:
+
+                link_row["qos_score"] = round(
+                    sum(score_values)
+                    / len(score_values),
+                    2
+                )
+
+
+            logger.info(
+                f"Link QoS observed: "
+                f"{link_row['source']}"
+                f"<->{link_row['destination']} | "
+                f"RTT={link_row['rtt']} ms, "
+                f"Jitter={link_row['jitter']} ms, "
+                f"Loss={link_row['observed_loss']}%, "
+                f"Score={link_row['qos_score']}, "
+                f"Observations="
+                f"{link_row['observation_count']}"
+            )
+
+
+        logger.info(
+            "Observed Link QoS Matrix completed: "
+            f"{sum(
+                1 for link in link_matrix
+                if link['observation_count'] > 0
+            )}/{len(link_matrix)} links measured"
+        )
+
+
+        RuntimeState.update(
+            qos_matrix=qos_matrix,
+            link_matrix=link_matrix,
+            stage="Link QoS Matrix Completed"
+        )
+
 
         # --------------------------------------------------------
         # PATH QOS MATRIX
@@ -1495,6 +1751,56 @@ class ExperimentExecutor:
         # Create a standardized per-flow QoS observation directly
         # from experiment measurements and the controller-resolved
         # forwarding path.
+        # Use the measured QoS matrix row for the primary
+        # monitoring flow. This avoids relying on the old local
+        # metrics variable after minimum-flow coverage planning.
+
+        primary_measurement = qos_matrix[0]
+
+        # --------------------------------------------------------
+        # PRIMARY METRICS COMPATIBILITY
+        # --------------------------------------------------------
+        # Multi-flow monitoring now stores measurements in
+        # primary_measurement / qos_matrix. Existing adaptive,
+        # recovery and result pipelines still consume a metrics
+        # dictionary, so construct it from the selected primary flow.
+
+        metrics = {
+            "average_rtt": (
+                primary_measurement.get("rtt") or 0.0
+            ),
+            "rtt": (
+                primary_measurement.get("rtt") or 0.0
+            ),
+            "jitter": (
+                primary_measurement.get("jitter") or 0.0
+            ),
+            "packet_loss": (
+                primary_measurement.get("packet_loss") or 0.0
+            ),
+            "throughput": (
+                primary_measurement.get("throughput") or 0.0
+            ),
+            "mos": calculate_mos(
+                primary_measurement.get("rtt") or 0.0,
+                primary_measurement.get("packet_loss") or 0.0
+            ),
+            "minimum_rtt": (
+                primary_measurement.get("rtt") or 0.0
+            ),
+            "maximum_rtt": (
+                primary_measurement.get("rtt") or 0.0
+            ),
+            "one_way_delay": (
+                (primary_measurement.get("rtt") or 0.0) / 2.0
+            ),
+        }
+
+        logger.info(
+            "Primary metrics compatibility state: "
+            f"{metrics}"
+        )
+
         qos_observation = QoSObservation(
             flow_id=(
                 f"{source_host.name}"
@@ -1503,16 +1809,25 @@ class ExperimentExecutor:
             source=source_host.name,
             destination=destination_host.name,
             path=flow_path,
-            rtt_ms=metrics.get("average_rtt", 0.0),
-            delay_ms=metrics.get("delay", 0.0),
-            jitter_ms=metrics.get("jitter", 0.0),
-            packet_loss_percent=metrics.get(
-                "packet_loss",
-                0.0
+            rtt_ms=(
+                primary_measurement.get("rtt")
+                or 0.0
             ),
-            throughput_mbps=metrics.get(
-                "throughput",
-                0.0
+            delay_ms=(
+                primary_measurement.get("rtt")
+                or 0.0
+            ),
+            jitter_ms=(
+                primary_measurement.get("jitter")
+                or 0.0
+            ),
+            packet_loss_percent=(
+                primary_measurement.get("packet_loss")
+                or 0.0
+            ),
+            throughput_mbps=(
+                primary_measurement.get("throughput")
+                or 0.0
             ),
         )
 
@@ -1688,7 +2003,7 @@ class ExperimentExecutor:
             rtt=metrics["average_rtt"],
             packet_loss=metrics["packet_loss"],
             throughput=metrics["throughput"],
-            jitter=metrics.get("jitter"),
+            jitter=(primary_measurement.get("jitter") or 0.0),
         )
 
         logger.info(f"QoS-QoE Decision: {decision}")

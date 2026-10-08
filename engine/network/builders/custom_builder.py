@@ -105,6 +105,22 @@ class CustomBuilder(BaseBuilder):
                 Link(
                     source=source,
                     destination=target,
+                    bandwidth=item.get(
+                        "bandwidth",
+                        100
+                    ),
+                    delay=item.get(
+                        "delay",
+                        "1ms"
+                    ),
+                    jitter=item.get(
+                        "jitter",
+                        "0ms"
+                    ),
+                    loss=item.get(
+                        "loss",
+                        0.0
+                    ),
                     source_port=item.get(
                         "source_port"
                     ),

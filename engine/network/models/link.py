@@ -12,6 +12,8 @@ class Link:
 
     delay: str = "1ms"
 
+    jitter: str = "0ms"
+
     loss: float = 0.0
 
     # Optional explicit interface/port numbers.

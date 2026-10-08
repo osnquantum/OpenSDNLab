@@ -541,6 +541,18 @@
 
 
                     <div class="section-label">
+                        Link QoS Configuration
+                    </div>
+
+                    <div class="field-help" style="margin-bottom: 12px;">
+                        Configure delay, jitter, packet loss and bandwidth
+                        independently for each generated network link.
+                    </div>
+
+                    <div id="link_qos_container">
+                    </div>
+
+                    <div class="section-label">
                         Execution
                     </div>
 
@@ -900,6 +912,171 @@ function showExperimentPanel(panel, button){
 /* CONFIGURATION SUMMARY */
 /* ========================================================= */
 
+function buildLinkQoSRows(){
+
+    const container =
+        document.getElementById("link_qos_container");
+
+    const hosts =
+        Number(document.getElementById("hosts").value);
+
+    const switches =
+        Number(document.getElementById("switches").value);
+
+    const topology =
+        document.getElementById("topology").value;
+
+    const links = [];
+
+    if (topology === "linear") {
+
+        for (let i = 1; i <= hosts; i++) {
+
+            const sw =
+                Math.min(i, switches);
+
+            links.push({
+                source: `h${i}`,
+                destination: `s${sw}`
+            });
+        }
+
+        for (let i = 1; i < switches; i++) {
+
+            links.push({
+                source: `s${i}`,
+                destination: `s${i + 1}`
+            });
+        }
+    }
+
+    let html = `
+        <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align:left;">Link</th>
+                    <th>Bandwidth (Mbps)</th>
+                    <th>Delay</th>
+                    <th>Jitter</th>
+                    <th>Packet Loss (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    links.forEach((link, index) => {
+
+        html += `
+            <tr>
+                <td>
+                    <strong>
+                        ${link.source} → ${link.destination}
+                    </strong>
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        class="link-bandwidth"
+                        data-index="${index}"
+                        value="100"
+                        min="1">
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        class="link-delay"
+                        data-index="${index}"
+                        value="1ms">
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        class="link-jitter"
+                        data-index="${index}"
+                        value="0ms">
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        class="link-loss"
+                        data-index="${index}"
+                        value="0"
+                        min="0"
+                        max="100"
+                        step="0.01">
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+            </tbody>
+        </table>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+
+function getLinkQoSConfiguration(){
+
+    const rows = [];
+
+    const bandwidth =
+        document.querySelectorAll(".link-bandwidth");
+
+    const delays =
+        document.querySelectorAll(".link-delay");
+
+    const jitters =
+        document.querySelectorAll(".link-jitter");
+
+    const losses =
+        document.querySelectorAll(".link-loss");
+
+    bandwidth.forEach(function(input, index){
+
+        rows.push({
+
+            source:
+                input.closest("tr")
+                    .querySelector("strong")
+                    .textContent
+                    .split("→")[0]
+                    .trim(),
+
+            destination:
+                input.closest("tr")
+                    .querySelector("strong")
+                    .textContent
+                    .split("→")[1]
+                    .trim(),
+
+            bandwidth:
+                Number(input.value),
+
+            delay:
+                delays[index].value,
+
+            jitter:
+                jitters[index].value,
+
+            loss:
+                Number(losses[index].value)
+        });
+
+    });
+
+    return rows;
+}
+
+
 function updateExperimentSummary(){
 
     const topology =
@@ -983,6 +1160,33 @@ function updateExperimentSummary(){
 });
 
 
+[
+    "topology",
+    "hosts",
+    "switches"
+].forEach(function(id){
+
+    document
+        .getElementById(id)
+        .addEventListener(
+            "input",
+            buildLinkQoSRows
+        );
+
+
+    document
+        .getElementById(id)
+        .addEventListener(
+            "change",
+            buildLinkQoSRows
+        );
+
+});
+
+
+buildLinkQoSRows();
+
+
 /* ========================================================= */
 /* RESET FORM */
 /* ========================================================= */
@@ -1055,7 +1259,10 @@ async function startExperiment(){
         runs:
             Number(
                 document.getElementById("runs").value
-            )
+            ),
+
+        link_qos:
+            getLinkQoSConfiguration()
 
     };
 

@@ -528,6 +528,62 @@
                     <div class="tool-section">
 
                         <span class="tool-label">
+                            Link QoS
+                        </span>
+
+                        <div
+                            id="selectedLinkLabel"
+                            style="font-size:12px;color:#94a3b8;margin-bottom:8px;"
+                        >
+                            No link selected
+                        </div>
+
+                        <input
+                            id="linkBandwidth"
+                            class="batch-input"
+                            type="number"
+                            min="1"
+                            placeholder="Bandwidth (Mbps)"
+                        >
+
+                        <input
+                            id="linkDelay"
+                            class="batch-input"
+                            type="text"
+                            placeholder="Delay (e.g. 10ms)"
+                        >
+
+                        <input
+                            id="linkJitter"
+                            class="batch-input"
+                            type="text"
+                            placeholder="Jitter (e.g. 2ms)"
+                        >
+
+                        <input
+                            id="linkLoss"
+                            class="batch-input"
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            placeholder="Packet Loss (%)"
+                        >
+
+                        <button
+                            type="button"
+                            class="tool-button primary"
+                            onclick="applySelectedLinkQoS()"
+                        >
+                            Apply Link QoS
+                        </button>
+
+                    </div>
+
+
+                    <div class="tool-section">
+
+                        <span class="tool-label">
                             Workspace
                         </span>
 
@@ -1345,7 +1401,11 @@ function createNode(id,type){
      * This replaces the duplicated controller connection
      * blocks that existed in the previous function.
      */
-    if(type==="switch"){
+    if(
+        type==="switch" &&
+        typeof jsPlumb !== "undefined" &&
+        document.getElementById("controllerNode")
+    ){
 
         let switches =
             topologyState.nodes.filter(
@@ -1354,27 +1414,39 @@ function createNode(id,type){
 
         if(switches.length===1){
 
-            jsPlumb.connect({
+            try{
 
-                source:"controllerNode",
+                jsPlumb.connect({
 
-                target:id,
+                    source:"controllerNode",
 
-                connector:[
-                    "Straight"
-                ],
+                    target:id,
 
-                paintStyle:{
+                    connector:[
+                        "Straight"
+                    ],
 
-                    stroke:"#ef4444",
+                    paintStyle:{
 
-                    strokeWidth:3,
+                        stroke:"#ef4444",
 
-                    dashstyle:"5 5"
+                        strokeWidth:3,
 
-                }
+                        dashstyle:"5 5"
 
-            });
+                    }
+
+                });
+
+            }
+            catch(error){
+
+                console.warn(
+                    "Controller connection failed:",
+                    error
+                );
+
+            }
 
         }
 
@@ -2117,7 +2189,15 @@ function createLink(source,target){
 
         source_port:sourcePort,
 
-        destination_port:destinationPort
+        destination_port:destinationPort,
+
+        bandwidth:100,
+
+        delay:"1ms",
+
+        jitter:"0ms",
+
+        loss:0
 
     });
 
@@ -2169,13 +2249,23 @@ function createLink(source,target){
             paintStyle:{
                 stroke:"#ffffff",
                 strokeWidth:3
-            }
+            },
+
+            overlays:[
+                [
+                    "Label",
+                    {
+                        label:"",
+                        location:0.5,
+                        cssClass:"link-qos-click-target"
+                    }
+                ]
+            ]
 
         });
 
     /*
-     * Delete Link Mode:
-     * clicking the actual connection deletes it.
+     * Link selection.
      */
     if(connection){
 
@@ -2183,13 +2273,25 @@ function createLink(source,target){
             "click",
             function(){
 
-                if(!deleteLinkMode){
+                console.log(
+                    "LINK CLICKED:",
+                    source,
+                    target
+                );
+
+                if(deleteLinkMode){
+
+                    deleteLink(
+                        source,
+                        target,
+                        connection
+                    );
 
                     return;
 
                 }
 
-                deleteLink(
+                selectLinkForQoS(
                     source,
                     target,
                     connection
@@ -2200,7 +2302,121 @@ function createLink(source,target){
 
     }
 
+
     updateJSON();
+
+}
+
+
+function selectLinkForQoS(source, target, connection){
+
+    const link =
+        topologyState.links.find(
+            l =>
+                l.source === source &&
+                l.target === target
+        );
+
+    if(!link){
+        return;
+    }
+
+    window.selectedQoSLink = {
+        source:source,
+        target:target,
+        connection:connection
+    };
+
+    document.getElementById(
+        "selectedLinkLabel"
+    ).textContent =
+        source + " → " + target;
+
+    document.getElementById(
+        "linkBandwidth"
+    ).value =
+        link.bandwidth ?? 100;
+
+    document.getElementById(
+        "linkDelay"
+    ).value =
+        link.delay ?? "1ms";
+
+    document.getElementById(
+        "linkJitter"
+    ).value =
+        link.jitter ?? "0ms";
+
+    document.getElementById(
+        "linkLoss"
+    ).value =
+        link.loss ?? 0;
+
+}
+
+
+function applySelectedLinkQoS(){
+
+    if(!window.selectedQoSLink){
+
+        alert(
+            "Select a link first."
+        );
+
+        return;
+
+    }
+
+    const selected =
+        window.selectedQoSLink;
+
+    const link =
+        topologyState.links.find(
+            l =>
+                l.source === selected.source &&
+                l.target === selected.target
+        );
+
+    if(!link){
+
+        alert(
+            "Selected link no longer exists."
+        );
+
+        return;
+
+    }
+
+    link.bandwidth =
+        Number(
+            document.getElementById(
+                "linkBandwidth"
+            ).value || 100
+        );
+
+    link.delay =
+        document.getElementById(
+            "linkDelay"
+        ).value.trim() || "1ms";
+
+    link.jitter =
+        document.getElementById(
+            "linkJitter"
+        ).value.trim() || "0ms";
+
+    link.loss =
+        Number(
+            document.getElementById(
+                "linkLoss"
+            ).value || 0
+        );
+
+    updateJSON();
+
+    console.log(
+        "LINK QOS UPDATED:",
+        link
+    );
 
 }
 

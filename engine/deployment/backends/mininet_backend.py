@@ -108,6 +108,7 @@ class MininetBackend:
             link_kwargs = {
                 "bw": link.bandwidth,
                 "delay": link.delay,
+                "jitter": link.jitter,
                 "loss": link.loss,
                 "max_queue_size": 1000
             }
@@ -146,6 +147,70 @@ class MininetBackend:
 
 
         return self.net
+
+    ############################################################
+
+    def apply_link_impairments(self, inventory):
+        """
+        Dynamically apply bandwidth, delay, jitter and loss
+        to the interfaces of an already-running Mininet network.
+        """
+
+        if self.net is None:
+            raise RuntimeError("Mininet network is not running")
+
+        for link in inventory.links:
+
+            src = self.net.get(link.source)
+            dst = self.net.get(link.destination)
+
+            src_intf = None
+            dst_intf = None
+
+            # Use explicit ports when available.
+            if link.source_port is not None:
+                src_intf = src.intf(
+                    f"{link.source}-eth{link.source_port}"
+                )
+
+            if link.destination_port is not None:
+                dst_intf = dst.intf(
+                    f"{link.destination}-eth{link.destination_port}"
+                )
+
+            # Otherwise discover the interfaces connecting these nodes.
+            if src_intf is None or dst_intf is None:
+                connections = src.connectionsTo(dst)
+
+                if not connections:
+                    logger.warning(
+                        f"No interface connection found for "
+                        f"{link.source} <-> {link.destination}"
+                    )
+                    continue
+
+                src_intf, dst_intf = connections[0]
+
+            kwargs = {
+                "bw": link.bandwidth,
+                "delay": link.delay,
+                "jitter": link.jitter,
+                "loss": link.loss,
+                "max_queue_size": 1000,
+            }
+
+            src_intf.config(**kwargs)
+            dst_intf.config(**kwargs)
+
+            logger.info(
+                f"Applied link impairment: "
+                f"{link.source}:{src_intf.name} <-> "
+                f"{link.destination}:{dst_intf.name} "
+                f"bw={link.bandwidth}, "
+                f"delay={link.delay}, "
+                f"jitter={link.jitter}, "
+                f"loss={link.loss}"
+            )
 
     ############################################################
 

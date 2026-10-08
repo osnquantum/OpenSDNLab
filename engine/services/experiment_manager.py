@@ -114,10 +114,75 @@ class ExperimentManager:
                 link.delay,
             )
 
+            link.jitter = deployment.get(
+                "jitter",
+                link.jitter,
+            )
+
             link.loss = deployment.get(
                 "loss",
                 link.loss,
             )
+    ############################################################
+
+    def apply_link_qos_profile(
+        self,
+        inventory,
+        link_qos,
+    ):
+        """
+        Apply per-link QoS settings received from the web UI.
+        """
+
+        if not link_qos:
+            return
+
+        profiles = {
+            (
+                item.get("source"),
+                item.get("destination"),
+            ): item
+            for item in link_qos
+        }
+
+        for link in inventory.links:
+
+            profile = profiles.get(
+                (link.source, link.destination)
+            )
+
+            if profile is None:
+                continue
+
+            link.bandwidth = profile.get(
+                "bandwidth",
+                link.bandwidth,
+            )
+
+            link.delay = profile.get(
+                "delay",
+                link.delay,
+            )
+
+            link.jitter = profile.get(
+                "jitter",
+                link.jitter,
+            )
+
+            link.loss = profile.get(
+                "loss",
+                link.loss,
+            )
+
+            logger.info(
+                f"Per-link QoS applied: "
+                f"{link.source} -> {link.destination} "
+                f"bw={link.bandwidth}, "
+                f"delay={link.delay}, "
+                f"jitter={link.jitter}, "
+                f"loss={link.loss}"
+            )
+
     ############################################################
 
     def deploy_experiment(
@@ -307,10 +372,17 @@ class ExperimentManager:
 
         )
 
-
         self.apply_deployment_profile(
             inventory,
             config.deployment,
+        )
+
+        self.apply_link_qos_profile(
+            inventory,
+            config.topology.get(
+                "link_qos",
+                []
+            )
         )
 
 

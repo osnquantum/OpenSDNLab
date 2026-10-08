@@ -68,6 +68,7 @@ class BlueprintAdapter:
                 "bandwidth": link.bandwidth,
 
                 "delay": link.delay,
+                "jitter": link.jitter,
 
                 "loss": link.loss,
 
