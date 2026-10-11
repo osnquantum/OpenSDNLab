@@ -1,94 +1,28 @@
 {
-    "switch_count": 2,
-    "packet_in_count": 73,
-    "flow_install_count": 6,
-    "topology_switch_count": 2,
-    "topology_link_count": 2,
-    "link_metrics": {
-        "s2:p2<->s1:p2": {
-            "link_id": "s2:p2<->s1:p2",
-            "src": {
-                "dpid": 2,
-                "port": 2
-            },
-            "dst": {
-                "dpid": 1,
-                "port": 2
-            },
-            "timestamp": 1787591554.506499,
-            "throughput_mbps": 0.0,
-            "packet_rate": 0.0,
-            "tx_errors": 0,
-            "rx_errors": 0,
-            "total_errors": 0,
-            "measurement_status": {
-                "src_available": true,
-                "dst_available": true,
-                "complete": true
-            },
-            "src_port_metrics": {
-                "dpid": 2,
-                "port_no": 2,
-                "timestamp": 1787591554.505852,
-                "interval_seconds": 2.0012,
-                "throughput_mbps": 0.0,
-                "packet_rate": 0.0,
-                "tx_bytes_delta": 0,
-                "rx_bytes_delta": 0,
-                "tx_packets_delta": 0,
-                "rx_packets_delta": 0,
-                "tx_errors_delta": 0,
-                "rx_errors_delta": 0,
-                "tx_bytes": 1153946,
-                "rx_bytes": 92376666,
-                "tx_packets": 17445,
-                "rx_packets": 19640,
-                "tx_errors": 0,
-                "rx_errors": 0
-            },
-            "dst_port_metrics": {
-                "dpid": 1,
-                "port_no": 2,
-                "timestamp": 1787591554.5044706,
-                "interval_seconds": 2.0019,
-                "throughput_mbps": 0.0,
-                "packet_rate": 0.0,
-                "tx_bytes_delta": 0,
-                "rx_bytes_delta": 0,
-                "tx_packets_delta": 0,
-                "rx_packets_delta": 0,
-                "tx_errors_delta": 0,
-                "rx_errors_delta": 0,
-                "tx_bytes": 92376666,
-                "rx_bytes": 1153946,
-                "tx_packets": 19640,
-                "rx_packets": 17445,
-                "tx_errors": 0,
-                "rx_errors": 0
-            }
-        }
-    },
-    "link_metric_count": 1,
+    "switch_count": 1,
+    "packet_in_count": 28,
+    "flow_install_count": 3,
+    "topology_switch_count": 1,
+    "topology_link_count": 0,
+    "link_metrics": {},
+    "link_metric_count": 0,
     "link_monitoring_enabled": true,
     "active_datapaths": [
-        1,
-        2
+        1
     ],
     "flow_paths": {
         "00:00:00:00:00:01->00:00:00:00:00:02": [
-            1,
-            2
+            1
         ],
         "00:00:00:00:00:02->00:00:00:00:00:01": [
-            2,
             1
         ]
     },
     "port_metrics": {
         "1": {
             "1": {
-                "timestamp": 1787591554.5044706,
-                "interval_seconds": 2.0019,
+                "timestamp": 1791483054.3267155,
+                "interval_seconds": 5.0894,
                 "throughput_mbps": 0.0,
                 "packet_rate": 0.0,
                 "tx_bytes_delta": 0,
@@ -97,16 +31,16 @@
                 "rx_packets_delta": 0,
                 "tx_errors_delta": 0,
                 "rx_errors_delta": 0,
-                "tx_bytes": 1154812,
-                "rx_bytes": 92375580,
-                "tx_packets": 17456,
-                "rx_packets": 19624,
+                "tx_bytes": 23636,
+                "rx_bytes": 45118,
+                "tx_packets": 247,
+                "rx_packets": 463,
                 "tx_errors": 0,
                 "rx_errors": 0
             },
             "2": {
-                "timestamp": 1787591554.5044706,
-                "interval_seconds": 2.0019,
+                "timestamp": 1791483054.3267155,
+                "interval_seconds": 5.0894,
                 "throughput_mbps": 0.0,
                 "packet_rate": 0.0,
                 "tx_bytes_delta": 0,
@@ -115,57 +49,18 @@
                 "rx_packets_delta": 0,
                 "tx_errors_delta": 0,
                 "rx_errors_delta": 0,
-                "tx_bytes": 92376666,
-                "rx_bytes": 1153946,
-                "tx_packets": 19640,
-                "rx_packets": 17445,
-                "tx_errors": 0,
-                "rx_errors": 0
-            }
-        },
-        "2": {
-            "1": {
-                "timestamp": 1787591554.505852,
-                "interval_seconds": 2.0012,
-                "throughput_mbps": 0.0,
-                "packet_rate": 0.0,
-                "tx_bytes_delta": 0,
-                "rx_bytes_delta": 0,
-                "tx_packets_delta": 0,
-                "rx_packets_delta": 0,
-                "tx_errors_delta": 0,
-                "rx_errors_delta": 0,
-                "tx_bytes": 92377472,
-                "rx_bytes": 1152920,
-                "tx_packets": 19650,
-                "rx_packets": 17430,
-                "tx_errors": 0,
-                "rx_errors": 0
-            },
-            "2": {
-                "timestamp": 1787591554.505852,
-                "interval_seconds": 2.0012,
-                "throughput_mbps": 0.0,
-                "packet_rate": 0.0,
-                "tx_bytes_delta": 0,
-                "rx_bytes_delta": 0,
-                "tx_packets_delta": 0,
-                "rx_packets_delta": 0,
-                "tx_errors_delta": 0,
-                "rx_errors_delta": 0,
-                "tx_bytes": 1153946,
-                "rx_bytes": 92376666,
-                "tx_packets": 17445,
-                "rx_packets": 19640,
+                "tx_bytes": 33452,
+                "rx_bytes": 24726,
+                "tx_packets": 345,
+                "rx_packets": 255,
                 "tx_errors": 0,
                 "rx_errors": 0
             }
         }
     },
-    "port_metric_count": 4,
+    "port_metric_count": 2,
     "switch_port_metric_count": {
-        "1": 2,
-        "2": 2
+        "1": 2
     },
     "port_monitoring_enabled": true,
     "port_monitor_interval": 2

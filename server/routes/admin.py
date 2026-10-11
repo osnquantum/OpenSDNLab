@@ -57,7 +57,7 @@ def restart():
     )
 
     run_cmd(
-        "cd ~/OpenSDNLab && nohup ./admin/restart.sh >/tmp/opensdn_restart.log 2>&1 &"
+        "cd /home/mininet/OpenSDNLab && nohup ./admin/restart.sh >/tmp/opensdn_restart.log 2>&1 &"
     )
 
     logger.info(
@@ -113,7 +113,7 @@ def run_admin_command(command):
 
         "output":
         run_cmd(
-            "cd ~/OpenSDNLab && "
+            "cd /home/mininet/OpenSDNLab && "
             + allowed[command]
         )
 
@@ -153,8 +153,23 @@ def mininet_status():
 def get_service_logs():
 
     result = run_cmd(
-        "journalctl -u opensdnlab.service "
-        "-n 100 --no-pager"
+        "cd /home/mininet/OpenSDNLab && "
+        "tail -n 100 logs/application/app.log"
+    )
+
+    return jsonify({
+        "success": True,
+        "output": result
+    })
+
+
+@admin.route("/api/admin/service-logs")
+def get_system_service_logs():
+
+    result = run_cmd(
+        "journalctl "
+        "-n 100 "
+        "--no-pager"
     )
 
     return jsonify({

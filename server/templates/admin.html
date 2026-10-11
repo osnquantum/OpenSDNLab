@@ -54,51 +54,6 @@ Ready...
 
 
 
-<div class="command-card">
-
-<h2>
-📜 Flask Runtime Logs
-</h2>
-
-<pre id="flask_logs"
-style="
-background:black;
-color:#22c55e;
-padding:20px;
-height:400px;
-overflow:auto;">
-Loading logs...
-</pre>
-
-</div>
-
-
-<script>
-
-function loadFlaskLogs(){
-
-fetch("/api/flask/logs")
-.then(r=>r.json())
-.then(data=>{
-
-document.getElementById(
-"flask_logs"
-).innerHTML =
-data.logs.join("");
-
-});
-
-}
-
-
-setInterval(
-loadFlaskLogs,
-2000
-);
-
-loadFlaskLogs();
-
-</script>
 
 
 <script>
@@ -470,7 +425,7 @@ refreshMininet();
 
 <div class="command-card">
 
-<h2>📟 OpenSDNLab Live Server Logs</h2>
+<h2>📟 OpenSDNLab Application Log</h2>
 
 <pre id="opensdn_logs" style="
 height: 400px;
@@ -490,7 +445,7 @@ Loading logs...
 
 function refreshOpenSDNLogs(){
 
-fetch("/api/flask/logs")
+fetch("/api/admin/logs")
 .then(r => r.json())
 .then(data => {
 
@@ -498,7 +453,7 @@ const terminal = document.getElementById(
 "opensdn_logs"
 );
 
-terminal.innerText = data.logs.join("");
+terminal.innerText = (data.output || "");
 
 terminal.scrollTop = terminal.scrollHeight;
 
@@ -550,7 +505,7 @@ async function refreshServiceLogs(){
     try{
 
         const response =
-            await fetch("/api/admin/logs");
+            await fetch("/api/admin/service-logs");
 
         const data =
             await response.json();
