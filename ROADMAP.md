@@ -1754,3 +1754,113 @@ GRU, DRL or native Segment Routing.
 # END PATH RECOVERY ENGINE UPDATE
 # ============================================================
 
+
+---
+
+## Current Working Checkpoint — 2026-10-12
+
+This section records the current development checkpoint. Earlier
+roadmap sections preserve historical implementation notes and may
+describe priorities that have since changed.
+
+### 1. Existing Implementation
+
+- [X] Asynchronous experiment execution and job monitoring.
+- [X] Mininet backend integration with the external OS-Ken controller.
+- [X] OS-Ken SimpleSwitch13 forwarding integration and OpenFlow 1.3 support.
+- [X] Minimum-flow coverage planning is present in the working tree.
+- [X] Executor builds a per-flow QoS matrix from selected monitoring flows.
+- [X] Primary-flow throughput measurement has been added to the executor.
+- [X] An iperf3 JSON parser has been added, including validation of
+      malformed and non-finite measurements.
+- [X] Throughput collector uses a dedicated test port and bounded client
+      execution instead of terminating all iperf3 processes.
+- [X] SQLite persistence distinguishes an unavailable throughput
+      measurement from a measured numeric zero through throughput_observed.
+
+These items describe implementation present in the working tree;
+they do not imply that every feature has passed end-to-end validation.
+
+### 2. Throughput Measurement — Current Validation Status
+
+- [X] Parser tests cover valid Mbps, valid zero, malformed JSON,
+      missing measurements, and non-finite values.
+- [X] Collector uses a bounded iperf3 JSON client and reports unavailable
+      measurements as None.
+- [X] Process-identity validation has been added to collector startup
+      and cleanup.
+- [ ] Complete the collector mock-fixture updates for process-identity
+      validation and rerun all focused tests.
+- [ ] Verify Python compilation and git diff --check after the final patch.
+- [ ] Validate actual throughput inside a controlled Mininet topology.
+- [ ] Verify that measured throughput reaches experiment results and that
+      unavailable measurements are persisted as SQL NULL.
+- [ ] Confirm valid measured zero remains distinguishable from missing data.
+
+The latest focused test run after introducing process-identity checks
+still had one failing startup-failure test. Do not mark the collector
+test suite as fully passing until that fixture is repaired and the
+tests pass again.
+
+### 3. Runtime Safety Constraints
+
+- Do not run global Mininet cleanup commands while the existing controller
+  or experiment environment may be in use.
+- Do not terminate the existing OS-Ken controller or unrelated iperf3
+  processes as part of throughput validation.
+- Do not start a competing Mininet topology until the environment is
+  confirmed safe for an isolated integration test.
+- Preserve existing worktree changes and untracked files.
+- Do not modify historical experiment rows as part of this task.
+
+### 4. QoS Data and GRU Prediction
+
+- [ ] Collect additional independent observations across controlled
+      network scenarios before retraining or approving a GRU model.
+- [ ] Evaluate prediction against a persistence baseline using held-out
+      experiments and scenario-aware metrics.
+- [ ] Verify dataset quality, missing measurements, feature consistency,
+      and scenario coverage before training.
+- [ ] Keep the current GRU checkpoint disconnected from live inference
+      and routing until evaluation supports approval.
+
+The GRU model is not approved for live control at this checkpoint.
+Do not overwrite existing checkpoints or retrain as part of the
+throughput collector task.
+
+### 5. Path Recovery and Link Metrics
+
+- [ ] Validate live topology and inter-switch link metrics.
+- [ ] Confirm directional OpenFlow port measurements map to the correct
+      logical bidirectional links.
+- [ ] Validate path-level QoS aggregation against actual forwarding paths.
+- [ ] Test path selection on a redundant topology.
+- [ ] Validate actual OpenFlow path reconfiguration and recovery outcomes.
+- [ ] Measure recovery time, packet loss, delay, jitter, and throughput.
+
+Path-recovery selection and live path enforcement must be tracked
+separately. Do not claim successful recovery enforcement based solely
+on successful path analysis.
+
+### 6. Immediate Priority Order
+
+1. Repair the remaining throughput collector test fixture.
+2. Rerun parser and collector tests, syntax checks, and diff validation.
+3. Review the complete staged diff before committing.
+4. Design a controlled throughput integration test that does not disturb
+   the existing controller or unrelated processes.
+5. Verify throughput persistence and end-to-end result propagation.
+6. Continue link-metric integration and path-recovery validation.
+7. Collect more independent QoS observations before reconsidering GRU
+   training or live prediction.
+
+### 7. Checkpoint Completion Criteria
+
+The throughput task is complete only after:
+
+- Focused unit tests pass.
+- Python compilation and diff checks pass.
+- Real Mininet throughput measurement is validated safely.
+- Measured and unavailable throughput values propagate correctly.
+- Persistence behavior is verified without changing historical records.
+

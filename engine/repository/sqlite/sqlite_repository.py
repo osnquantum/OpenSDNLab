@@ -567,7 +567,7 @@ class SQLiteRepository:
                 metrics["maximum_rtt"],
                 metrics["jitter"],
                 metrics["packet_loss"],
-                metrics["throughput"],
+                metrics.get("throughput_observed", metrics["throughput"]),
                 metrics["one_way_delay"],
                 metrics["mos"],
                 job_id,

@@ -851,6 +851,32 @@ class ExperimentExecutor:
                 )
 
         # --------------------------------------------------------
+        # PRIMARY-FLOW THROUGHPUT MEASUREMENT
+        # --------------------------------------------------------
+        # Preserve None when measurement is unavailable. Runtime
+        # consumers receive a numeric fallback later in the pipeline.
+
+        primary_source, primary_destination = traffic_flows[0]
+
+        try:
+            throughput_result = self.monitoring.throughput.collect(
+                primary_source,
+                primary_destination,
+                experiment_id=experiment.experiment_id,
+                duration=3,
+            )
+
+            qos_matrix[0]["throughput"] = (
+                throughput_result.throughput
+            )
+
+        except Exception as exc:
+            logger.warning(
+                f"Primary-flow throughput measurement failed: {exc}"
+            )
+            qos_matrix[0]["throughput"] = None
+
+        # --------------------------------------------------------
         # QOS MATRIX SCORING
         # --------------------------------------------------------
         # Normalize the measured parameters across active flows.
@@ -1778,8 +1804,13 @@ class ExperimentExecutor:
             "packet_loss": (
                 primary_measurement.get("packet_loss") or 0.0
             ),
+            "throughput_observed": (
+                primary_measurement.get("throughput")
+            ),
             "throughput": (
-                primary_measurement.get("throughput") or 0.0
+                primary_measurement.get("throughput")
+                if primary_measurement.get("throughput") is not None
+                else 0.0
             ),
             "mos": calculate_mos(
                 primary_measurement.get("rtt") or 0.0,
